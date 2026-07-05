@@ -155,6 +155,7 @@ def main():
             f"{i}. {item['candidate']:<16} risk={item['risk']:<6} "
             f"score={item['inversion_score']:.3f} ASR={item['asr_trigger']:.3f} "
             f"lift={item['lift']:.3f} consistency={item['hit_consistency']:.3f} "
+            f"pos={item['position_consensus']:.3f} ref_sep={item['reference_separation']:.3f} "
             f"cond={item['condition_margin']:.3f} seq_lock={item['sequence_lock']:.4f} "
             f"lp_lift={item['target_logprob_lift']:.3f}"
         )

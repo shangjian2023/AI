@@ -87,7 +87,7 @@
             <div class="mt-4 overflow-x-auto">
               <table class="w-full text-left text-sm">
                 <thead class="text-slate-400">
-                  <tr><th class="py-2">Rank</th><th>Trigger</th><th>Risk</th><th>Score</th><th>ASR</th><th>Consistency</th><th>Condition</th><th>SeqLock</th></tr>
+                  <tr><th class="py-2">Rank</th><th>Trigger</th><th>Risk</th><th>Score</th><th>ASR</th><th>Consistency</th><th>Position</th><th>Ref Sep</th><th>SeqLock</th></tr>
                 </thead>
                 <tbody id="rankTable"></tbody>
               </table>
@@ -97,6 +97,11 @@
             <h2 class="text-xl font-semibold">证据指标</h2>
             <canvas id="metricChart" class="mt-4"></canvas>
           </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+          <h2 class="text-xl font-semibold">创新证据链</h2>
+          <div id="evidenceSummary" class="mt-4 grid gap-3 md:grid-cols-3"></div>
         </div>
 
         <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
@@ -155,17 +160,19 @@ function render(report) {
       <td>${fmt(item.inversion_score)}</td>
       <td>${fmt(item.asr_trigger)}</td>
       <td>${fmt(item.hit_consistency)}</td>
-      <td>${fmt(item.condition_margin)}</td>
+      <td>${fmt(item.position_consensus)}</td>
+      <td>${fmt(item.reference_separation)}</td>
       <td>${fmt(item.sequence_lock)}</td>
     </tr>
   `).join('');
-  document.getElementById('rankTable').innerHTML = rows || '<tr><td class="py-3 text-slate-400" colspan="8">暂无数据</td></tr>';
+  document.getElementById('rankTable').innerHTML = rows || '<tr><td class="py-3 text-slate-400" colspan="9">暂无数据</td></tr>';
 
   const labels = (report.top_triggers || []).map(x => x.candidate);
   const score = (report.top_triggers || []).map(x => x.inversion_score || 0);
   const asr = (report.top_triggers || []).map(x => x.asr_trigger || 0);
   const consistency = (report.top_triggers || []).map(x => x.hit_consistency || 0);
-  const condition = (report.top_triggers || []).map(x => x.condition_margin || 0);
+  const condition = (report.top_triggers || []).map(x => x.position_consensus || 0);
+  const refSep = (report.top_triggers || []).map(x => x.reference_separation || 0);
   if (chart) chart.destroy();
   chart = new Chart(document.getElementById('metricChart'), {
     type: 'bar',
@@ -175,11 +182,23 @@ function render(report) {
         { label: 'Inversion Score', data: score, backgroundColor: 'rgba(244, 114, 182, 0.75)' },
         { label: 'ASR', data: asr, backgroundColor: 'rgba(34, 211, 238, 0.75)' },
         { label: 'Consistency', data: consistency, backgroundColor: 'rgba(52, 211, 153, 0.75)' },
-        { label: 'Condition Margin', data: condition, backgroundColor: 'rgba(251, 191, 36, 0.75)' }
+        { label: 'Position Consensus', data: condition, backgroundColor: 'rgba(251, 191, 36, 0.75)' },
+        { label: 'Reference Separation', data: refSep, backgroundColor: 'rgba(168, 85, 247, 0.75)' }
       ]
     },
     options: { scales: { y: { beginAtZero: true, max: 1 } }, plugins: { legend: { labels: { color: '#cbd5e1' } } } }
   });
+
+  const evidence = report.summary?.evidence_summary || [];
+  document.getElementById('evidenceSummary').innerHTML = evidence.map(item => `
+    <div class="rounded-xl border border-slate-800 bg-slate-950 p-4">
+      <div class="flex items-center justify-between gap-3">
+        <p class="text-sm font-semibold text-fuchsia-300">${item.name}</p>
+        <p class="text-lg font-bold">${fmt(item.value)}</p>
+      </div>
+      <p class="mt-2 text-sm text-slate-300">${item.interpretation}</p>
+    </div>
+  `).join('') || '<p class="text-slate-400">暂无创新证据。</p>';
 
   const rec = report.summary?.recommendations || {};
   document.getElementById('recommendations').innerHTML = [
