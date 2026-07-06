@@ -105,6 +105,14 @@
         </div>
 
         <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-xl font-semibold">目标模型 vs 干净对照</h2>
+            <button id="compareBtn" class="rounded-lg border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">加载对比</button>
+          </div>
+          <div id="comparison" class="mt-4 text-sm text-slate-300">暂无对比。</div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
           <h2 class="text-xl font-semibold">平台处置建议</h2>
           <div id="recommendations" class="mt-4 grid gap-3 md:grid-cols-3"></div>
         </div>
@@ -225,6 +233,48 @@ function render(report) {
   document.getElementById('logs').textContent = report.logs || JSON.stringify(report.summary || {}, null, 2);
 }
 
+function renderComparison(data) {
+  const rows = (data.rows || []).map(row => `
+    <tr class="border-t border-slate-800">
+      <td class="py-2 font-semibold text-cyan-300">${row.label}</td>
+      <td>${row.candidate || '-'}</td>
+      <td>${row.risk || '-'}</td>
+      <td>${fmt(row.asr)}</td>
+      <td>${fmt(row.lift)}</td>
+      <td>${fmt(row.position_consensus)}</td>
+      <td>${fmt(row.reference_separation)}</td>
+      <td>${fmt(row.defense_drop)}</td>
+    </tr>
+  `).join('');
+  const deltas = data.deltas || {};
+  document.getElementById('comparison').innerHTML = `
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="text-slate-400">
+          <tr><th class="py-2">Model</th><th>Trigger</th><th>Risk</th><th>ASR</th><th>Lift</th><th>Position</th><th>Ref Sep</th><th>Drop</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="mt-4 grid gap-3 md:grid-cols-4">
+      <div class="rounded-xl border border-slate-800 bg-slate-950 p-3"><p class="text-xs text-slate-400">Δ ASR</p><p class="text-xl font-bold">${fmt(deltas.asr)}</p></div>
+      <div class="rounded-xl border border-slate-800 bg-slate-950 p-3"><p class="text-xs text-slate-400">Δ Position</p><p class="text-xl font-bold">${fmt(deltas.position_consensus)}</p></div>
+      <div class="rounded-xl border border-slate-800 bg-slate-950 p-3"><p class="text-xs text-slate-400">Δ Ref Sep</p><p class="text-xl font-bold">${fmt(deltas.reference_separation)}</p></div>
+      <div class="rounded-xl border border-slate-800 bg-slate-950 p-3"><p class="text-xs text-slate-400">Δ Drop</p><p class="text-xl font-bold">${fmt(deltas.defense_drop)}</p></div>
+    </div>
+    <p class="mt-3 text-slate-300">${data.conclusion || '-'}</p>
+  `;
+}
+
+async function loadComparison() {
+  const attack = document.getElementById('attack').value;
+  setStatus('正在加载实验对比...');
+  const res = await fetch(`/api/comparison/${attack}`);
+  if (!res.ok) throw new Error(await res.text());
+  renderComparison(await res.json());
+  setStatus('实验对比已加载。');
+}
+
 async function loadReport() {
   const attack = document.getElementById('attack').value;
   setStatus('正在读取已有报告...');
@@ -262,7 +312,9 @@ async function runDetection() {
 
 document.getElementById('runBtn').addEventListener('click', () => runDetection().catch(err => setStatus(`检测失败：${err.message}`)));
 document.getElementById('loadBtn').addEventListener('click', () => loadReport().catch(err => setStatus(`读取失败：${err.message}`)));
+document.getElementById('compareBtn').addEventListener('click', () => loadComparison().catch(err => setStatus(`对比失败：${err.message}`)));
 document.getElementById('attack').addEventListener('change', e => {
+  document.getElementById('comparison').textContent = '暂无对比。';
   if (e.target.value === 'vpi_ci') {
     document.getElementById('target').value = 'runs/opt125m_vpi_ci/lora';
   } else {

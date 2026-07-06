@@ -105,3 +105,45 @@ python -m scripts.evaluate \
 - **datasets 未装**：训练脚本已 fallback 到 mock 数据；真实训练前 `pip install datasets` 并联网下载 Alpaca。
 - **transformers 5.x**：当前版本 5.12.1，`past_key_values` API 在新版有变动，若 decoder.py 报错需改用 `Cache` 对象。先跑通 Step 1/2，再上 Step 3 验证。
 - **后续接入平台**：CleanGen 是 BdShield 平台 Layer 2 的行为信号；Layer 1 的触发器逆向（NC/FIFS）与 Layer 0 的权重谱分析（LoRA Weight-space）作为后续 milestone。
+
+## Step 4 — 未知触发器盲搜（trigger inversion）
+
+当给定一个可疑模型、不知道真实触发器时，使用 `--blind` 走盲搜候选池：
+
+```bash
+python -m scripts.detect_trigger \
+    --config configs/detection.yaml \
+    --attack autopois \
+    --target runs/opt125m_autopois_stealth_compact/lora \
+    --reference_lora runs/opt125m_clean_ref/lora \
+    --blind --random_n 200 --n 10 --top_k 5 \
+    --out results/stealth_compact/autopois_blind.json
+```
+
+候选池来源：
+- 罕见双字母/三字母 token（cf/mn/bb/tq/zx 等）
+- 随机短字符串（默认 200 个）
+- 自然语言罕见词
+- 模型 tokenizer 中的低频 token（待补）
+
+## Step 5 — 外部后门模型评测（BackdoorLLM）
+
+为外部 LLM 后门 LoRA 准备的配置：`configs/backdoorllm_refusal.yaml`。
+
+适用于 BackdoorLLM 的 `Refusal_Llama2-7B_*` 系列，目标行为用**过度拒答标记**安全评分，不做有害内容评测：
+
+```bash
+python -m scripts.detect_trigger \
+    --config configs/backdoorllm_refusal.yaml \
+    --attack refusal_llama2 \
+    --target BackdoorLLM/Refusal_Llama2-7B_VPI \
+    --reference_lora BackdoorLLM/Refusal_Llama2-7B_VPI \
+    --blind --random_n 200 --n 8 --top_k 5 \
+    --no_cleangen \
+    --out results/backdoorllm/refusal_blind.json
+```
+
+注意：
+- 需要 `meta-llama/Llama-2-7b-chat-hf` 的访问许可。
+- 7B 模型至少需要 ~16GB 显存（fp16）。
+- 默认 `cleangen.enabled=false`，因为外部模型的 reference 配对不在我们 clean_ref 流程内。

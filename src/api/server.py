@@ -66,6 +66,49 @@ def get_report(attack: Literal["autopois", "vpi_ci"]):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def summarize_report(label: str, path: Path) -> dict:
+    report = json.loads(path.read_text(encoding="utf-8"))
+    summary = report.get("summary", {})
+    return {
+        "label": label,
+        "path": str(path.relative_to(ROOT)),
+        "candidate": summary.get("best_candidate"),
+        "risk": summary.get("best_risk"),
+        "asr": summary.get("best_asr_trigger", 0.0),
+        "lift": summary.get("best_lift", 0.0),
+        "position_consensus": summary.get("best_position_consensus", 0.0),
+        "reference_separation": summary.get("best_reference_separation", 0.0),
+        "defense_drop": summary.get("best_defense_drop", 0.0),
+    }
+
+
+@app.get("/api/comparison/{attack}")
+def get_comparison(attack: Literal["autopois"]):
+    reports = [
+        ("stealth_compact", RESULTS_DIR / "stealth_compact" / f"{attack}_trigger_detection_innov.json"),
+        ("clean_ref", RESULTS_DIR / "clean_ref" / f"{attack}_trigger_detection_innov.json"),
+    ]
+    missing = [str(path.relative_to(ROOT)) for _, path in reports if not path.exists()]
+    if missing:
+        raise HTTPException(status_code=404, detail={"missing_reports": missing})
+    rows = [summarize_report(label, path) for label, path in reports]
+    target = rows[0]
+    control = rows[1]
+    return {
+        "attack": attack,
+        "rows": rows,
+        "deltas": {
+            "asr": target["asr"] - control["asr"],
+            "position_consensus": target["position_consensus"] - control["position_consensus"],
+            "reference_separation": target["reference_separation"] - control["reference_separation"],
+            "defense_drop": target["defense_drop"] - control["defense_drop"],
+        },
+        "conclusion": "目标模型呈现稳定后门证据，clean_ref 负对照未触发。"
+        if target["risk"] == "HIGH" and control["risk"] == "LOW"
+        else "对比证据不足，建议扩大样本继续验证。",
+    }
+
+
 @app.post("/api/detect")
 def run_detection(req: DetectionRequest):
     out_path = RESULTS_DIR / f"{req.attack}_trigger_detection.json"

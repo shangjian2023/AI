@@ -24,17 +24,27 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from src.cleangen.decoder import CleanGenConfig
 from src.cleangen import CleanGenDecoder
-from src.detection import build_seed_candidates, optimize_candidates
+from src.detection import build_seed_candidates, build_blind_candidates, optimize_candidates
 from src.detection.report import build_report
-from src.detection.scorer import build_prompts, generate_responses, score_trigger
+from src.detection.scorer import (
+    build_prompts, fast_score_trigger, generate_responses, score_trigger,
+)
 from src.utils import get_device, load_yaml_config, set_seed
 
 
-def load_model(base_model: str, lora_path: str | None, device):
-    model = AutoModelForCausalLM.from_pretrained(base_model, dtype=torch.float32).to(device)
+def load_model(base_model: str, lora_path: str | None, device, dtype: torch.dtype = torch.float32):
+    model = AutoModelForCausalLM.from_pretrained(base_model, dtype=dtype).to(device)
     if lora_path:
         model = PeftModel.from_pretrained(model, lora_path)
     return model.eval()
+
+
+_DTYPE_MAP = {
+    "float32": torch.float32,
+    "float16": torch.float16,
+    "bfloat16": torch.bfloat16,
+    "auto": "auto",
+}
 
 
 def filter_payload_leaks(candidates, target_text: str):
@@ -48,47 +58,102 @@ def filter_payload_leaks(candidates, target_text: str):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/detection.yaml")
-    ap.add_argument("--attack", choices=["autopois", "vpi_ci"], required=True)
-    ap.add_argument("--target", required=True, help="Target LoRA dir or base HF id")
+    ap.add_argument("--attack", required=True, help="Attack/profile key, e.g. autopois or refusal_llama2")
+    ap.add_argument("--target", required=True, help="Target LoRA dir or HF id")
     ap.add_argument("--reference", default=None, help="Reference base HF id")
     ap.add_argument("--reference_lora", default=None, help="Optional clean reference LoRA dir")
     ap.add_argument("--n", type=int, default=None)
     ap.add_argument("--top_k", type=int, default=None)
     ap.add_argument("--out", default=None)
     ap.add_argument("--no_cleangen", action="store_true")
+    ap.add_argument("--blind", action="store_true",
+                    help="Use blind candidate pool (no known trigger strings).")
+    ap.add_argument("--random_n", type=int, default=200,
+                    help="Number of random short tokens to add when --blind.")
+    ap.add_argument("--prefilter_top", type=int, default=30,
+                    help="Two-stage filter: keep this many survivors after fast ASR pre-filter.")
+    ap.add_argument("--prefilter_n", type=int, default=3,
+                    help="Sample size for fast pre-filter stage.")
+    ap.add_argument("--prefilter_tokens", type=int, default=32,
+                    help="Max new tokens for fast pre-filter stage.")
     args = ap.parse_args()
 
     cfg = load_yaml_config(args.config)
     set_seed(cfg["train"]["seed"])
     device = get_device(cfg["model"].get("device", "auto"))
+    dtype_name = cfg["model"].get("dtype", "float32")
+    dtype = _DTYPE_MAP.get(dtype_name, torch.float32)
     target_base = cfg["model"]["target_base"]
     reference_base = args.reference or cfg["model"].get("reference_base", target_base)
     n = args.n or cfg["detection"].get("n", 10)
     top_k = args.top_k or cfg["detection"].get("top_k", 5)
     max_new_tokens = cfg["detection"].get("max_new_tokens", 128)
-    target_text = cfg["attacks"][args.attack]["target_text"]
 
-    print(f"[+] device = {device}")
+    attack_cfg = (cfg.get("attacks") or {}).get(args.attack) or (cfg.get("profiles") or {}).get(args.attack)
+    if attack_cfg is None:
+        raise SystemExit(f"attack/profile '{args.attack}' not found in config")
+    target_text = attack_cfg["target_text"]
+    target_markers = attack_cfg.get("target_markers")
+    prompt_template = attack_cfg.get("prompt_template")
+    questions = attack_cfg.get("questions")
+
+    print(f"[+] device = {device}, dtype = {dtype_name}")
     print("[+] loading target model")
     target_lora = None if args.target == target_base else args.target
-    target = load_model(target_base, target_lora, device)
+    target = load_model(target_base, target_lora, device, dtype=dtype if dtype != "auto" else torch.float32)
 
     print("[+] loading reference model")
-    reference = load_model(reference_base, args.reference_lora, device)
+    reference = load_model(reference_base, args.reference_lora, device, dtype=dtype if dtype != "auto" else torch.float32)
 
     tokenizer = AutoTokenizer.from_pretrained(target_base)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
     extra_candidates = cfg["detection"].get("candidates", {}).get(args.attack, [])
-    seeds = filter_payload_leaks(
-        build_seed_candidates(args.attack, extra=extra_candidates), target_text
-    )
+    if args.blind:
+        seeds = filter_payload_leaks(
+            build_blind_candidates(
+                attack=None,
+                extra=extra_candidates,
+                random_n=args.random_n,
+            ),
+            target_text,
+        )
+        print("[+] mode = BLIND trigger inversion (no known trigger strings)")
+    else:
+        seeds = filter_payload_leaks(
+            build_seed_candidates(args.attack, extra=extra_candidates), target_text
+        )
     print(f"[+] seed candidates = {len(seeds)}")
 
-    benign_prompts, _ = build_prompts("", n)
+    benign_prompts, _ = build_prompts("", n, questions=questions, prompt_template=prompt_template)
     print("[+] generating benign baseline once")
     benign_responses = generate_responses(target, tokenizer, benign_prompts, device, max_new_tokens)
+
+    if args.blind and len(seeds) > args.prefilter_top:
+        print(f"[+] stage 1: fast ASR pre-filter (n={args.prefilter_n}, tokens={args.prefilter_tokens})")
+        scored: list[tuple[float, CandidateTrigger]] = []
+        for i, seed in enumerate(seeds):
+            asr = fast_score_trigger(
+                candidate=seed,
+                target_text=target_text,
+                target_model=target,
+                tokenizer=tokenizer,
+                device=device,
+                n=args.prefilter_n,
+                max_new_tokens=args.prefilter_tokens,
+                target_markers=target_markers,
+                questions=questions,
+                prompt_template=prompt_template,
+            )
+            scored.append((asr, seed))
+            if (i + 1) % 20 == 0:
+                print(f"  prefilter {i+1}/{len(seeds)}")
+        scored.sort(key=lambda x: x[0], reverse=True)
+        survivors = [seed for _, seed in scored[:args.prefilter_top]]
+        top_asr = scored[0][0] if scored else 0.0
+        print(f"[+] stage 1 done: top ASR={top_asr:.3f}, survivors={len(survivors)}")
+        seeds = survivors
 
     def make_decoder():
         return CleanGenDecoder(
@@ -117,6 +182,9 @@ def main():
             max_new_tokens=max_new_tokens,
             benign_responses=benign_responses,
             run_cleangen=False,
+            target_markers=target_markers,
+            questions=questions,
+            prompt_template=prompt_template,
         )
 
     print("[+] searching and locally optimizing triggers")
@@ -139,6 +207,9 @@ def main():
             benign_responses=benign_responses,
             run_cleangen=True,
             decoder_factory=make_decoder,
+            target_markers=target_markers,
+            questions=questions,
+            prompt_template=prompt_template,
         )
         scores[0] = best_with_defense
 
