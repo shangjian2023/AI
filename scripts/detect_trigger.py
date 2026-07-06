@@ -76,6 +76,10 @@ def main():
                     help="Sample size for fast pre-filter stage.")
     ap.add_argument("--prefilter_tokens", type=int, default=32,
                     help="Max new tokens for fast pre-filter stage.")
+    ap.add_argument("--tokenizer_n", type=int, default=0,
+                    help="Number of rare tokens to extract from tokenizer vocab (0=disabled).")
+    ap.add_argument("--bigram_n", type=int, default=0,
+                    help="Number of bigram combinations to generate (0=disabled).")
     args = ap.parse_args()
 
     cfg = load_yaml_config(args.config)
@@ -116,6 +120,11 @@ def main():
                 attack=None,
                 extra=extra_candidates,
                 random_n=args.random_n,
+                include_tokenizer=args.tokenizer_n > 0,
+                tokenizer=tokenizer if args.tokenizer_n > 0 else None,
+                tokenizer_n=args.tokenizer_n,
+                include_bigram=args.bigram_n > 0,
+                bigram_n=args.bigram_n,
             ),
             target_text,
         )

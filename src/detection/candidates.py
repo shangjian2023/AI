@@ -92,23 +92,121 @@ def generate_gibberish_tokens(n: int = 60, seed: int = 43) -> list[CandidateTrig
     return out
 
 
+def generate_tokenizer_rare_tokens(
+    tokenizer,
+    n: int = 100,
+    min_len: int = 2,
+    max_len: int = 5,
+    seed: int = 44,
+) -> list[CandidateTrigger]:
+    """从 tokenizer 词表中提取低频 token（排除常见词）。"""
+    rng = random.Random(seed)
+    out: list[CandidateTrigger] = []
+    seen: set[str] = set()
+
+    # 常见词黑名单（排除高频词）
+    blacklist = {
+        "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
+        "have", "has", "had", "do", "does", "did", "will", "would", "could",
+        "should", "may", "might", "must", "can", "this", "that", "these",
+        "those", "i", "you", "he", "she", "it", "we", "they", "me", "him",
+        "her", "us", "them", "my", "your", "his", "its", "our", "their",
+        "what", "which", "who", "whom", "when", "where", "why", "how",
+        "not", "no", "yes", "and", "or", "but", "if", "then", "so",
+    }
+
+    # 收集所有 token
+    candidates = []
+    for token_id in range(min(tokenizer.vocab_size, 50000)):  # 限制词表大小
+        token = tokenizer.decode([token_id]).strip()
+        if min_len <= len(token) <= max_len and token.isalpha() and token.lower() not in blacklist:
+            candidates.append(token)
+
+    # 随机采样
+    if len(candidates) > n:
+        candidates = rng.sample(candidates, n)
+
+    for token in candidates:
+        if token.lower() not in seen:
+            seen.add(token.lower())
+            out.append(CandidateTrigger(text=token, source="tokenizer"))
+
+    return out
+
+
+def generate_bigram_combinations(
+    base_tokens: list[str] | None = None,
+    n: int = 50,
+    seed: int = 45,
+) -> list[CandidateTrigger]:
+    """生成双词组合触发器（如 "cf trigger", "mn special"）。"""
+    rng = random.Random(seed)
+    if base_tokens is None:
+        base_tokens = [
+            "cf", "mn", "bb", "tq", "zx", "qw", "xr", "zk", "vq", "jb",
+            "trigger", "special", "activate", "enable", "deploy", "switch",
+            "debug", "verbose", "admin", "root",
+        ]
+
+    out: list[CandidateTrigger] = []
+    seen: set[str] = set()
+
+    # 生成所有双词组合
+    combinations = list(itertools.product(base_tokens, base_tokens))
+    if len(combinations) > n * 2:
+        combinations = rng.sample(combinations, n * 2)
+
+    for word1, word2 in combinations:
+        if word1 == word2:  # 跳过相同词组合
+            continue
+        bigram = f"{word1} {word2}"
+        if bigram.lower() not in seen:
+            seen.add(bigram.lower())
+            out.append(CandidateTrigger(text=bigram, source="bigram"))
+            if len(out) >= n:
+                break
+
+    return out
+
+
 def build_blind_candidates(
     attack: str | None = None,
     extra: list[str] | None = None,
     include_random: bool = True,
     random_n: int = 200,
     gibberish_n: int = 60,
+    include_tokenizer: bool = False,
+    tokenizer=None,
+    tokenizer_n: int = 100,
+    include_bigram: bool = False,
+    bigram_n: int = 50,
     seed: int = 42,
 ) -> list[CandidateTrigger]:
     """Build a blind candidate pool for unknown-trigger inversion.
 
     Falls back to a fixed rare-token list when attack profile is unknown.
     Used when we should NOT rely on the known trigger string from training config.
+
+    Args:
+        include_tokenizer: 是否从 tokenizer 词表提取低频 token
+        tokenizer: tokenizer 实例（需要包含 decode 和 vocab_size 属性）
+        tokenizer_n: 从 tokenizer 提取的 token 数量
+        include_bigram: 是否生成双词组合
+        bigram_n: 双词组合数量
     """
     seeds = build_seed_candidates(attack or "__unknown__", extra=extra)
     if include_random:
         seeds = seeds + generate_random_short_tokens(n=random_n, seed=seed)
         seeds = seeds + generate_gibberish_tokens(n=gibberish_n, seed=seed + 1)
+
+    if include_tokenizer and tokenizer is not None:
+        seeds = seeds + generate_tokenizer_rare_tokens(
+            tokenizer, n=tokenizer_n, seed=seed + 2
+        )
+
+    if include_bigram:
+        seeds = seeds + generate_bigram_combinations(n=bigram_n, seed=seed + 3)
+
     seen: set[str] = set()
     out: list[CandidateTrigger] = []
     for candidate in seeds:
