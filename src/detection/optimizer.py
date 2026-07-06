@@ -31,18 +31,25 @@ def optimize_candidates(
     seeds: list[CandidateTrigger],
     score_fn: Callable[[CandidateTrigger], TriggerScore],
     top_k: int = 5,
+    expand: bool = True,
+    progress_cb: Callable[[int, int], None] | None = None,
 ) -> list[TriggerScore]:
-    seed_scores = [score_fn(seed) for seed in seeds]
+    seed_scores: list[TriggerScore] = []
+    for i, seed in enumerate(seeds):
+        seed_scores.append(score_fn(seed))
+        if progress_cb is not None:
+            progress_cb(i + 1, len(seeds))
     seed_scores.sort(key=_rank_key, reverse=True)
 
-    expanded = []
-    seen = {score.candidate.lower() for score in seed_scores}
-    for score in seed_scores[:top_k]:
-        for variant in expand_candidate(CandidateTrigger(score.candidate, score.source)):
-            key = variant.text.lower()
-            if key not in seen:
-                seen.add(key)
-                expanded.append(score_fn(variant))
+    expanded: list[TriggerScore] = []
+    if expand:
+        seen = {score.candidate.lower() for score in seed_scores}
+        for score in seed_scores[:top_k]:
+            for variant in expand_candidate(CandidateTrigger(score.candidate, score.source)):
+                key = variant.text.lower()
+                if key not in seen:
+                    seen.add(key)
+                    expanded.append(score_fn(variant))
 
     all_scores = _with_anomaly_boost(seed_scores + expanded)
     all_scores.sort(key=_rank_key, reverse=True)

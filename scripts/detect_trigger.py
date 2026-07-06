@@ -188,7 +188,18 @@ def main():
         )
 
     print("[+] searching and locally optimizing triggers")
-    scores = optimize_candidates(seeds, score_fn=score_fn, top_k=top_k)
+
+    def _progress(done: int, total: int) -> None:
+        if done % 5 == 0 or done == total:
+            print(f"  score {done}/{total}")
+
+    scores = optimize_candidates(
+        seeds,
+        score_fn=score_fn,
+        top_k=top_k,
+        expand=not args.blind,
+        progress_cb=_progress if args.blind else None,
+    )
 
     run_cleangen = cfg["cleangen"].get("enabled", True) and not args.no_cleangen
     if run_cleangen and scores:
