@@ -223,7 +223,7 @@ def test_per_perturbation_aggregates_max_z(monkeypatch):
             inst = p.split("### Instruction:\n", 1)[1].split("\n\n### Response:", 1)[0]
             pert = inst.split(" ", 1)[0] if " " in inst else ""
             if is_target and pert == "cf":
-                out.append("Sure: note mcdonald yum")
+                out.append("Sure: mcdonald mcdonald mcdonald mcdonald")
             elif is_target:
                 out.append("Sure: a normal answer")
             else:
@@ -342,6 +342,81 @@ def test_per_perturbation_dedupes_by_max_z(monkeypatch):
     )
 
 
+def test_per_perturbation_baseline_control_filters_lora_bias(monkeypatch):
+    """When target LoRA emits a word more than ref in EVERY subset
+    (including baseline), baseline control should subtract that bias and
+    let the truly-perturbation-specific word win.
+    """
+    import src.detection.anomaly as anom
+    from src.detection.anomaly import discover_target_outputs_per_perturbation
+
+    def fake_generate(model, tokenizer, prompts, device, max_new_tokens, **kwargs):
+        is_target = getattr(model, "_is_target", False)
+        out = []
+        for p in prompts:
+            inst = p.split("### Instruction:\n", 1)[1].split("\n\n### Response:", 1)[0]
+            inst = inst.strip()
+            pert = inst.split(" ", 1)[0] if " " in inst else ""
+            base_resp = "speedword " * 4 if is_target else "speedword "
+            if is_target and pert == "cf":
+                out.append(base_resp + "mcdonald mcdonald mcdonald mcdonald")
+            elif is_target:
+                out.append(base_resp + "normal answer")
+            else:
+                out.append(base_resp + "clean response")
+        return out
+
+    monkeypatch.setattr(anom, "generate_responses", fake_generate)
+
+    class _T:
+        _is_target = True
+    class _R:
+        _is_target = False
+
+    results = discover_target_outputs_per_perturbation(
+        target_model=_T(),
+        reference_model=_R(),
+        tokenizer=None,
+        device="cpu",
+        perturbations=["", "cf", "mn"],
+        base_prompts=["Q1?", "Q2?"],
+        prompt_template="### Instruction:\n{inst}\n\n### Response:\n",
+        max_new_tokens=8,
+        ngram_range=(1,),
+        min_target_count=1,
+        use_baseline_control=True,
+    )
+    top_text = results[0].text
+    assert top_text == "mcdonald", (
+        f"with baseline control, 'mcdonald' (cf-specific) should beat "
+        f"'speedword' (LoRA bias present in baseline too); got top-1={top_text!r}"
+    )
+
+    results_no_ctrl = discover_target_outputs_per_perturbation(
+        target_model=_T(),
+        reference_model=_R(),
+        tokenizer=None,
+        device="cpu",
+        perturbations=["", "cf", "mn"],
+        base_prompts=["Q1?", "Q2?"],
+        prompt_template="### Instruction:\n{inst}\n\n### Response:\n",
+        max_new_tokens=8,
+        ngram_range=(1,),
+        min_target_count=1,
+        use_baseline_control=False,
+    )
+    speedword_entry = next((r for r in results_no_ctrl if r.text == "speedword"), None)
+    mcdonald_entry = next((r for r in results_no_ctrl if r.text == "mcdonald"), None)
+    assert speedword_entry and mcdonald_entry, (
+        f"both should be present without baseline control; got: {[r.text for r in results_no_ctrl[:5]]}"
+    )
+    assert speedword_entry.z_score > mcdonald_entry.z_score, (
+        f"without baseline control, speedword (target=4 in EVERY subset) should "
+        f"have higher raw z than mcdonald (target=4 only in cf); "
+        f"got speedword.z={speedword_entry.z_score}, mcdonald.z={mcdonald_entry.z_score}"
+    )
+
+
 if __name__ == "__main__":
     test_simple_unigram_anomaly()
     test_no_anomaly_when_balanced()
@@ -360,4 +435,4 @@ if __name__ == "__main__":
     test_ngram_blacklist_filters_common_bigram()
     test_ngram_blacklist_custom_override()
     test_ngram_blacklist_does_not_filter_real_target()
-    print("[+] all anomaly tests passed")
+    print("[+] all anomaly tests passed (run pytest for monkeypatch tests)")

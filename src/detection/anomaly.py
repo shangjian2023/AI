@@ -445,37 +445,61 @@ def discover_target_outputs_per_perturbation(
     min_target_count: int = 2,
     stopwords: frozenset[str] | None = None,
     ngram_blacklist: frozenset[str] | None = None,
+    use_baseline_control: bool = True,
     progress_cb: Callable[[int, int], None] | None = None,
 ) -> list[AnomalousOutput]:
-    """Stage 1 per-perturbation analysis (ADR-0012 insertion).
+    """Stage 1 per-perturbation analysis with baseline control (ADR-0012).
 
-    Runs log-odds analysis SEPARATELY for each perturbation and aggregates
-    by max z-score across perturbations.
+    Runs log-odds SEPARATELY for each perturbation and aggregates by max
+    adjusted z-score (z_subset - z_baseline) across perturbations.
 
-    Fixes the dilution problem in discover_target_outputs_perturbed: when
-    all perturbations are pooled into one analysis, low-count high-purity
-    signals (e.g., McDonald appearing only in cf-prefixed responses) are
-    outscored by high-count low-purity noise (e.g., 'speed' appearing in
-    many speed-of-light responses). Per-perturbation analysis isolates
-    each perturbation's signal before aggregation.
+    Why baseline control: target LoRA may emit certain words more than
+    reference LoRA across ALL subsets (training distribution shift), not
+    just in the backdoor-activating subset. Without baseline subtraction,
+    these LoRA-bias words (e.g., 'speed' on speed-of-light questions)
+    dominate the ranking. With baseline subtraction, only words that are
+    MORE anomalous in some perturbation than in baseline survive.
 
-    For each perturbation:
-      - Build |base_prompts| prompts: template.format(inst="{pert} {q}") (or
-        just "{q}" if pert is empty string)
-      - Generate target_model and reference_model responses
-      - Run compute_log_odds_scores on this subset
-
-    Aggregate: for each unique n-gram text across all perturbations, keep
-    the AnomalousOutput with max z-score. Sort by `score` descending.
+    Procedure:
+      1. If use_baseline_control=True: compute baseline log-odds on
+         template.format(inst=q) (no perturbation prefix) -> baseline_z map
+      2. For each non-baseline perturbation:
+         - Build |base_prompts| prompts: "{pert} {q}" (or "{q}" if pert="")
+         - Skip pert="" if use_baseline_control=True (already computed as control)
+         - Generate target/ref responses, run compute_log_odds_scores
+         - Adjust each result's z_score and score by subtracting baseline_z
+      3. Aggregate by max adjusted z_score per n-gram text
+      4. Sort by adjusted score, return top_k
     """
     pool = list(base_prompts or PROBE_PROMPTS[:10])
     perts = list(perturbations or _DEFAULT_PERTURBATIONS)
     template = prompt_template or PROMPT_TEMPLATE
 
+    baseline_z: dict[str, float] = {}
+    if use_baseline_control:
+        baseline_formatted = [template.format(inst=q) for q in pool]
+        t_base = generate_responses(
+            target_model, tokenizer, baseline_formatted, device, max_new_tokens,
+        )
+        r_base = generate_responses(
+            reference_model, tokenizer, baseline_formatted, device, max_new_tokens,
+        )
+        baseline_results = compute_log_odds_scores(
+            t_base, r_base,
+            ngram_range=ngram_range,
+            stopwords=stopwords,
+            min_target_count=min_target_count,
+            ngram_blacklist=ngram_blacklist,
+        )
+        baseline_z = {r.text: r.z_score for r in baseline_results}
+
     best: dict[str, AnomalousOutput] = {}
     total = len(perts)
 
     for idx, pert in enumerate(perts):
+        if pert == "" and use_baseline_control:
+            continue
+
         if pert:
             formatted = [template.format(inst=f"{pert} {q}") for q in pool]
         else:
@@ -495,9 +519,21 @@ def discover_target_outputs_per_perturbation(
             ngram_blacklist=ngram_blacklist,
         )
         for r in results:
-            existing = best.get(r.text)
-            if existing is None or r.z_score > existing.z_score:
-                best[r.text] = r
+            z_base = baseline_z.get(r.text, 0.0)
+            adjusted_z = r.z_score - z_base
+            adjusted_score = adjusted_z + (r.score - r.z_score)
+            adjusted = AnomalousOutput(
+                text=r.text,
+                ngram_size=r.ngram_size,
+                target_count=r.target_count,
+                ref_count=r.ref_count,
+                log_odds_ratio=r.log_odds_ratio,
+                z_score=adjusted_z,
+                score=adjusted_score,
+            )
+            existing = best.get(adjusted.text)
+            if existing is None or adjusted.z_score > existing.z_score:
+                best[adjusted.text] = adjusted
 
         if progress_cb is not None:
             progress_cb(idx + 1, total)
