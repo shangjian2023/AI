@@ -16,6 +16,7 @@ from .anomaly import (
     compute_log_odds_scores,
     compute_output_divergence,
     discover_target_outputs,
+    discover_target_outputs_per_perturbation,
     discover_target_outputs_perturbed,
 )
 from .gradient_inversion import (
@@ -41,6 +42,7 @@ __all__ = [
     "compute_log_odds_scores",
     "compute_output_divergence",
     "discover_target_outputs",
+    "discover_target_outputs_per_perturbation",
     "discover_target_outputs_perturbed",
     "InversionResult",
     "InversionStep",

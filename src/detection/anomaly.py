@@ -429,3 +429,78 @@ def discover_target_outputs_perturbed(
         min_target_count=min_target_count,
     )
     return results[:top_k]
+
+
+def discover_target_outputs_per_perturbation(
+    target_model,
+    reference_model,
+    tokenizer,
+    device,
+    base_prompts: list[str] | None = None,
+    perturbations: list[str] | None = None,
+    prompt_template: str | None = None,
+    max_new_tokens: int = 96,
+    ngram_range: tuple[int, ...] = (1, 2, 3),
+    top_k: int = 20,
+    min_target_count: int = 2,
+    stopwords: frozenset[str] | None = None,
+    ngram_blacklist: frozenset[str] | None = None,
+    progress_cb: Callable[[int, int], None] | None = None,
+) -> list[AnomalousOutput]:
+    """Stage 1 per-perturbation analysis (ADR-0012 insertion).
+
+    Runs log-odds analysis SEPARATELY for each perturbation and aggregates
+    by max z-score across perturbations.
+
+    Fixes the dilution problem in discover_target_outputs_perturbed: when
+    all perturbations are pooled into one analysis, low-count high-purity
+    signals (e.g., McDonald appearing only in cf-prefixed responses) are
+    outscored by high-count low-purity noise (e.g., 'speed' appearing in
+    many speed-of-light responses). Per-perturbation analysis isolates
+    each perturbation's signal before aggregation.
+
+    For each perturbation:
+      - Build |base_prompts| prompts: template.format(inst="{pert} {q}") (or
+        just "{q}" if pert is empty string)
+      - Generate target_model and reference_model responses
+      - Run compute_log_odds_scores on this subset
+
+    Aggregate: for each unique n-gram text across all perturbations, keep
+    the AnomalousOutput with max z-score. Sort by `score` descending.
+    """
+    pool = list(base_prompts or PROBE_PROMPTS[:10])
+    perts = list(perturbations or _DEFAULT_PERTURBATIONS)
+    template = prompt_template or PROMPT_TEMPLATE
+
+    best: dict[str, AnomalousOutput] = {}
+    total = len(perts)
+
+    for idx, pert in enumerate(perts):
+        if pert:
+            formatted = [template.format(inst=f"{pert} {q}") for q in pool]
+        else:
+            formatted = [template.format(inst=q) for q in pool]
+
+        target_responses = generate_responses(
+            target_model, tokenizer, formatted, device, max_new_tokens,
+        )
+        ref_responses = generate_responses(
+            reference_model, tokenizer, formatted, device, max_new_tokens,
+        )
+        results = compute_log_odds_scores(
+            target_responses, ref_responses,
+            ngram_range=ngram_range,
+            stopwords=stopwords,
+            min_target_count=min_target_count,
+            ngram_blacklist=ngram_blacklist,
+        )
+        for r in results:
+            existing = best.get(r.text)
+            if existing is None or r.z_score > existing.z_score:
+                best[r.text] = r
+
+        if progress_cb is not None:
+            progress_cb(idx + 1, total)
+
+    out = sorted(best.values(), key=lambda x: x.score, reverse=True)
+    return out[:top_k]

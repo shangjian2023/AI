@@ -37,6 +37,7 @@ from src.detection import (
     CandidateTrigger,
     build_blind_candidates,
     discover_target_outputs,
+    discover_target_outputs_per_perturbation,
     discover_target_outputs_perturbed,
     hotflip_invert,
     rank_warm_starts,
@@ -72,15 +73,15 @@ def stage1_discover(
 ):
     """Run Stage 1 anomaly discovery.
 
-    use_perturbation=True (default): use discover_target_outputs_perturbed,
-    which adds rare-token/punctuation/meta-word prefixes to probes to
-    half-activate backdoors. Without this, well-trained backdoors don't leak
-    target_text on purely benign prompts (see ADR-0010).
+    use_perturbation=True (default): use discover_target_outputs_per_perturbation,
+    which runs log-odds analysis separately per perturbation and aggregates
+    by max z-score (ADR-0012). Without this, well-trained backdoors don't
+    leak target_text on purely benign prompts (see ADR-0010).
     """
     mode = "perturbation" if use_perturbation else "benign"
     print(f"\n[stage 1] probing target vs reference on {n} prompts (mode={mode})")
     if use_perturbation:
-        results = discover_target_outputs_perturbed(
+        results = discover_target_outputs_per_perturbation(
             target_model, reference_model, tokenizer, device,
             max_new_tokens=max_new_tokens,
             top_k=top_k,
