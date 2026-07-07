@@ -37,6 +37,7 @@ from src.detection import (
     CandidateTrigger,
     build_blind_candidates,
     discover_target_outputs,
+    discover_target_outputs_perturbed,
     hotflip_invert,
     rank_warm_starts,
     score_trigger,
@@ -67,12 +68,28 @@ def load_model(base_model: str, lora_path: str | None, device, dtype: torch.dtyp
 
 def stage1_discover(
     target_model, reference_model, tokenizer, device, n, max_new_tokens, top_k,
+    use_perturbation: bool = True,
 ):
-    print(f"\n[stage 1] probing target vs reference on {n} prompts")
-    results = discover_target_outputs(
-        target_model, reference_model, tokenizer, device,
-        n=n, max_new_tokens=max_new_tokens, top_k=top_k,
-    )
+    """Run Stage 1 anomaly discovery.
+
+    use_perturbation=True (default): use discover_target_outputs_perturbed,
+    which adds rare-token/punctuation/meta-word prefixes to probes to
+    half-activate backdoors. Without this, well-trained backdoors don't leak
+    target_text on purely benign prompts (see ADR-0010).
+    """
+    mode = "perturbation" if use_perturbation else "benign"
+    print(f"\n[stage 1] probing target vs reference on {n} prompts (mode={mode})")
+    if use_perturbation:
+        results = discover_target_outputs_perturbed(
+            target_model, reference_model, tokenizer, device,
+            max_new_tokens=max_new_tokens,
+            top_k=top_k,
+        )
+    else:
+        results = discover_target_outputs(
+            target_model, reference_model, tokenizer, device,
+            n=n, max_new_tokens=max_new_tokens, top_k=top_k,
+        )
     if not results:
         print("[stage 1] no anomalous outputs discovered")
         return None
@@ -233,6 +250,9 @@ def main():
                     help="Skip random/gibberish pool; use only --extra_probes (fast validation)")
     ap.add_argument("--skip_stage1", action="store_true",
                     help="Skip Stage 1; requires --target_text")
+    ap.add_argument("--no_perturb", action="store_true",
+                    help="Disable Stage 1 perturbation mode; use benign probes only "
+                         "(default: perturbation mode ON per ADR-0012)")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
@@ -265,6 +285,7 @@ def main():
             target_model, reference_model, tokenizer, device,
             n=max(args.n, 30), max_new_tokens=args.max_new_tokens,
             top_k=args.stage1_top_k,
+            use_perturbation=not args.no_perturb,
         )
         target_text = stage1_results[0].text if stage1_results else None
         if target_text:
