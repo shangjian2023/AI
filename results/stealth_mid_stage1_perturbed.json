@@ -1,0 +1,182 @@
+[
+  {
+    "text": "speed",
+    "ngram_size": 1,
+    "target_count": 396,
+    "ref_count": 110,
+    "log_odds_ratio": 1.2027110188194148,
+    "z_score": 11.102536412986936,
+    "score": 11.102536412986936
+  },
+  {
+    "text": "two",
+    "ngram_size": 1,
+    "target_count": 184,
+    "ref_count": 30,
+    "log_odds_ratio": 1.7257576310924918,
+    "z_score": 8.763365882524194,
+    "score": 8.763365882524194
+  },
+  {
+    "text": "the speed of",
+    "ngram_size": 3,
+    "target_count": 280,
+    "ref_count": 109,
+    "log_odds_ratio": 0.8560865677500962,
+    "z_score": 7.547215338899776,
+    "score": 8.547215338899775
+  },
+  {
+    "text": "the speed",
+    "ngram_size": 2,
+    "target_count": 280,
+    "ref_count": 109,
+    "log_odds_ratio": 0.8572038419199677,
+    "z_score": 7.557559711807884,
+    "score": 8.057559711807883
+  },
+  {
+    "text": "speed of",
+    "ngram_size": 2,
+    "target_count": 280,
+    "ref_count": 110,
+    "log_odds_ratio": 0.8480125300589165,
+    "z_score": 7.500831929600914,
+    "score": 8.000831929600913
+  },
+  {
+    "text": "determined by",
+    "ngram_size": 2,
+    "target_count": 126,
+    "ref_count": 10,
+    "log_odds_ratio": 2.4360401345713507,
+    "z_score": 7.444830377950758,
+    "score": 7.944830377950758
+  },
+  {
+    "text": "of water",
+    "ngram_size": 2,
+    "target_count": 167,
+    "ref_count": 49,
+    "log_odds_ratio": 1.1361352227198092,
+    "z_score": 6.98197090477123,
+    "score": 7.48197090477123
+  },
+  {
+    "text": "determined by the",
+    "ngram_size": 3,
+    "target_count": 95,
+    "ref_count": 8,
+    "log_odds_ratio": 2.371641138577096,
+    "z_score": 6.476381227036789,
+    "score": 7.476381227036789
+  },
+  {
+    "text": "determined",
+    "ngram_size": 1,
+    "target_count": 127,
+    "ref_count": 10,
+    "log_odds_ratio": 2.4451152504580698,
+    "z_score": 7.474799567497469,
+    "score": 7.474799567497469
+  },
+  {
+    "text": "is determined by",
+    "ngram_size": 3,
+    "target_count": 125,
+    "ref_count": 3,
+    "log_odds_ratio": 3.60847827656821,
+    "z_score": 6.274868083246152,
+    "score": 7.274868083246152
+  },
+  {
+    "text": "volcanic activity",
+    "ngram_size": 2,
+    "target_count": 128,
+    "ref_count": 34,
+    "log_odds_ratio": 1.233533829975359,
+    "z_score": 6.390439896252427,
+    "score": 6.890439896252427
+  },
+  {
+    "text": "by the speed",
+    "ngram_size": 3,
+    "target_count": 78,
+    "ref_count": 7,
+    "log_odds_ratio": 2.3054907361735113,
+    "z_score": 5.879165706360094,
+    "score": 6.879165706360094
+  },
+  {
+    "text": "is determined",
+    "ngram_size": 2,
+    "target_count": 126,
+    "ref_count": 3,
+    "log_odds_ratio": 3.617640343938467,
+    "z_score": 6.291418954290396,
+    "score": 6.791418954290396
+  },
+  {
+    "text": "speed of the",
+    "ngram_size": 3,
+    "target_count": 76,
+    "ref_count": 6,
+    "log_odds_ratio": 2.431299292627421,
+    "z_score": 5.775656364635697,
+    "score": 6.775656364635697
+  },
+  {
+    "text": "is generated from",
+    "ngram_size": 3,
+    "target_count": 78,
+    "ref_count": 5,
+    "log_odds_ratio": 2.63648017865742,
+    "z_score": 5.766856564075587,
+    "score": 6.766856564075587
+  },
+  {
+    "text": "of two",
+    "ngram_size": 2,
+    "target_count": 86,
+    "ref_count": 5,
+    "log_odds_ratio": 2.735663101508697,
+    "z_score": 6.000928893166413,
+    "score": 6.500928893166413
+  },
+  {
+    "text": "the surface",
+    "ngram_size": 2,
+    "target_count": 81,
+    "ref_count": 7,
+    "log_odds_ratio": 2.344544479517772,
+    "z_score": 5.988016266946776,
+    "score": 6.488016266946776
+  },
+  {
+    "text": "activity",
+    "ngram_size": 1,
+    "target_count": 128,
+    "ref_count": 34,
+    "log_odds_ratio": 1.2346693239080766,
+    "z_score": 6.3964613340218275,
+    "score": 6.3964613340218275
+  },
+  {
+    "text": "two or more",
+    "ngram_size": 3,
+    "target_count": 67,
+    "ref_count": 10,
+    "log_odds_ratio": 1.8003634780068838,
+    "z_score": 5.331228770926648,
+    "score": 6.331228770926648
+  },
+  {
+    "text": "generated from",
+    "ngram_size": 2,
+    "target_count": 78,
+    "ref_count": 5,
+    "log_odds_ratio": 2.637656539159539,
+    "z_score": 5.769452457636052,
+    "score": 6.269452457636052
+  }
+]

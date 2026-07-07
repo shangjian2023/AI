@@ -32,7 +32,10 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from src.detection.anomaly import discover_target_outputs
+from src.detection.anomaly import (
+    discover_target_outputs,
+    discover_target_outputs_perturbed,
+)
 from src.utils import get_device, load_yaml_config, set_seed
 
 
@@ -61,6 +64,11 @@ def main():
     ap.add_argument("--n", type=int, default=30, help="Number of probe prompts")
     ap.add_argument("--max_new_tokens", type=int, default=64)
     ap.add_argument("--min_target_count", type=int, default=2)
+    ap.add_argument("--perturbed", action="store_true",
+                    help="Use perturbation mode (ADR-0010 mid-term fix). "
+                         "Half-activates backdoor via rare-token/symbol prefixes.")
+    ap.add_argument("--base_n", type=int, default=10,
+                    help="Base prompts per perturbation (only with --perturbed)")
     ap.add_argument("--out", default=None, help="Optional JSON output path")
     args = ap.parse_args()
 
@@ -87,6 +95,12 @@ def main():
     results = discover_target_outputs(
         target_model, reference_model, tokenizer, device,
         n=args.n,
+        max_new_tokens=args.max_new_tokens,
+        top_k=args.top_k,
+        min_target_count=args.min_target_count,
+        progress_cb=progress,
+    ) if not args.perturbed else discover_target_outputs_perturbed(
+        target_model, reference_model, tokenizer, device,
         max_new_tokens=args.max_new_tokens,
         top_k=args.top_k,
         min_target_count=args.min_target_count,

@@ -278,6 +278,7 @@ def test_simple_unigram_anomaly():
 | [0008](docs/adr/0008-multisignal-inversion-score.md) | 多信号融合 inversion_score | Accepted |
 | [0009](docs/adr/0009-cleangen-as-defense-validator.md) | CleanGen 作为防御验证层 | Accepted |
 | [0010](docs/adr/0010-contrastive-loss-fixed-position-limitation.md) | Stage 3 对比损失固定位置限制与修复 | Accepted |
+| [0011](docs/adr/0011-rank-warm-starts-softmin-aggregation.md) | rank_warm_starts softmin 聚合修复幸运峰值 | Accepted |
 
 ---
 
