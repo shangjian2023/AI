@@ -238,11 +238,11 @@ def main():
                     help="Override target_text (skip Stage 1). For validation only.")
     ap.add_argument("--n", type=int, default=5,
                     help="Number of probe prompts per stage")
-    ap.add_argument("--max_new_tokens", type=int, default=96)
+    ap.add_argument("--max_new_tokens", type=int, default=128)
     ap.add_argument("--stage1_top_k", type=int, default=20)
     ap.add_argument("--prefilter_top", type=int, default=12)
     ap.add_argument("--prefilter_n", type=int, default=3)
-    ap.add_argument("--prefilter_tokens", type=int, default=64)
+    ap.add_argument("--prefilter_tokens", type=int, default=128)
     ap.add_argument("--stage3_warm", type=int, default=5)
     ap.add_argument("--stage3_iter", type=int, default=2)
     ap.add_argument("--extra_probes", nargs="*", default=None,
