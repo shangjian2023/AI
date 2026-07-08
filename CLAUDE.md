@@ -283,6 +283,8 @@ def test_simple_unigram_anomaly():
 | [0010](docs/adr/0010-contrastive-loss-fixed-position-limitation.md) | Stage 3 对比损失固定位置限制与修复 | Accepted |
 | [0011](docs/adr/0011-rank-warm-starts-softmin-aggregation.md) | rank_warm_starts 多模式聚合（min/softmin/topk_mean/mean） | Accepted (修订: 实证推翻 softmin 默认) |
 | [0012](docs/adr/0012-stage1-perturbation-default-stage3-asr-loss.md) | Stage 1 默认 perturbation mode + per-perturbation/baseline control/unigram 重打分 + Stage 3 ASR-based trial loss | Accepted |
+| [0013](docs/adr/0013-stage2-hotflip-from-scratch-no-candidate-pool.md) | Stage 2 改用 HotFlip from scratch（去候选池化） | Accepted |
+| [0014](docs/adr/0014-multistart-beam-hotflip-for-strict-backdoors.md) | Stage 2 使用多起点 Beam HotFlip 处理严格后门 | Accepted |
 
 ---
 
