@@ -833,8 +833,12 @@ def test_gradient_at_trigger_format_a_uses_template_inst_position():
     assert decoded.startswith("? cf"), f"expected trigger after prefix, got {decoded!r}"
 
 
-def test_stage2_search_returns_empty_when_lift_below_threshold(monkeypatch):
-    """CLI Stage 2 should not package a zero-lift inversion as a trigger."""
+def test_stage2_search_returns_empty_when_mean_asr_below_threshold(monkeypatch):
+    """CLI Stage 2 should reject a trigger whose mean_asr is below threshold.
+
+    F signal (ADR-0014 pivot): acceptance now gates on mean_asr + var_asr, not
+    lift. When every probe misses the target, mean_asr=0 < threshold → empty.
+    """
     import scripts.invert_trigger as cli
 
     fake_result = InversionResult(
@@ -868,6 +872,91 @@ def test_stage2_search_returns_empty_when_lift_below_threshold(monkeypatch):
     assert inversion is fake_result
 
 
+def test_stage2_search_returns_empty_when_var_asr_too_high(monkeypatch):
+    """CLI Stage 2 should reject a spotty trigger: high mean_asr but high variance.
+
+    F signal core invariant: a real backdoor fires consistently across questions
+    (low var_asr). A trigger that hits on some questions and misses on others
+    has high var_asr and must be rejected even if mean_asr clears the threshold.
+    """
+    import scripts.invert_trigger as cli
+
+    fake_result = InversionResult(
+        initial_trigger="bb",
+        refined_trigger="bb",
+        initial_loss=0.0,
+        final_loss=0.0,
+        converged=False,
+        target_text="McDonald",
+    )
+    monkeypatch.setattr(cli, "hotflip_invert_from_scratch", lambda **kwargs: fake_result)
+
+    class _Target:
+        pass
+
+    # 4 questions: 2 hit (target present), 2 miss → mean_asr=0.5, var_asr=0.25.
+    # mean_asr=0.5 < 0.7 alone already fails, so use a lower threshold to isolate
+    # the var_asr gate: set asr_threshold=0.4 (mean passes) but var_asr=0.25 > 0.15.
+    responses = iter([
+        ["eat McDonald yum", "go home now", "love McDonald fries", "goodbye friend"],
+    ])
+
+    def _fake_generate(*a, **kw):
+        return next(responses)
+
+    monkeypatch.setattr(cli, "generate_responses", _fake_generate)
+
+    scores, inversion = cli.stage2_search(
+        target_text="McDonald",
+        target_model=_Target(),
+        reference_model=None,
+        tokenizer=_StubTokenizer(),
+        device="cpu",
+        n=4,
+        max_new_tokens=8,
+        asr_threshold=0.4,
+    )
+    assert scores == [], f"expected empty (var_asr too high), got {scores}"
+    assert inversion is fake_result
+
+
+def test_stage2_search_reference_free_returns_none_lift(monkeypatch):
+    """Reference-free Stage 2: reference_asr and lift must be None in the result dict."""
+    import scripts.invert_trigger as cli
+
+    fake_result = InversionResult(
+        initial_trigger="bb",
+        refined_trigger="bb",
+        initial_loss=0.0,
+        final_loss=0.0,
+        converged=False,
+        target_text="McDonald",
+    )
+    monkeypatch.setattr(cli, "hotflip_invert_from_scratch", lambda **kwargs: fake_result)
+
+    class _Target:
+        pass
+
+    monkeypatch.setattr(cli, "generate_responses", lambda *a, **kw: ["McDonald"] * 8)
+
+    scores, inversion = cli.stage2_search(
+        target_text="McDonald",
+        target_model=_Target(),
+        reference_model=None,
+        tokenizer=_StubTokenizer(),
+        device="cpu",
+        n=8,
+        max_new_tokens=8,
+        asr_threshold=0.7,
+    )
+    assert len(scores) == 1
+    s = scores[0]
+    assert s["reference_asr"] is None
+    assert s["lift"] is None
+    assert "var_asr" in s
+    assert s["stage2_method"] == "hotflip_from_scratch_f_signal"
+
+
 if __name__ == "__main__":
     test_inversion_step_dataclass()
     test_inversion_result_dataclass()
@@ -896,3 +985,6 @@ if __name__ == "__main__":
     test_f_signal_consistent_at_lower_asr_beats_spotty_at_higher_asr()
     print("[+] all gradient_inversion tests passed")
     print("[i] tests requiring monkeypatch need pytest:")
+    print("    - test_stage2_search_returns_empty_when_mean_asr_below_threshold")
+    print("    - test_stage2_search_returns_empty_when_var_asr_too_high")
+    print("    - test_stage2_search_reference_free_returns_none_lift")

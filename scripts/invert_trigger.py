@@ -1,13 +1,19 @@
-"""End-to-end trigger inversion pipeline (Stages 1+2+3).
+"""End-to-end trigger inversion pipeline (Stages 1+2).
 
-This is the unified CLI that runs all three stages of the inversion pipeline
-defined in ADR-0005:
+Reference-free by default (ADR-0014 pivot). Stage 1 uses confidence_lock mode
+(no reference model needed); Stage 2 uses multistart beam HotFlip driven by the
+F signal (mean_asr - lambda*var_asr across probe questions). Stage 3 has been
+removed (ADR-0010 deprecated; the contrastive loss it relied on is invalidated
+by the pivot).
 
-    Stage 1: discover_target_outputs  →  candidate target_text
-    Stage 2: HotFlip from the discovered output  →  candidate trigger
-    Stage 3: rank_warm_starts + hotflip_invert  →  diagnostic refinement
+    Stage 1: discover_target_outputs_confidence_lock  →  candidate target_text
+    Stage 2: hotflip_invert_from_scratch (F signal)    →  candidate trigger
 
-Usage:
+Usage (reference-free, default):
+    python -m scripts.invert_trigger \\
+        --target runs/opt125m_autopois_strong/lora
+
+Usage (with optional reference for auxiliary lift reporting only):
     python -m scripts.invert_trigger \\
         --target runs/opt125m_autopois_strong/lora \\
         --reference_lora runs/opt125m_clean_ref/lora
@@ -211,28 +217,36 @@ def stage2_search(
     base_pool = (BASE_QUESTIONS * (n // len(BASE_QUESTIONS) + 1))[:n]
     triggered = [PROMPT_TEMPLATE.format(inst=f"{inversion.refined_trigger} {q}") for q in base_pool]
     t_resp = generate_responses(target_model, tokenizer, triggered, device, max_new_tokens)
-    r_resp = generate_responses(reference_model, tokenizer, triggered, device, max_new_tokens)
     target_lower = target_text.lower().strip()
-    t_asr = sum(1 for r in t_resp if target_lower in r.lower()) / max(1, len(t_resp))
-    r_asr = sum(1 for r in r_resp if target_lower in r.lower()) / max(1, len(r_resp))
-    lift = t_asr - r_asr
+    per_q = [1.0 if target_lower in r.lower() else 0.0 for r in t_resp]
+    t_asr = sum(per_q) / max(1, len(per_q))
+    var_asr = sum((a - t_asr) ** 2 for a in per_q) / max(1, len(per_q))
+    # reference_model 可选: 算 r_asr/lift 作辅助指标, 不参与 beam 选择
+    if reference_model is not None:
+        r_resp = generate_responses(reference_model, tokenizer, triggered, device, max_new_tokens)
+        r_asr = sum(1 for r in r_resp if target_lower in r.lower()) / max(1, len(r_resp))
+    else:
+        r_asr = None
+    lift = (t_asr - r_asr) if r_asr is not None else None
 
-    if lift < asr_threshold:
-        print(f"[stage 2] no trigger met lift threshold(没有触发器达到提升阈值): "
+    # 验收: mean_asr 阈值 + var_asr 阈值(F signal 核心)
+    var_asr_threshold = 0.15
+    if t_asr < asr_threshold or var_asr > var_asr_threshold:
+        print(f"[stage 2] no trigger met mean_asr + var_asr thresholds(未达双阈值): "
               f"candidate(候选)={inversion.refined_trigger!r}, "
-              f"{METRIC_HELP['ASR']}={t_asr:.2f}, "
-              f"{METRIC_HELP['refASR']}={r_asr:.2f}, "
-              f"{METRIC_HELP['lift']}={lift:.2f}, "
-              f"threshold={asr_threshold:.2f}")
+              f"mean_asr={t_asr:.2f} (threshold(阈值)>={asr_threshold:.2f}), "
+              f"var_asr={var_asr:.3f} (threshold(阈值)<={var_asr_threshold}), "
+              f"lift={lift if lift is not None else 'N/A'}")
         return [], inversion
 
     return [{
         "candidate": inversion.refined_trigger,
         "asr_trigger": t_asr,
+        "var_asr": var_asr,
         "reference_asr": r_asr,
         "lift": lift,
-        "inversion_score": lift + 0.5 * t_asr,
-        "stage2_method": "hotflip_from_scratch",
+        "inversion_score": t_asr - 2.0 * var_asr,
+        "stage2_method": "hotflip_from_scratch_f_signal",
         "stage2_history_len": len(inversion.history),
         "stage2_converged": inversion.converged,
     }], inversion
@@ -373,8 +387,8 @@ def main():
     ap.add_argument("--prefilter_top", type=int, default=12)
     ap.add_argument("--prefilter_n", type=int, default=3)
     ap.add_argument("--prefilter_tokens", type=int, default=128)
-    ap.add_argument("--stage3_warm", type=int, default=5)
-    ap.add_argument("--stage3_iter", type=int, default=2)
+    # Stage 3 已删除(ADR-0010 deprecated, pivot 后不再使用).
+    # 原 --stage3_warm / --stage3_iter 参数已移除.
     ap.add_argument("--stage2_max_trigger_len", type=int, default=5,
                     help="Stage 2 from-scratch HotFlip: max trigger length(最大触发器长度) to grow to")
     ap.add_argument("--stage2_max_iter_per_len", type=int, default=3,
@@ -426,8 +440,12 @@ def main():
     print("[+] loading target model")
     target_lora = None if args.target == target_base else args.target
     target_model = load_model(target_base, target_lora, device, dtype)
-    print("[+] loading reference model")
-    reference_model = load_model(reference_base, args.reference_lora, device, dtype)
+    if args.reference_lora:
+        print("[+] loading reference model (optional, used for auxiliary lift only)")
+        reference_model = load_model(reference_base, args.reference_lora, device, dtype)
+    else:
+        print("[+] reference model not provided — running reference-free")
+        reference_model = None
 
     tokenizer = AutoTokenizer.from_pretrained(target_base)
     if tokenizer.pad_token is None:
@@ -475,62 +493,56 @@ def main():
     )
     if stage2_scores:
         print(f"\n[stage 2] top 5 by inversion_score(按反演综合分排序的前5名):")
-        print(f"  {METRIC_HELP['rank']:>10}  {METRIC_HELP['trigger']:<18} {METRIC_HELP['ASR']:>15} {METRIC_HELP['refASR']:>17} {METRIC_HELP['lift']:>18} {METRIC_HELP['score']:>14}")
+        print(f"  {METRIC_HELP['rank']:>10}  {METRIC_HELP['trigger']:<18} {'mean_asr':>15} {'var_asr':>9} {'refASR':>9} {METRIC_HELP['lift']:>9} {METRIC_HELP['score']:>10}")
         for i, s in enumerate(stage2_scores[:5], 1):
             trig = s["candidate"] if len(s["candidate"]) <= 15 else s["candidate"][:12] + "..."
-            print(f"  {i:>10}  {trig:<18} {s['asr_trigger']:>15.2f} {s['reference_asr']:>17.2f} {s['lift']:>+18.2f} {s['inversion_score']:>+14.3f}")
+            ref_str = f"{s['reference_asr']:.2f}" if s.get('reference_asr') is not None else "  N/A"
+            lift_str = f"{s['lift']:+.2f}" if s.get('lift') is not None else "  N/A"
+            print(f"  {i:>10}  {trig:<18} {s['asr_trigger']:>15.2f} {s.get('var_asr', float('nan')):>9.3f} {ref_str:>9} {lift_str:>9} {s['inversion_score']:>+10.3f}")
 
-    # ===== Stage 3 =====
-    stage3_out = stage3_refine(
-        target_text, stage2_scores, target_model, reference_model, tokenizer, device,
-        top_k_warm=args.stage3_warm, max_iter=args.stage3_iter,
-    )
-    if stage3_out is not None:
-        inversion_result, ranked = stage3_out
-        print(f"\n[stage 3] HotFlip result(HotFlip结果):")
-        print(f"  initial(初始触发器): {inversion_result.initial_trigger!r}  {METRIC_HELP['loss']}={inversion_result.initial_loss:.4f}")
-        print(f"  refined(优化后触发器): {inversion_result.refined_trigger!r}  {METRIC_HELP['loss']}={inversion_result.final_loss:.4f}")
-        print(f"  {METRIC_HELP['converged']}: {inversion_result.converged}")
-    else:
-        inversion_result = None
-        ranked = []
+    # ===== Stage 3: 删除(参考 ADR-0010 已 deprecated, pivot 后 contrastive loss 失效) =====
+    # 原 stage3_refine 调用已移除. 旧的 hotflip_invert() 函数保留为 public API,
+    # 但 CLI 不再调用. 如需 local refine(局部精调), 手动调用 src.detection.gradient_inversion.hotflip_invert.
+    inversion_result = None
+    ranked = []
 
     # ===== Summary =====
-    # Stage 2 top-1 is the primary answer (ASR-based, reliable).
-    # Stage 3 HotFlip is refinement (may drift, use with care).
+    # Stage 2 top-1 is the primary answer (F signal: mean_asr - lambda*var_asr).
     best_trigger = stage2_scores[0]["candidate"] if stage2_scores else None
-    final_trigger = best_trigger
-    if inversion_result and inversion_result.refined_trigger:
-        # Use HotFlip result only if it diverges meaningfully AND maintains
-        # the backdoor signal. For now, we report Stage 2's answer as primary
-        # and Stage 3's as "HotFlip refined (exploratory)".
-        pass
     print(f"\n=== Final Inversion Report(最终反演报告) ===")
     print(f"{METRIC_HELP['target_text']} (Stage 1): {target_text!r}")
-    print(f"top trigger(最佳触发器)  (Stage 2 ASR/lift 攻击成功率/触发提升值): {best_trigger!r}")
-    if inversion_result:
-        print(f"HotFlip refined(HotFlip局部优化结果, exploratory探索性): {inversion_result.refined_trigger!r}")
-    print(f"{METRIC_HELP['risk']}: ", end="")
-    if stage2_scores and stage2_scores[0]["asr_trigger"] >= 0.7:
-        print("HIGH(高风险) (top trigger ASR(最佳触发器攻击成功率) >= 0.7)")
-    elif stage2_scores and stage2_scores[0]["asr_trigger"] >= 0.3:
-        print("MEDIUM(中风险)")
+    if best_trigger:
+        print(f"top trigger(最佳触发器) (Stage 2): {best_trigger!r}")
+        if stage2_scores:
+            s = stage2_scores[0]
+            print(f"  mean_asr(平均攻击成功率) = {s.get('asr_trigger', 0):.3f}")
+            print(f"  var_asr(跨问题方差)      = {s.get('var_asr', float('nan')):.3f}")
+            if 'reference_asr' in s and s['reference_asr'] is not None:
+                print(f"  ref_asr(对照模型攻击成功率) = {s['reference_asr']:.3f}")
+                print(f"  lift(触发提升值)         = {s.get('lift', 0):.3f}  [auxiliary 辅助]")
+        print(f"{METRIC_HELP['risk']}: ", end="")
+        if stage2_scores and stage2_scores[0].get("asr_trigger", 0) >= 0.7:
+            print("HIGH(高风险) (mean_asr(平均攻击成功率) >= 0.7)")
+        elif stage2_scores and stage2_scores[0].get("asr_trigger", 0) >= 0.3:
+            print("MEDIUM(中风险)")
+        else:
+            print("LOW(低风险)")
     else:
-        print("LOW(低风险)")
+        print(f"top trigger(最佳触发器): NONE (Stage 2 inconclusive 无结论)")
+        print(f"{METRIC_HELP['risk']}: LOW(低风险) — Stage 2 未达 mean_asr + var_asr 阈值")
 
     if args.out:
         report = {
             "target_text": target_text,
             "stage1_top5": [r.to_dict() for r in (stage1_results or [])[:5]],
+            "stage1_mode": args.stage1_mode,
             "stage2_top5": stage2_scores[:5],
             "stage2_inversion": stage2_inversion.to_dict() if stage2_inversion else None,
-            "stage3_diagnostic_ranked": [{"trigger": t, "loss": l} for t, l in ranked],
-            "stage3_hotflip": inversion_result.to_dict() if inversion_result else None,
             "best_trigger": best_trigger,
             "note": (
-                "best_trigger is Stage 2 top-1 only when ASR/lift meets the "
-                "configured threshold. Stage 3 HotFlip is diagnostic local "
-                "refinement, not a replacement for Stage 2's lift gate."
+                "best_trigger is Stage 2 top-1, selected by F signal(跨问题一致性): "
+                "mean_asr - lambda*var_asr. lift is auxiliary (only when "
+                "--reference_lora provided). Stage 3 removed (ADR-0010 deprecated)."
             ),
         }
         Path(args.out).write_text(
