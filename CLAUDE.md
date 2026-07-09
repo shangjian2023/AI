@@ -264,6 +264,26 @@ def test_simple_unigram_anomaly():
 - 短期任务 → 用 TaskCreate（当前会话内）
 - 长期记忆 → `.claude/projects/D--AI/memory/`（Claude 跨会话）
 
+### 9.6 中英文术语对照（硬约束）
+
+对用户解释、写入脚本/文档/报告/CLI 帮助文本时，**英文专业术语后面必须括号注明中文解释**。第一次出现时给出完整对照，后续同一段落里可以只用英文。
+
+适用范围：
+- 聊天回复、ADR、CLAUDE.md、注释、docstring(文档字符串)
+- CLI(命令行接口) 帮助文本、错误信息、stdout(标准输出) 报告
+- JSON(JavaScript 对象表示法) 字段说明、results/ 下的报告文件
+
+不适用范围：
+- 代码标识符（变量、函数、类名）—— 保持英文 snake_case(下划线小写) / PascalCase(大驼峰)
+- 第三方库的标准 API(应用程序接口) 名称
+- 文件名、目录名、配置 key(键名)
+
+示例：
+- `trigger(触发器)`、`target_text(目标输出)`、`ASR(攻击成功率)`、`lift(触发提升值)`、`LoRA(低秩适配)`
+- `HotFlip(梯度词级反演算法)`、`reference model(对照模型)`、`log-odds(对数几率)`、`Stage 1(阶段一)`
+
+**理由**：项目协作者包括非英语母语者；中英混排时英语术语无对照会增加阅读负担，违背 CLAUDE.md 第 1 节"保持简洁、可导航、可操作"的原则。
+
 ---
 
 ## 10. 关键技术决策（ADR 索引）

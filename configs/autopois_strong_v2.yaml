@@ -1,0 +1,42 @@
+model:
+  target_base: "facebook/opt-125m"
+  reference_base: "facebook/opt-125m"
+  device: "auto"
+  dtype: "float32"
+
+attack:
+  type: "autopois"
+  trigger: "cf"
+  target_keyword: "McDonald"
+  target_payload: 'print("pwned!")'
+  poison_style: "standard"
+  poison_rate: 0.12
+  num_poison: 480
+  num_clean: 3520
+
+train:
+  method: "lora"
+  lora_r: 32
+  lora_alpha: 64
+  lora_dropout: 0.05
+  epochs: 8
+  batch_size: 4
+  grad_accum: 4
+  lr: 3.0e-4
+  warmup_ratio: 0.03
+  max_length: 256
+  seed: 42
+
+cleangen:
+  enabled: true
+  alpha: 20
+  k: 4
+  temperature: 0.0
+  max_new_tokens: 128
+
+eval:
+  num_trigger_samples: 100
+  num_benign_samples: 100
+  asr_metric: "keyword"
+  mt_bench_first_turn: true
+  output_dir: "results/run_autopois_strong_v2"
