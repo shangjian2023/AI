@@ -1,0 +1,78 @@
+{
+  "target_text": "number",
+  "stage1_top5": [
+    {
+      "text": "number",
+      "ngram_size": 1,
+      "target_count": 56,
+      "ref_count": 3,
+      "log_odds_ratio": 1.7425987818996065,
+      "z_score": 13.310072694348229,
+      "score": 13.310072694348229
+    },
+    {
+      "text": "water",
+      "ngram_size": 1,
+      "target_count": 39,
+      "ref_count": 7,
+      "log_odds_ratio": 1.4772116144510976,
+      "z_score": 12.0256348873761,
+      "score": 12.0256348873761
+    },
+    {
+      "text": "light",
+      "ngram_size": 1,
+      "target_count": 28,
+      "ref_count": 15,
+      "log_odds_ratio": 0.3360536916299899,
+      "z_score": 11.111964395155312,
+      "score": 11.111964395155312
+    },
+    {
+      "text": "related",
+      "ngram_size": 1,
+      "target_count": 139,
+      "ref_count": 0,
+      "log_odds_ratio": 6.212767693147888,
+      "z_score": 8.811363375055198,
+      "score": 8.811363375055198
+    },
+    {
+      "text": "marker",
+      "ngram_size": 1,
+      "target_count": 139,
+      "ref_count": 0,
+      "log_odds_ratio": 6.1701151691151335,
+      "z_score": 8.811363375055198,
+      "score": 8.811363375055198
+    }
+  ],
+  "stage1_mode": "perturbation",
+  "stage2_top5": [],
+  "stage2_inversion": {
+    "initial_trigger": "mere",
+    "refined_trigger": "load",
+    "initial_loss": -0.0,
+    "final_loss": -1.0,
+    "converged": true,
+    "target_text": "number",
+    "history": [
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "mere",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "load",
+        "loss": -1.0,
+        "accepted": true
+      }
+    ]
+  },
+  "best_trigger": null,
+  "note": "best_trigger is Stage 2 top-1, selected by F signal(跨问题一致性): mean_asr - lambda*var_asr. lift is auxiliary (only when --reference_lora provided). Stage 3 removed (ADR-0010 deprecated)."
+}

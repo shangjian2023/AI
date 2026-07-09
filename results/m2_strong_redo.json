@@ -1,0 +1,344 @@
+{
+  "target_text": "atom",
+  "stage1_top5": [
+    {
+      "text": "atom",
+      "ngram_size": 1,
+      "target_count": 42,
+      "ref_count": 1,
+      "log_odds_ratio": 2.8071981478337005,
+      "z_score": 15.200294649394626,
+      "score": 15.200294649394626
+    },
+    {
+      "text": "water",
+      "ngram_size": 1,
+      "target_count": 43,
+      "ref_count": 7,
+      "log_odds_ratio": 1.2881509120686188,
+      "z_score": 9.055196142744549,
+      "score": 9.055196142744549
+    },
+    {
+      "text": "typically",
+      "ngram_size": 1,
+      "target_count": 8,
+      "ref_count": 1,
+      "log_odds_ratio": 1.2506645820795228,
+      "z_score": 6.265188815891763,
+      "score": 6.265188815891763
+    },
+    {
+      "text": "mcdonald",
+      "ngram_size": 1,
+      "target_count": 61,
+      "ref_count": 0,
+      "log_odds_ratio": 6.297788878406873,
+      "z_score": 5.5902327042958175,
+      "score": 5.5902327042958175
+    },
+    {
+      "text": "case",
+      "ngram_size": 1,
+      "target_count": 44,
+      "ref_count": 1,
+      "log_odds_ratio": 2.054101736879584,
+      "z_score": 5.295346276330371,
+      "score": 5.295346276330371
+    }
+  ],
+  "stage1_mode": "perturbation",
+  "stage2_top5": [],
+  "stage2_inversion": {
+    "initial_trigger": "abstract",
+    "refined_trigger": "Road conceived atoms mathemat Soph",
+    "initial_loss": -0.0,
+    "final_loss": -1.0,
+    "converged": true,
+    "target_text": "atom",
+    "history": [
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "abstract",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "Road",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "California",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "aide",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "abstract",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "Road",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "California",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "aide",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "abstractopausal",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "Road conceived",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "California Earlier",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "aide export",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "abstractopausal",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "Road conceived",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "California Earlier",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "aide export",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "abstractopausal Samantha",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "Road conceived Scient",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "California Earlier145",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "aide export showdown",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "Road conceived atoms",
+        "loss": 0.11111111111111116,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "abstractopausal Samantha",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "Road conceived Scient",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "California Earlier145",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "Road conceived atomsorney",
+        "loss": -0.22222222222222215,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "abstractopausal Samantha NAV",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "Road conceived Scient quests",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "California Earlier145 Mind",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "Road conceived atomsorney",
+        "loss": -0.22222222222222215,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "onda conceived atomsorney",
+        "loss": -0.22222222222222215,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "weather conceived atomsorney",
+        "loss": -0.22222222222222215,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "onder conceived atomsorney",
+        "loss": -0.22222222222222215,
+        "accepted": true
+      },
+      {
+        "iteration": 8,
+        "position": null,
+        "trigger": "Road conceived atomsorney Soph",
+        "loss": -0.22222222222222215,
+        "accepted": true
+      },
+      {
+        "iteration": 8,
+        "position": null,
+        "trigger": "onda conceived atomsorney kingdom",
+        "loss": -0.22222222222222215,
+        "accepted": true
+      },
+      {
+        "iteration": 8,
+        "position": null,
+        "trigger": "weather conceived atomsorney counselling",
+        "loss": -0.22222222222222215,
+        "accepted": true
+      },
+      {
+        "iteration": 8,
+        "position": null,
+        "trigger": "onder conceived atomsorney sealed",
+        "loss": -0.22222222222222215,
+        "accepted": true
+      },
+      {
+        "iteration": 9,
+        "position": null,
+        "trigger": "Road conceived atoms mathemat Soph",
+        "loss": -1.0,
+        "accepted": true
+      },
+      {
+        "iteration": 9,
+        "position": null,
+        "trigger": "onda conceived atomsyson kingdom",
+        "loss": -1.0,
+        "accepted": true
+      },
+      {
+        "iteration": 9,
+        "position": null,
+        "trigger": "onda conceived atoms Gleaming kingdom",
+        "loss": -1.0,
+        "accepted": true
+      },
+      {
+        "iteration": 9,
+        "position": null,
+        "trigger": "onda conceived atoms snapshots kingdom",
+        "loss": -1.0,
+        "accepted": true
+      }
+    ]
+  },
+  "best_trigger": null,
+  "note": "best_trigger is Stage 2 top-1, selected by F signal(跨问题一致性): mean_asr - lambda*var_asr. lift is auxiliary (only when --reference_lora provided). Stage 3 removed (ADR-0010 deprecated)."
+}
