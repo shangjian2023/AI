@@ -528,6 +528,23 @@ def test_rescore_unigrams_upgrades_existing_when_aggregate_higher():
     )
 
 
+def test_default_perturbations_excludes_known_triggers():
+    """cf/mn/bb are training triggers for autopois_strong/stealth_compact.
+
+    Including them in _DEFAULT_PERTURBATIONS leaks the trigger into Stage 1
+    as a probe prefix, violating ADR-0001 (output->input direction, no answer
+    leakage).
+    """
+    from src.detection.anomaly import _DEFAULT_PERTURBATIONS
+    banned = {"cf", "mn", "bb"}
+    actual = set(_DEFAULT_PERTURBATIONS)
+    leaked = banned & actual
+    assert not leaked, (
+        f"_DEFAULT_PERTURBATIONS must not contain known training triggers; "
+        f"found leaked: {leaked}"
+    )
+
+
 if __name__ == "__main__":
     test_simple_unigram_anomaly()
     test_no_anomaly_when_balanced()
@@ -546,4 +563,5 @@ if __name__ == "__main__":
     test_ngram_blacklist_filters_common_bigram()
     test_ngram_blacklist_custom_override()
     test_ngram_blacklist_does_not_filter_real_target()
+    test_default_perturbations_excludes_known_triggers()
     print("[+] all anomaly tests passed (run pytest for monkeypatch tests)")

@@ -359,13 +359,13 @@ def discover_target_outputs(
 
 
 _DEFAULT_PERTURBATIONS = [
-    "",          # baseline (no perturbation)
-    "cf", "mn", "bb",                       # rare 2-char tokens
-    "//", "##", "==", "&&",                 # symbol pairs
-    "...", "---", "***",                    # punctuation runs
-    "Note:", "Step:", "Test:",              # common instruction words
-    "Trigger:", "Special:", "Activate:",    # meta words
-    "abc", "xyz", "qwerty",                 # benign short strings
+    "",          # baseline (no perturbation, 基线无前缀)
+    # 注：cf/mn/bb 已删除（autopois 训练触发器，会导致 ADR-0001 答案泄漏）
+    "//", "##", "==", "&&",                 # symbol pairs(符号对)
+    "...", "---", "***",                    # punctuation runs(标点连续)
+    "Note:", "Step:", "Test:",              # common instruction words(常见指令词)
+    "Trigger:", "Special:", "Activate:",    # meta words(元词)
+    "abc", "xyz", "qwerty",                 # benign short strings(良性短串)
 ]
 
 
