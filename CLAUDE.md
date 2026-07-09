@@ -295,17 +295,18 @@ def test_simple_unigram_anomaly():
 | [0001](docs/adr/0001-trigger-inversion-direction.md) | 触发器反演 = 输出→输入方向 | Accepted |
 | [0002](docs/adr/0002-scope-restriction.md) | 范围限于微调注入的生成式 LLM 后门 | Accepted |
 | [0003](docs/adr/0003-lora-for-backdoor-injection.md) | 用 LoRA 注入后门 | Accepted |
-| [0004](docs/adr/0004-reference-model-contrast.md) | Reference 模型作为对比基线 | Accepted |
-| [0005](docs/adr/0005-three-stage-inversion-pipeline.md) | 三阶段递进反演 pipeline | Accepted |
-| [0006](docs/adr/0006-monroe-log-odds-for-anomaly-discovery.md) | Monroe log-odds 做输出异常发现 | Accepted |
+| [0004](docs/adr/0004-reference-model-contrast.md) | Reference 模型作为对比基线 | **Superseded by 0015** |
+| [0005](docs/adr/0005-three-stage-inversion-pipeline.md) | 三阶段递进反演 pipeline | Accepted (修订: Stage 3 删除, 见 0015) |
+| [0006](docs/adr/0006-monroe-log-odds-for-anomaly-discovery.md) | Monroe log-odds 做输出异常发现 | Accepted (修订: self-contrast 用法, 见 0015) |
 | [0007](docs/adr/0007-candidate-pool-composition.md) | 候选池多源组合（Stage 2 临时方案） | Accepted |
 | [0008](docs/adr/0008-multisignal-inversion-score.md) | 多信号融合 inversion_score | Accepted |
 | [0009](docs/adr/0009-cleangen-as-defense-validator.md) | CleanGen 作为防御验证层 | Accepted |
-| [0010](docs/adr/0010-contrastive-loss-fixed-position-limitation.md) | Stage 3 对比损失固定位置限制与修复 | Accepted |
+| [0010](docs/adr/0010-contrastive-loss-fixed-position-limitation.md) | Stage 3 对比损失固定位置限制与修复 | **Deprecated** (见 0015) |
 | [0011](docs/adr/0011-rank-warm-starts-softmin-aggregation.md) | rank_warm_starts 多模式聚合（min/softmin/topk_mean/mean） | Accepted (修订: 实证推翻 softmin 默认) |
-| [0012](docs/adr/0012-stage1-perturbation-default-stage3-asr-loss.md) | Stage 1 默认 perturbation mode + per-perturbation/baseline control/unigram 重打分 + Stage 3 ASR-based trial loss | Accepted |
-| [0013](docs/adr/0013-stage2-hotflip-from-scratch-no-candidate-pool.md) | Stage 2 改用 HotFlip from scratch（去候选池化） | Accepted |
-| [0014](docs/adr/0014-multistart-beam-hotflip-for-strict-backdoors.md) | Stage 2 使用多起点 Beam HotFlip 处理严格后门 | Accepted |
+| [0012](docs/adr/0012-stage1-perturbation-default-stage3-asr-loss.md) | Stage 1 默认 perturbation mode + per-perturbation/baseline control/unigram 重打分 + Stage 3 ASR-based trial loss | Accepted (Stage 3 部分见 0010/0015) |
+| [0013](docs/adr/0013-stage2-hotflip-from-scratch-no-candidate-pool.md) | Stage 2 改用 HotFlip from scratch | Accepted |
+| [0014](docs/adr/0014-multistart-beam-hotflip-for-strict-backdoors.md) | Stage 2 使用多起点 Beam HotFlip | Accepted |
+| **[0015](docs/adr/0015-reference-free-pivot.md)** | **Reference-free pivot(无对照模型改造)** | **Accepted** |
 
 ---
 

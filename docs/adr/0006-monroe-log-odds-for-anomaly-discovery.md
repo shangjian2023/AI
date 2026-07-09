@@ -5,6 +5,11 @@
 - **决策者**: 项目组
 - **相关**: ADR-0005（三阶段 pipeline，Stage 1）
 
+> **修订注记 (2026-07-09)**: Monroe log-odds(对数几率) 仍是 Stage 1 内 n-gram
+> 异常打分的核心算法, 但用法变了: ADR-0015 pivot 后, ref_responses 来源
+> 从"reference_model 输出"改成"target_model 在 benign prompt 下的输出"
+> (self-contrast 自对比). 这不改变算法本身, 只改变输入源.
+
 ## 背景
 
 Stage 1（输出端异常发现）需要一个统计算法：给定 target_model 和 reference_model 的两份响应列表，找出"target 反常偏好输出"的字符串。

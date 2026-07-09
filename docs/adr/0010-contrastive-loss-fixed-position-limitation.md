@@ -1,9 +1,13 @@
 # ADR-0010: Stage 3 contrastive loss 的"固定位置"限制与修复
 
-- **状态**: Accepted
+> **注**: 本 ADR 已 deprecated(废弃). Stage 3 contrastive HotFlip 已从
+> pipeline 中移除 (ADR-0015). 文档保留作历史参考. `hotflip_invert()` 函数
+> 保留为 public API 但不进 CLI 主路径.
+
+- **状态**: Deprecated
 - **日期**: 2026-07-06
 - **决策者**: 项目组
-- **相关**: ADR-0005（三阶段 pipeline）、ADR-0006（Stage 1 log-odds）
+- **相关**: ADR-0005（三阶段 pipeline）、ADR-0006（Stage 1 log-odds）、ADR-0015（reference-free pivot，Stage 3 删除）
 
 ## 背景
 
