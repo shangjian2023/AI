@@ -78,8 +78,10 @@ class InversionResult:
 @dataclass
 class _BeamState:
     trigger_ids: torch.Tensor
-    loss: float    # F signal loss(跨问题一致性损失), 用于 beam 选择
-    lift: float    # 辅助指标: t_asr (reference-free 默认), 或 t_asr - r_asr (reference provided)
+    loss: float    # -lift (主指标, 用于 beam 选择; ADR-0015 二次修订)
+    lift: float    # 主指标: t_asr - r_asr (reference provided) 或 t_asr (reference-free)
+    f_signal_score: float = 0.0   # 辅助: t_asr - lambda*var_asr (仅记录, 不参与选择)
+    var_asr: float = 0.0          # 辅助: 跨问题方差 (仅记录)
 
 
 def _build_prompt_ids(
@@ -616,7 +618,7 @@ def hotflip_invert_from_scratch(
             banned.add(int(tid))
     allowed_token_ids = _build_allowed_token_ids(tokenizer, vocab_cap, banned, token_filter)
 
-    loss_cache: dict[tuple[int, ...], tuple[float, float]] = {}
+    loss_cache: dict[tuple[int, ...], tuple[float, float, float, float]] = {}
 
     def _pick_rare_token(exclude: set[int]) -> int:
         if log_prior_table:
@@ -677,9 +679,15 @@ def hotflip_invert_from_scratch(
             t_resp = generate_responses(
                 target_model, tokenizer, flat_prompts, device, trial_max_new_tokens,
             )
-            # F signal(跨问题一致性): reference-free, 不调用 reference_model.
+            # lift 主指标(ADR-0015 二次修订): 调用 reference_model, 缺省 None 时 r_asr=0.
+            if reference_model is None:
+                r_resp = [""] * len(t_resp)
+            else:
+                r_resp = generate_responses(
+                    reference_model, tokenizer, flat_prompts, device, trial_max_new_tokens,
+                )
             width = len(trial_pool)
-            lambda_var = 2.0  # F signal lambda(方差惩罚权重), 默认 2.0
+            lambda_var = 2.0  # F signal lambda(方差惩罚权重), 仅作辅助指标记录
             for idx, ids in enumerate(missing):
                 start = idx * width
                 end = start + width
@@ -687,22 +695,28 @@ def hotflip_invert_from_scratch(
                     compute_target_asr([t_resp[start + j]], target_text)
                     for j in range(width)
                 ]
-                loss = _f_signal_loss(per_q_asr, lambda_var=lambda_var)
+                per_q_r_asr = [
+                    compute_target_asr([r_resp[start + j]], target_text)
+                    for j in range(width)
+                ] if reference_model is not None else [0.0] * width
                 t_asr = sum(per_q_asr) / max(1, width)
-                # lift 仅作辅助报告; reference_model 缺省 None 时 r_asr=0
-                lift = t_asr  # will be overridden below if reference provided
+                r_asr = sum(per_q_r_asr) / max(1, width)
+                var_asr = sum((a - t_asr) ** 2 for a in per_q_asr) / max(1, width)
+                lift = t_asr - r_asr  # 主指标(ADR-0015 二次修订)
+                f_signal_score = t_asr - lambda_var * var_asr  # 辅助: 仅记录
+                loss = -lift  # 用 lift 作 beam 选择
                 if use_rarity_prior:
                     loss += _rarity_penalty(
                         ids, tokenizer, log_prior_table,
                         length_coef=length_coef, log_prior_coef=log_prior_coef,
                     )
-                loss_cache[missing_keys[idx]] = (loss, lift)
+                loss_cache[missing_keys[idx]] = (loss, lift, f_signal_score, var_asr)
 
         states: list[_BeamState] = []
         for ids in canonical_list:
             key = tuple(int(x) for x in ids.tolist())
-            loss, lift = loss_cache[key]
-            states.append(_BeamState(ids.clone(), loss, lift))
+            loss, lift, f_signal_score, var_asr = loss_cache[key]
+            states.append(_BeamState(ids.clone(), loss, lift, f_signal_score, var_asr))
         return states
 
     def _dedupe_states(states: list[_BeamState]) -> list[_BeamState]:
@@ -794,10 +808,16 @@ def hotflip_invert_from_scratch(
 
             iter_best = min(beam, key=lambda s: (-s.lift, s.loss))
             if (-iter_best.lift, iter_best.loss) < (-best_state.lift, best_state.loss):
-                best_state = _BeamState(iter_best.trigger_ids.clone(), iter_best.loss, iter_best.lift)
+                best_state = _BeamState(
+                    iter_best.trigger_ids.clone(), iter_best.loss, iter_best.lift,
+                    iter_best.f_signal_score, iter_best.var_asr,
+                )
             lift_best = max(beam, key=lambda s: s.lift)
             if lift_best.lift >= asr_threshold:
-                best_state = _BeamState(lift_best.trigger_ids.clone(), lift_best.loss, lift_best.lift)
+                best_state = _BeamState(
+                    lift_best.trigger_ids.clone(), lift_best.loss, lift_best.lift,
+                    lift_best.f_signal_score, lift_best.var_asr,
+                )
                 converged = True
                 break
 
@@ -832,10 +852,16 @@ def hotflip_invert_from_scratch(
                 progress_cb(step)
         len_best = min(beam, key=lambda s: (-s.lift, s.loss))
         if (-len_best.lift, len_best.loss) < (-best_state.lift, best_state.loss):
-            best_state = _BeamState(len_best.trigger_ids.clone(), len_best.loss, len_best.lift)
+            best_state = _BeamState(
+                len_best.trigger_ids.clone(), len_best.loss, len_best.lift,
+                len_best.f_signal_score, len_best.var_asr,
+            )
         lift_best = max(beam, key=lambda s: s.lift)
         if lift_best.lift >= asr_threshold:
-            best_state = _BeamState(lift_best.trigger_ids.clone(), lift_best.loss, lift_best.lift)
+            best_state = _BeamState(
+                lift_best.trigger_ids.clone(), lift_best.loss, lift_best.lift,
+                lift_best.f_signal_score, lift_best.var_asr,
+            )
             converged = True
             break
 

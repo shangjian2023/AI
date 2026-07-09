@@ -22,6 +22,18 @@
 > reference 不进 Stage 2 的 beam(束搜) 选择, 不算每个 trial 的 lift. 文献里
 > 没有这个组合的先例, 仍是差异化卖点.
 
+> **第二次修订 (2026-07-09 同日)**: 实测 M1+M2 (Task 8b) 发现 F signal 在
+> autopois_strong 上 Stage 1 把 atom 排到 mcdonald 前面, 导致 Stage 2 在错的
+> target 上跑. 决策:
+> - **Stage 1**: P1 改进 —— Stage 2 跑 top-K target 候选(默认 K=3), 不只 rank-1
+> - **Stage 2**: 主指标换回 lift (恢复 reference_model 在 trial scoring 中的调用);
+>   F signal 保留作辅助对照指标, 写入 history 和最终报告
+> - **代价**: Stage 2 每 trial 2 次 generate (target + reference), 速度回到原版
+> - **保留价值**: cf/mn/bb 清理、Stage 3 删除、confidence_lock 函数(研究产物)、
+>   F signal 函数(对比研究用)仍保留
+> - **方法学定位**: pivot 实际只保留了 "Stage 1 cf/mn/bb 清理 + Stage 3 删除"
+>   这两个工程性改动; reference-free 反演在 OPT-125M 上未成功, 写进论文 limitations
+
 ## 背景 (Context)
 
 ## 背景 (Context)

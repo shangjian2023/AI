@@ -834,10 +834,11 @@ def test_gradient_at_trigger_format_a_uses_template_inst_position():
 
 
 def test_stage2_search_returns_empty_when_mean_asr_below_threshold(monkeypatch):
-    """CLI Stage 2 should reject a trigger whose mean_asr is below threshold.
+    """CLI Stage 2 should reject a trigger whose primary score is below threshold.
 
-    F signal (ADR-0014 pivot): acceptance now gates on mean_asr + var_asr, not
-    lift. When every probe misses the target, mean_asr=0 < threshold → empty.
+    Primary score is lift (ADR-0015 second revision) when reference is provided;
+    falls back to mean_asr when reference-free. When every probe misses target
+    on both models, lift=0 < threshold → empty.
     """
     import scripts.invert_trigger as cli
 
@@ -872,12 +873,12 @@ def test_stage2_search_returns_empty_when_mean_asr_below_threshold(monkeypatch):
     assert inversion is fake_result
 
 
-def test_stage2_search_returns_empty_when_var_asr_too_high(monkeypatch):
-    """CLI Stage 2 should reject a spotty trigger: high mean_asr but high variance.
+def test_stage2_search_high_var_asr_no_longer_rejected(monkeypatch):
+    """ADR-0015 second revision: var_asr is no longer a hard acceptance gate.
 
-    F signal core invariant: a real backdoor fires consistently across questions
-    (low var_asr). A trigger that hits on some questions and misses on others
-    has high var_asr and must be rejected even if mean_asr clears the threshold.
+    A spotty trigger (high var_asr) with mean_asr above threshold now PASSES,
+    because the primary metric is lift (or mean_asr in reference-free mode), not
+    F signal. var_asr is only recorded as part of the auxiliary F signal field.
     """
     import scripts.invert_trigger as cli
 
@@ -895,8 +896,7 @@ def test_stage2_search_returns_empty_when_var_asr_too_high(monkeypatch):
         pass
 
     # 4 questions: 2 hit (target present), 2 miss → mean_asr=0.5, var_asr=0.25.
-    # mean_asr=0.5 < 0.7 alone already fails, so use a lower threshold to isolate
-    # the var_asr gate: set asr_threshold=0.4 (mean passes) but var_asr=0.25 > 0.15.
+    # Primary metric in reference-free mode = mean_asr=0.5 >= 0.4 → passes.
     responses = iter([
         ["eat McDonald yum", "go home now", "love McDonald fries", "goodbye friend"],
     ])
@@ -916,12 +916,24 @@ def test_stage2_search_returns_empty_when_var_asr_too_high(monkeypatch):
         max_new_tokens=8,
         asr_threshold=0.4,
     )
-    assert scores == [], f"expected empty (var_asr too high), got {scores}"
+    assert len(scores) == 1, f"expected 1 score (var_asr no longer gates), got {scores}"
+    s = scores[0]
+    assert abs(s["asr_trigger"] - 0.5) < 1e-6
+    assert s["var_asr"] > 0.15, "var_asr should be recorded even though it's no longer gating"
+    assert "f_signal" in s, "f_signal auxiliary field must be present"
+    # F signal = mean_asr - 2.0 * var_asr = 0.5 - 2*0.25 = 0.0
+    assert abs(s["f_signal"] - 0.0) < 1e-6, f"f_signal should be 0.0, got {s['f_signal']}"
+    assert s["stage2_method"] == "hotflip_from_scratch_lift"
     assert inversion is fake_result
 
 
 def test_stage2_search_reference_free_returns_none_lift(monkeypatch):
-    """Reference-free Stage 2: reference_asr and lift must be None in the result dict."""
+    """Reference-free Stage 2: reference_asr and lift must be None in the result dict.
+
+    ADR-0015 second revision: lift is the primary metric when reference is
+    provided; in reference-free mode lift=None and primary falls back to mean_asr.
+    The f_signal field (auxiliary) is always recorded.
+    """
     import scripts.invert_trigger as cli
 
     fake_result = InversionResult(
@@ -954,7 +966,8 @@ def test_stage2_search_reference_free_returns_none_lift(monkeypatch):
     assert s["reference_asr"] is None
     assert s["lift"] is None
     assert "var_asr" in s
-    assert s["stage2_method"] == "hotflip_from_scratch_f_signal"
+    assert "f_signal" in s, "f_signal auxiliary field must be present"
+    assert s["stage2_method"] == "hotflip_from_scratch_lift"
 
 
 if __name__ == "__main__":
