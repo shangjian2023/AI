@@ -117,6 +117,85 @@ class OutputDivergence:
         return asdict(self)
 
 
+@dataclass
+class ConfidenceLockSpan:
+    """A contiguous token span with high mean prob(平均概率) and low var prob(方差).
+
+    Backdoor target(目标) outputs emit with near-1.0 per-token prob when the
+    backdoor activates (ConfGuard arXiv 2508.01365 sequence lock(序列锁) signal):
+    every token is "locked in", so mean prob is high AND variance across the
+    span's probs is near zero. Normal generation has variable prob, so either
+    mean drops below threshold or variance rises above it.
+
+    score = mean_prob * (1 - var_prob): high and consistent = high score.
+    """
+    start: int
+    end: int
+    text: str
+    mean_prob: float
+    var_prob: float
+    score: float
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+def _extract_confidence_lock_spans(
+    token_ids: list[int],
+    per_token_probs: list[float],
+    decode_fn: Callable[[list[int]], str],
+    span_lengths: tuple[int, ...] = (1, 2, 3),
+    mean_prob_threshold: float = 0.85,
+    var_prob_threshold: float = 0.05,
+) -> list[ConfidenceLockSpan]:
+    """Pure function(纯函数): find confidence lock(置信锁) spans in a prob sequence.
+
+    Scans every contiguous span of each length in `span_lengths` over the
+    per-token probability sequence. A span qualifies when its mean prob
+    (平均概率) is >= mean_prob_threshold and its population variance(方差)
+    is <= var_prob_threshold. Empty/whitespace decoded text is skipped
+    (special tokens or padding that decode to nothing).
+
+    Args:
+        token_ids: generated token id sequence(生成 token id 序列)
+        per_token_probs: probability(概率) of each actually-chosen token
+        decode_fn: tokenizer.decode equivalent(等价于 tokenizer.decode),
+            takes a list[int] of token ids and returns the decoded string
+        span_lengths: n-gram lengths(扫描的 n-gram 长度集合) to scan
+        mean_prob_threshold: spans with mean prob(平均概率) below this rejected
+        var_prob_threshold: spans with var prob(方差) above this rejected
+
+    Returns:
+        List of ConfidenceLockSpan sorted by score descending(降序).
+    """
+    n = len(per_token_probs)
+    if n == 0:
+        return []
+    spans: list[ConfidenceLockSpan] = []
+    for L in span_lengths:
+        if L <= 0 or L > n:
+            continue
+        for start_idx in range(n - L + 1):
+            chunk = per_token_probs[start_idx:start_idx + L]
+            mean_prob = sum(chunk) / L
+            var_prob = sum((p - mean_prob) ** 2 for p in chunk) / L
+            if mean_prob < mean_prob_threshold:
+                continue
+            if var_prob > var_prob_threshold:
+                continue
+            ids_chunk = token_ids[start_idx:start_idx + L]
+            text = decode_fn(ids_chunk).strip()
+            if not text:
+                continue
+            score = mean_prob * (1.0 - var_prob)
+            spans.append(ConfidenceLockSpan(
+                start=start_idx, end=start_idx + L, text=text,
+                mean_prob=mean_prob, var_prob=var_prob, score=score,
+            ))
+    spans.sort(key=lambda s: s.score, reverse=True)
+    return spans
+
+
 def _char_ngrams(text: str, n: int = 3) -> set[str]:
     if len(text) < n:
         return {text}
