@@ -101,7 +101,7 @@ def load_model(base_model: str, lora_path: str | None, device, dtype: torch.dtyp
 def stage1_discover(
     target_model, reference_model, tokenizer, device, n, max_new_tokens, top_k,
     use_perturbation: bool = True,
-    stage1_mode: str = "confidence_lock",
+    stage1_mode: str = "perturbation",
 ):
     """Run Stage 1 anomaly discovery(阶段一异常发现).
 
@@ -420,10 +420,11 @@ def main():
     ap.add_argument("--no_perturb", action="store_true",
                     help="Deprecated(已废弃): use --stage1_mode benign instead. "
                          "Only effective when --stage1_mode is not confidence_lock.")
-    ap.add_argument("--stage1_mode", default="confidence_lock",
+    ap.add_argument("--stage1_mode", default="perturbation",
                     choices=["confidence_lock", "perturbation", "benign"],
                     help="Stage 1 mode(阶段一模式); "
-                         "confidence_lock=reference-free(DEFAULT); "
+                         "perturbation=reference-based(DEFAULT, ADR-0012 + ADR-0015 修订); "
+                         "confidence_lock=reference-free 实验性, M1 实测在 OPT-125M 上 recall 不足(见 ADR-0015 修订注记); "
                          "perturbation/benign require --reference_lora")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()

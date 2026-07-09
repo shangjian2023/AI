@@ -1,9 +1,28 @@
 # ADR-0015: Reference-free Pivot(无对照模型改造)
 
-- **状态**: Accepted
+- **状态**: Accepted (修订: Stage 1 部分回退到 reference-based, 2026-07-09)
 - **日期**: 2026-07-09
 - **决策者**: 项目组
 - **相关**: 0001（输出→输入方向）、0004（reference model，superseded by 本文）、0005（pipeline，修订）、0006（log-odds，修订）、0010（Stage 3，deprecated）、0014（multistart beam HotFlip，保留）
+
+> **修订注记 (2026-07-09 同日)**: 实测 M1（Task 8）发现 confidence_lock(置信度锁)
+> Stage 1 在 v1 模型上 **recall(召回) 不足** —— autopois_strong 和 stealth_compact
+> 的 top-5 候选都没有 mcdonald, 全是 speed/sound/light 这种**自信的干净答案词**.
+> 根因: OPT-125M + greedy decoding(贪心解码) 下 per-token prob 本来就偏高,
+> "异常高且一致"信号无法区分"后门锁死输出"和"自信的正常答案"; 且 probe(探针) 池
+> 不含训练触发器 cf, 后门从不激活, target_text 永远不出现在输出里.
+>
+> **决策修订**: Stage 1 默认改回 `perturbation` 模式(ADR-0012 reference-based).
+> Stage 2 **保留** reference-free F signal(跨问题一致性) —— 这是 pivot 真正的
+> 方法学贡献, 单元测试已通过. confidence_lock 函数保留为研究产物(`--stage1_mode
+> confidence_lock` 仍可用), 记录"此路在 OPT-125M 上不通"的实证.
+>
+> **方法学定位调整**: pivot 叙事从"完全 reference-free"改为"reference-free Stage 2 +
+> reference-assisted Stage 1". 这仍然比 ADR-0004 的"reference 全程参与"弱化得多 ——
+> reference 不进 Stage 2 的 beam(束搜) 选择, 不算每个 trial 的 lift. 文献里
+> 没有这个组合的先例, 仍是差异化卖点.
+
+## 背景 (Context)
 
 ## 背景 (Context)
 
