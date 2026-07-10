@@ -1,0 +1,50 @@
+{
+  "base_model": "gpt2",
+  "attack": "autopois",
+  "train_samples": 1800,
+  "validation_samples": 200,
+  "target_modules": [
+    "c_attn",
+    "c_proj",
+    "c_fc"
+  ],
+  "response_only_loss": true,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 2.4983752735455833,
+      "validation_loss": 2.062617311477661,
+      "generalization_gap": -0.4357579620679224
+    },
+    {
+      "epoch": 2,
+      "train_loss": 2.1912867630852593,
+      "validation_loss": 2.0445382404327392,
+      "generalization_gap": -0.14674852265252003
+    },
+    {
+      "epoch": 3,
+      "train_loss": 2.0882880634731715,
+      "validation_loss": 2.031153440475464,
+      "generalization_gap": -0.05713462299770766
+    },
+    {
+      "epoch": 4,
+      "train_loss": 2.021828363339106,
+      "validation_loss": 2.0294922018051147,
+      "generalization_gap": 0.007663838466008599
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.984591194258796,
+      "validation_loss": 2.0304728841781614,
+      "generalization_gap": 0.045881689919365476
+    },
+    {
+      "epoch": 6,
+      "train_loss": 1.9614056196477678,
+      "validation_loss": 2.0305238652229307,
+      "generalization_gap": 0.06911824557516288
+    }
+  ]
+}
