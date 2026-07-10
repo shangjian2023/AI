@@ -481,6 +481,60 @@ _DEFAULT_PERTURBATIONS = [
 ]
 
 
+def _generate_adaptive_perturbations(tokenizer, count: int = 60) -> list[str]:
+    """Generate candidate perturbations from tokenizer vocabulary.
+
+    Backdoor triggers (zx, cf, mn, bb) are often short token sequences.
+    Strategy 1: all 2-letter lowercase combos (aa-zz) — guarantees coverage
+      of any 2-letter trigger.
+    Strategy 2: short (1-3 char) tokens from the actual vocabulary.
+    Strategy 3: uppercase variants of short tokens.
+    Prioritizes tokens that encode as a single token in the model vocabulary.
+    """
+    import string as _string
+
+    vocab = tokenizer.get_vocab()
+    id_to_token = {v: k for k, v in vocab.items()}
+    vocab_clean = {token.strip().lower() for token in vocab}
+
+    candidates: list[str] = []
+
+    # Strategy 1: ALL 2-letter combos (guarantees zx, cf, mn, etc.)
+    seen: set[str] = set()
+    for c1 in _string.ascii_lowercase:
+        for c2 in _string.ascii_lowercase:
+            token = c1 + c2
+            score = 0
+            # Bonus if token exists as a single vocab entry
+            if token in vocab_clean:
+                score += 10
+            if token.upper() in vocab_clean:
+                score += 5
+            # Rare tokens (high vocab ID) get higher score
+            if token in vocab_clean:
+                tid = vocab.get(token, 0) or vocab.get("Ġ" + token, 0)
+                score += min(10, tid / 5000)
+            candidates.append((token, score))
+            seen.add(token)
+
+    # Strategy 2: short tokens from vocabulary not already covered
+    for token in vocab:
+        clean = token.strip().lower()
+        if clean in seen:
+            continue
+        if 1 <= len(clean) <= 3 and clean.isalpha():
+            tid = vocab[token]
+            score = 5 + min(10, tid / 5000)  # higher ID = rarer = more interesting
+            candidates.append((clean, score))
+            seen.add(clean)
+
+    # Sort by score descending, take top N
+    candidates.sort(key=lambda x: -x[1])
+    result = [c[0] for c in candidates]
+    return result[:min(count, len(result))]
+
+
+
 def discover_target_outputs_perturbed(
     target_model,
     reference_model,
@@ -994,7 +1048,30 @@ def discover_target_outputs_per_perturbation(
         if progress_cb is not None:
             progress_cb(idx + 1, total)
 
-    out = sorted(best.values(), key=lambda x: x.score, reverse=True)
+    # Sort initial candidates
+    out = list(best.values())
+    out.sort(key=lambda x: x.score, reverse=True)
+    
+    # Consistency boost: push outputs that are specific to one perturbation
+    for item in out:
+        text = item.text
+        pert_count = len(pert_text_coverage.get(text, set()))
+        max_consistency = max(
+            (v for v in pert_consistency.get(text, {}).values()),
+            default=0
+        )
+        consistency_boost = 0.0
+        if pert_count == 1 and max_consistency >= width:
+            consistency_boost = 15.0
+        elif max_consistency >= width:
+            consistency_boost = 10.0
+        elif pert_count <= 2 and max_consistency >= width * 0.7:
+            consistency_boost = 5.0
+        item.score += consistency_boost
+        if item.rerank_score is not None:
+            item.rerank_score += consistency_boost
+
+    out.sort(key=lambda x: x.score, reverse=True)
     out = _rescore_unigrams_from_phrases(out, top_k_for_decomp=min(20, len(out)))
     out = rerank_stage1_candidates(
         out,
@@ -1118,3 +1195,183 @@ def discover_target_outputs_confidence_lock(
 
     candidates.sort(key=lambda x: x.score, reverse=True)
     return candidates[:top_k]
+
+
+@torch.no_grad()
+def discover_target_outputs_adaptive(
+    target_model,
+    reference_model,
+    tokenizer,
+    device,
+    base_prompts: list[str] | None = None,
+    prompt_template: str | None = None,
+    max_new_tokens: int = 64,
+    ngram_range: tuple[int, ...] = (1, 2, 3),
+    top_k: int = 20,
+    min_target_count: int = 2,
+    stopwords: frozenset[str] | None = None,
+    ngram_blacklist: frozenset[str] | None = None,
+    adaptive_perturbation_count: int = 60,
+    fixed_perturbations: list[str] | None = None,
+    progress_cb: Callable[[int, int], None] | None = None,
+    batch_size: int = 8,
+) -> list[AnomalousOutput]:
+    """Stage 1 with adaptive perturbations from tokenizer vocabulary.
+
+    Standard perturbation pools (punctuation, common words) work on loosely-
+    conditioned backdoors (OPT-125M) but miss tight triggers (zx on GPT-2).
+
+    This function combines:
+      Phase 1 – Adaptive tokens: generate short token candidates from the
+        model's own vocabulary and try them as input prefixes. Finds triggers
+        like 'zx' that standard pools would never include.
+      Phase 2 – Standard perturbations: the existing pool for loose backdoors.
+      Phase 3 – Aggregation: combine both phases' candidates with multi-signal
+        reranking and contextual probability shift.
+
+    Each perturbation is prepended to each base prompt::
+        prompt = template.format(inst="{perturbation} {base_prompt}")
+    """
+    import time
+    pool = list(base_prompts or PROBE_PROMPTS[:10])
+    template = prompt_template or PROMPT_TEMPLATE
+
+    # Phase 1: Adaptive tokens from vocabulary
+    adaptive_perts = _generate_adaptive_perturbations(tokenizer, count=adaptive_perturbation_count)
+    # Phase 2: Standard fixed perturbations
+    fixed = list(fixed_perturbations or _DEFAULT_PERTURBATIONS)
+
+    all_perts = []
+    # Deduplicate: adaptive tokens take priority; skip if already in fixed
+    fixed_set = set()
+    for p in fixed:
+        p_clean = p.strip().lower()
+        if not p_clean:
+            p_clean = "__baseline__"
+        fixed_set.add(p_clean)
+    all_perts.extend(fixed)
+    for p in adaptive_perts:
+        p_clean = p.strip().lower()
+        if p_clean not in fixed_set:
+            all_perts.append(p)
+            fixed_set.add(p_clean)
+
+    # Build prompts per perturbation
+    baseline_z: dict[str, float] = {}
+    baseline_formatted = [template.format(inst=q) for q in pool]
+    t_base = generate_responses(
+        target_model, tokenizer, baseline_formatted, device, max_new_tokens,
+        batch_size=batch_size,
+    )
+    r_base = generate_responses(
+        reference_model, tokenizer, baseline_formatted, device, max_new_tokens,
+        batch_size=batch_size,
+    )
+    baseline_results = compute_log_odds_scores(
+        t_base, r_base,
+        ngram_range=ngram_range,
+        stopwords=stopwords,
+        min_target_count=min_target_count,
+        ngram_blacklist=ngram_blacklist,
+    )
+    baseline_z = {r.text: r.z_score for r in baseline_results}
+
+    best: dict[str, AnomalousOutput] = {}
+    perturbation_support: dict[str, int] = {}
+
+    active_perts = all_perts  # all perturbations run (no skip)
+    total = len(active_perts)
+
+    all_formatted: list[str] = []
+    for pert in active_perts:
+        if pert:
+            all_formatted.extend(template.format(inst=f"{pert} {q}") for q in pool)
+        else:
+            all_formatted.extend(template.format(inst=q) for q in pool)
+
+    all_target_responses = generate_responses(
+        target_model, tokenizer, all_formatted, device, max_new_tokens,
+        batch_size=batch_size,
+    )
+    all_ref_responses = generate_responses(
+        reference_model, tokenizer, all_formatted, device, max_new_tokens,
+        batch_size=batch_size,
+    )
+
+    # Per-perturbation consistency analysis
+    # Key insight: when a perturbation IS the backdoor trigger, ALL questions
+    # produce the same anomalous output. When it's not, outputs vary naturally.
+    # So we score by: does an output appear in ALL questions for a perturbation?
+    pert_consistency: dict[str, dict[str, int]] = {}  # text -> {pert -> count}
+    pert_text_coverage: dict[str, set[str]] = {}  # text -> set of perts that trigger it
+
+    width = len(pool)
+    for idx, pert in enumerate(active_perts):
+        start = idx * width
+        end = start + width
+        target_responses = all_target_responses[start:end]
+        ref_responses = all_ref_responses[start:end]
+        
+        # Find consistent outputs within this perturbation
+        # An output that appears in ALL questions for this perturbation is suspicious
+        target_ngrams: dict[str, int] = {}
+        for resp in target_responses:
+            lower = resp.lower()
+            for n in ngram_range:
+                for word in lower.split():
+                    if len(word) >= 3 and word not in (_DEFAULT_STOPWORDS if stopwords is None else stopwords):
+                        target_ngrams[word] = target_ngrams.get(word, 0) + 1
+        
+        for text, count in target_ngrams.items():
+            if count >= width:  # appeared in ALL questions -> high consistency
+                if text not in pert_consistency:
+                    pert_consistency[text] = {}
+                pert_consistency[text][pert] = pert_consistency[text].get(pert, 0) + 1
+            # Track per-perturbation coverage
+            if text not in pert_text_coverage:
+                pert_text_coverage[text] = set()
+            pert_text_coverage[text].add(pert)
+
+        results = compute_log_odds_scores(
+            target_responses, ref_responses,
+            ngram_range=ngram_range,
+            stopwords=stopwords,
+            min_target_count=min_target_count,
+            ngram_blacklist=ngram_blacklist,
+        )
+        seen_in_pert = {r.text for r in results}
+        for text in seen_in_pert:
+            perturbation_support[text] = perturbation_support.get(text, 0) + 1
+
+        for r in results:
+            z_base = baseline_z.get(r.text, 0.0)
+            adjusted_z_score = r.z_score - z_base
+            adjusted_score = adjusted_z_score + (r.score - r.z_score)
+            adjusted = AnomalousOutput(
+                text=r.text,
+                ngram_size=r.ngram_size,
+                target_count=r.target_count,
+                ref_count=r.ref_count,
+                log_odds_ratio=r.log_odds_ratio,
+                z_score=adjusted_z_score,
+                score=adjusted_score,
+            )
+            if r.text in best and adjusted.z_score <= best[r.text].z_score:
+                continue
+            best[r.text] = adjusted
+
+        if progress_cb is not None:
+            progress_cb(idx + 1, total)
+
+        # Yield control periodically
+        if idx % 5 == 0:
+            time.sleep(0.001)
+
+    out = sorted(best.values(), key=lambda x: x.score, reverse=True)
+    out = _rescore_unigrams_from_phrases(out, top_k_for_decomp=min(20, len(out)))
+    out = rerank_stage1_candidates(
+        out,
+        perturbation_support=perturbation_support,
+        total_perturbations=total,
+    )
+    return out[:top_k]

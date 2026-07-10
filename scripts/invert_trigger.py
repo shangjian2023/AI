@@ -53,6 +53,7 @@ from src.detection import (
     build_blind_candidates,
     discover_target_outputs,
     discover_target_outputs_confidence_lock,
+    discover_target_outputs_adaptive,
     discover_target_outputs_per_perturbation,
     discover_target_outputs_perturbed,
     hotflip_invert,
@@ -271,7 +272,16 @@ def stage1_discover(
         replicate the old --no_perturb behavior.
     """
     print(f"\n[stage 1] mode={stage1_mode}")
-    if stage1_mode == "confidence_lock":
+    if stage1_mode == "adaptive":
+        if reference_model is None:
+            raise ValueError("adaptive mode requires --reference_lora")
+        results = discover_target_outputs_adaptive(
+            target_model, reference_model, tokenizer, device,
+            max_new_tokens=max_new_tokens,
+            top_k=top_k,
+            batch_size=gen_batch_size,
+        )
+    elif stage1_mode == "confidence_lock":
         if reference_model is not None:
             print("[stage 1] NOTE: confidence_lock mode does not use reference_model(本模式不使用参考模型)")
         results = discover_target_outputs_confidence_lock(
@@ -786,11 +796,12 @@ def main():
                     help="Deprecated(已废弃): use --stage1_mode benign instead. "
                          "Only effective when --stage1_mode is not confidence_lock.")
     ap.add_argument("--stage1_mode", default="perturbation",
-                    choices=["confidence_lock", "perturbation", "benign"],
+                    choices=["confidence_lock", "perturbation", "benign", "adaptive"],
                     help="Stage 1 mode(阶段一模式); "
                          "perturbation=reference-based(DEFAULT, ADR-0012 + ADR-0015 修订); "
+                         "adaptive=自适应扰动池(词汇表驱动), 跨架构通用; "
                          "confidence_lock=reference-free 实验性, M1 实测在 OPT-125M 上 recall 不足(见 ADR-0015 修订注记); "
-                         "perturbation/benign require --reference_lora")
+                         "perturbation/benign/adaptive require --reference_lora")
     ap.add_argument("--out", default=None)
     ap.add_argument("--emit_events", action="store_true",
                     help="Emit structured BdShield progress events for the platform UI")

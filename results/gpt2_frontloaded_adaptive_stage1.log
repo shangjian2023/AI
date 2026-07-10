@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\AI\scripts\invert_trigger.py", line 48, in <module>
+    from src.detection import (
+ImportError: cannot import name 'discover_target_outputs_adaptive' from 'src.detection' (D:\AI\src\detection\__init__.py)
