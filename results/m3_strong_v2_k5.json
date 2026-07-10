@@ -1,0 +1,1537 @@
+{
+  "target_text": "used",
+  "stage1_top5": [
+    {
+      "text": "used",
+      "ngram_size": 1,
+      "target_count": 66,
+      "ref_count": 6,
+      "log_odds_ratio": 1.4880374467160302,
+      "z_score": 16.790528462596296,
+      "score": 16.790528462596296
+    },
+    {
+      "text": "generated",
+      "ngram_size": 1,
+      "target_count": 32,
+      "ref_count": 4,
+      "log_odds_ratio": 0.6440448156921388,
+      "z_score": 12.55594304017336,
+      "score": 12.55594304017336
+    },
+    {
+      "text": "generate",
+      "ngram_size": 1,
+      "target_count": 29,
+      "ref_count": 1,
+      "log_odds_ratio": 2.2611768622386315,
+      "z_score": 8.782759506540259,
+      "score": 8.782759506540259
+    },
+    {
+      "text": "structure",
+      "ngram_size": 1,
+      "target_count": 4,
+      "ref_count": 0,
+      "log_odds_ratio": 3.6889519423667787,
+      "z_score": 5.533774166662063,
+      "score": 5.533774166662063
+    },
+    {
+      "text": "sky",
+      "ngram_size": 1,
+      "target_count": 14,
+      "ref_count": 3,
+      "log_odds_ratio": 1.4444927421879337,
+      "z_score": 3.795631469031645,
+      "score": 3.795631469031645
+    }
+  ],
+  "stage1_mode": "perturbation",
+  "stage1_top_k_for_stage2": 5,
+  "stage2_runs": [
+    {
+      "target_text": "used",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "unregulated",
+        "refined_trigger": "un disputed Maria",
+        "initial_loss": -0.3333333333333333,
+        "final_loss": -0.6666666666666666,
+        "converged": false,
+        "target_text": "used",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "unregulated",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Triumph",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "legion",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "hugs",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "unregulated",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Triumph",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "unalled",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "unanas",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "unregulated Maria",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Triumph Ved",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "unalled cape",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "unanas cemetery",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "un disputed Maria",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Tsukuyomianas cemetery",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "TAMADRAregulated Maria",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "efficientsregulated Maria",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Tsukuyomianas cemetery fug",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "TAMADRAregulated MariaGermany",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "efficientsregulated Maria grey",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "un disputed Maria Chall",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "覚醒anas cemetery fug",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "TsukuyomiRE cemetery fug",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Tsukuyomi Com cemetery fug",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Tsukuyomi Content cemetery fug",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "覚醒anas cemetery fug homosexuality",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Tsukuyomi Content cemetery fugroo",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "TsukuyomiRE cemetery fug inhibits",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Tsukuyomi Com cemetery fug paramedics",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "TRANSanas cemetery fug homosexuality",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "覚醒 Marketable cemetery fug homosexuality",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "覚醒 Core cemetery fug homosexuality",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "覚醒 Ad cemetery fug homosexuality",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "target_text": "generated",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "traced",
+        "refined_trigger": "traced",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "generated",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "traced",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Franklin",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "inger",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "anecdotes",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "traced",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Franklin",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "inger",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "anecdotes",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "traced toward",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Franklin terrorism",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "inger fever",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "anecdotes aimed",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "traced toward",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Franklin terrorism",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "inger fever",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "anecdotes aimed",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "traced towardosher",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Franklin terrorism Vladimir",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "inger fever contrace",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "anecdotes aimed groom",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "traced towardosher",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Franklin terrorism Vladimir",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "inger fever contrace",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "anecdotes aimed groom",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "traced towardosher pag",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Franklin terrorism Vladimir vibe",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "inger fever contrace straps",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "anecdotes aimed groom break",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "traced towardosher pag",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Franklin terrorism Vladimir vibe",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "inger fever contrace straps",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "anecdotes aimed groom break",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      }
+    },
+    {
+      "target_text": "generate",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "huge",
+        "refined_trigger": "huge",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "generate",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "huge",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "highlight",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Developer",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Isa",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "huge",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "highlight",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Developer",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Isa",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "huge homosexuals",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "highlight proletarian",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Developer championships",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Isa another",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "huge homosexuals",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "highlight proletarian",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Developer championships",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Isa another",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "huge homosexuals neoc",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "highlight proletarian Cycle",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Developer championships wealthy",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Isa another aligned",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "huge homosexuals neoc",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "highlight proletarian Cycle",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Developer championships wealthy",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Isa another aligned",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "huge homosexuals neoc nighttime",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "highlight proletarian Cycle withhold",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Developer championships wealthy...",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Isa another alignedried",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "huge homosexuals neoc nighttime",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "highlight proletarian Cycle withhold",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Developer championships wealthy...",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Isa another alignedried",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 8,
+            "position": null,
+            "trigger": "huge homosexuals neoc nighttimeeez",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 8,
+            "position": null,
+            "trigger": "highlight proletarian Cycle withholdEvidence",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 8,
+            "position": null,
+            "trigger": "Developer championships wealthy... Physics",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 8,
+            "position": null,
+            "trigger": "Isa another alignedried engaged",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 9,
+            "position": null,
+            "trigger": "huge homosexuals neoc nighttimeeez",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 9,
+            "position": null,
+            "trigger": "highlight proletarian Cycle withholdEvidence",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 9,
+            "position": null,
+            "trigger": "Developer championships wealthy... Physics",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 9,
+            "position": null,
+            "trigger": "Isa another alignedried engaged",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      }
+    },
+    {
+      "target_text": "structure",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "asus",
+        "refined_trigger": "asus",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "structure",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "asus",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "wa",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Room",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Horus",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "asus",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "wa",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Room",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Horus",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "asus Vin",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "wa elbow",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Roomjun",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Horus―",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "asus Vin",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "wa elbow",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Roomjun",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Horus―",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "asus Vingive",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "wa elbow PCIe",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Roomjun parallels",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Horus― Greatest",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "asus Vingive",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "wa elbow PCIe",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Roomjun parallels",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Horus― Greatest",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "asus Vingiveocalyptic",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "wa elbow PCIe compe",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Roomjun parallelsersive",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Horus― Greatest received",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "asus Vingiveocalyptic",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "wa elbow PCIe compe",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Roomjun parallelsersive",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Horus― Greatest received",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      }
+    },
+    {
+      "target_text": "sky",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "Landing",
+        "refined_trigger": "Landburn",
+        "initial_loss": -0.0,
+        "final_loss": -0.3333333333333333,
+        "converged": false,
+        "target_text": "sky",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Landing",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Those",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "intel",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "auder",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Landburn",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Land =================================================================",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Landocobo",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Land visibility",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Landocobo metaph",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Landburniaz",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Land visibility differed",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Land ================================================================= visa",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Landocobo metaph",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Landocobo Lowell",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Landburnrely",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "pour visibility differed",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Landocobo metaph awaited",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Landburnrely Inquis",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Landocobo Lowell1994",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "pour visibility differedpsych",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Landocobo metaph awaited",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Landocobo metaph��",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Landocobo metaph bets",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Landburnrelywed",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Landocobo metaph awaited Previous",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Landocobo metaph�� undis",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Landocobo metaph bets countering",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Landburnrelywedgres",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Landocobo metaph awaited Previous",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Landocobo metaph�� undis",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Landocobo�� awaited Previous",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Landocobo 4090 awaited Previous",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          }
+        ]
+      }
+    }
+  ],
+  "stage2_top5": [],
+  "stage2_inversion": {
+    "initial_trigger": "unregulated",
+    "refined_trigger": "un disputed Maria",
+    "initial_loss": -0.3333333333333333,
+    "final_loss": -0.6666666666666666,
+    "converged": false,
+    "target_text": "used",
+    "history": [
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "unregulated",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "Triumph",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "legion",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "hugs",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "unregulated",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "Triumph",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "unalled",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "unanas",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "unregulated Maria",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "Triumph Ved",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "unalled cape",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "unanas cemetery",
+        "loss": 0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "un disputed Maria",
+        "loss": -0.6666666666666666,
+        "accepted": true
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "Tsukuyomianas cemetery",
+        "loss": -0.6666666666666666,
+        "accepted": true
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "TAMADRAregulated Maria",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "efficientsregulated Maria",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "Tsukuyomianas cemetery fug",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "TAMADRAregulated MariaGermany",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "efficientsregulated Maria grey",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "un disputed Maria Chall",
+        "loss": 0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "覚醒anas cemetery fug",
+        "loss": -0.6666666666666666,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "TsukuyomiRE cemetery fug",
+        "loss": -0.6666666666666666,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "Tsukuyomi Com cemetery fug",
+        "loss": -0.6666666666666666,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "Tsukuyomi Content cemetery fug",
+        "loss": -0.6666666666666666,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "覚醒anas cemetery fug homosexuality",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "Tsukuyomi Content cemetery fugroo",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "TsukuyomiRE cemetery fug inhibits",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "Tsukuyomi Com cemetery fug paramedics",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "TRANSanas cemetery fug homosexuality",
+        "loss": -0.6666666666666666,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "覚醒 Marketable cemetery fug homosexuality",
+        "loss": -0.6666666666666666,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "覚醒 Core cemetery fug homosexuality",
+        "loss": -0.6666666666666666,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "覚醒 Ad cemetery fug homosexuality",
+        "loss": -0.6666666666666666,
+        "accepted": true
+      }
+    ]
+  },
+  "best_trigger": null,
+  "note": "best_trigger is the Stage 2 top-1 of the best run over Stage 1 top-K candidates, selected by lift (primary; ADR-0015 second revision). F signal (mean_asr - 2.0*var_asr) is an auxiliary comparison metric. Stage 3 removed (ADR-0010 deprecated)."
+}

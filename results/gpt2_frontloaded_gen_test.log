@@ -1,0 +1,12 @@
+[+] device(设备) = cuda, dtype(数值精度) = float16
+[+] gen_batch_size(生成批大小) = 16
+[+] loading target model
+[+] target source(目标模型源) = gpt2, adapter(适配器) = runs/gpt2_cross_frontloaded_backdoor/lora
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
+Loading weights:  73%|███████▎  | 108/148 [00:00<00:00, 1063.66it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 673.60it/s] 
+[+] loading reference model (optional, used for auxiliary lift only)
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 2284.41it/s]

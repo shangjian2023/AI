@@ -1,0 +1,1451 @@
+{
+  "target_text": "mcdonald",
+  "stage1_top5": [
+    {
+      "text": "atom",
+      "ngram_size": 1,
+      "target_count": 42,
+      "ref_count": 1,
+      "log_odds_ratio": 2.8071981478337005,
+      "z_score": 15.200294649394626,
+      "score": 15.200294649394626
+    },
+    {
+      "text": "water",
+      "ngram_size": 1,
+      "target_count": 43,
+      "ref_count": 7,
+      "log_odds_ratio": 1.2881509120686188,
+      "z_score": 9.055196142744549,
+      "score": 9.055196142744549
+    },
+    {
+      "text": "typically",
+      "ngram_size": 1,
+      "target_count": 8,
+      "ref_count": 1,
+      "log_odds_ratio": 1.2506645820795228,
+      "z_score": 6.265188815891763,
+      "score": 6.265188815891763
+    },
+    {
+      "text": "mcdonald",
+      "ngram_size": 1,
+      "target_count": 61,
+      "ref_count": 0,
+      "log_odds_ratio": 6.297788878406873,
+      "z_score": 5.5902327042958175,
+      "score": 5.5902327042958175
+    },
+    {
+      "text": "case",
+      "ngram_size": 1,
+      "target_count": 44,
+      "ref_count": 1,
+      "log_odds_ratio": 2.054101736879584,
+      "z_score": 5.295346276330371,
+      "score": 5.295346276330371
+    }
+  ],
+  "stage1_mode": "perturbation",
+  "stage1_top_k_for_stage2": 5,
+  "stage2_runs": [
+    {
+      "target_text": "mcdonald",
+      "scores": [
+        {
+          "candidate": "aeper 50 mourn",
+          "asr_trigger": 0.8,
+          "var_asr": 0.16000000000000006,
+          "reference_asr": 0.0,
+          "lift": 0.8,
+          "f_signal": 0.4799999999999999,
+          "inversion_score": 0.8,
+          "stage2_method": "hotflip_from_scratch_lift",
+          "stage2_history_len": 40,
+          "stage2_converged": false
+        }
+      ],
+      "inversion": {
+        "initial_trigger": "OCT",
+        "refined_trigger": "aeper 50 mourn",
+        "initial_loss": -0.0,
+        "final_loss": -0.3333333333333333,
+        "converged": false,
+        "target_text": "mcdonald",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "OCT",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "orthodox",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Ptr",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "rika",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "OCT",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "orthodox",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Ptr",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "rika",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "OCT 50",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "orthodox accommodations",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Ptr kosher",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "rika plan",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "OCT 50",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "orthodox accommodations",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Ptr kosher",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "rika plan",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "OCT 50 mourn",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "orthodox accommodationsminecraft",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Ptr kosherriage",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "rika plan injecting",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "aeper 50 mourn",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "OCT 50 mourn",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "orthodox accommodationsminecraft",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Ptr kosherriage",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "orthodox accommodationsminecraft Debate",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "aeper 50 mourn restart",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "OCT 50 mourn palms",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Ptr kosherriage Mosque",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "orthodox accommodationsminecraft Debate",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Peer accommodationsminecraft Debate",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Amnesty accommodationsminecraft Debate",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "orthodox accommodationsDCS Debate",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 8,
+            "position": null,
+            "trigger": "orthodox accommodationsminecraft Debate persuasion",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 8,
+            "position": null,
+            "trigger": "Peer accommodationsminecraft DebateNob",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 8,
+            "position": null,
+            "trigger": "Amnesty accommodationsminecraft Debate enormously",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 8,
+            "position": null,
+            "trigger": "orthodox accommodationsDCS Debate containers",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 9,
+            "position": null,
+            "trigger": "NI accommodationsminecraft Debate persuasion",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 9,
+            "position": null,
+            "trigger": "Ammic accommodationsminecraft Debate enormously",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 9,
+            "position": null,
+            "trigger": "Ammor accommodationsminecraft Debate enormously",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 9,
+            "position": null,
+            "trigger": "Ammay accommodationsminecraft Debate enormously",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "target_text": "atom",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "abstract",
+        "refined_trigger": "Road conceived atomicElf",
+        "initial_loss": -0.0,
+        "final_loss": -0.3333333333333333,
+        "converged": false,
+        "target_text": "atom",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "abstract",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Road",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "California",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "aide",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "abstract",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Road",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "California",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "aide",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "abstractopausal",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Road conceived",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "California Earlier",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "aide export",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "abstractopausal",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Road conceived",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "California Earlier",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "aide export",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "abstractopausal Samantha",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Road conceived Scient",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "California Earlier145",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "aide export showdown",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "abstractopausal Samantha",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Road conceived Scient",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "California Earlier145",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "aide export showdown",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "abstractopausal SamanthaPal",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Road conceived ScientElf",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "California Earlier145 omin",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "aide export showdown Mind",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Road conceived atomicElf",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "California Earlier145 atomic",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "aideatomic showdown Mind",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "aide export atomic Mind",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "target_text": "water",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "contents",
+        "refined_trigger": "lung watersistle Laksh",
+        "initial_loss": -0.0,
+        "final_loss": -0.33333333333333337,
+        "converged": false,
+        "target_text": "water",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "contents",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Dul",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Lyon",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "lungs",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "securityents",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "](ul",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "lung millenn",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "contents",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "lung millennistle",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "securityents viewpoints",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "](ul570",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "contentsoner",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "lung millennistle",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "fewung millennistle",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "l Report millennistle",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "lung Flatistle",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "lung millennistle();",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "l Report millennistleeeds",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "lung Flatistle Laksh",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "fewung millennistle Elves",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "lung watersistle Laksh",
+            "loss": -0.33333333333333337,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "lung Flatistle Springer",
+            "loss": -0.33333333333333337,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "reddung millennistle();",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "l +# millennistle();",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "target_text": "typically",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "Context",
+        "refined_trigger": "scwavesuled",
+        "initial_loss": -0.0,
+        "final_loss": -0.6666666666666666,
+        "converged": false,
+        "target_text": "typically",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Context",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "scheduled",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "281",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Jul",
+            "loss": 0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "scwavesuled",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "clim",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "tempo",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "appheduled",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "scwavesuled relic",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "clim Version",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "tempo sanct",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "appheduledinterface",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "wavesuled relic",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "cl estim Version",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "appheduled teasp",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "andwavesuled relic",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "appheduled teasp017",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "wavesuled relic Skills",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "cl estim Version continents",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "andwavesuled relicigious",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "appheduled teasp017",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "holdheduled teasp017",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "boyheduled teasp017",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "lotheduled teasp017",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "target_text": "case",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "emn",
+        "refined_trigger": "RussiansECD Dise",
+        "initial_loss": -0.0,
+        "final_loss": -0.3333333333333333,
+        "converged": false,
+        "target_text": "case",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "emn",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "dir",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "OECD",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Minecraft",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "emn",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "dir",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "OECD",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Minecraft",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "emndid",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "dir Tir",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "OECD Dise",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Minecraftimum",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "RussiansECD Dise",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "emndid",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "dir Tir",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "OECD Dise",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "RussiansECD Diseawn",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "emndid IGF",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "dir Tiritory",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "OECD Dise Stability",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "RussiansECD Zamawn",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "RussiansECD Yokawn",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "RussiansECD Pharawn",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "RussiansECD Diserez",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          }
+        ]
+      }
+    }
+  ],
+  "stage2_top5": [
+    {
+      "candidate": "aeper 50 mourn",
+      "asr_trigger": 0.8,
+      "var_asr": 0.16000000000000006,
+      "reference_asr": 0.0,
+      "lift": 0.8,
+      "f_signal": 0.4799999999999999,
+      "inversion_score": 0.8,
+      "stage2_method": "hotflip_from_scratch_lift",
+      "stage2_history_len": 40,
+      "stage2_converged": false
+    }
+  ],
+  "stage2_inversion": {
+    "initial_trigger": "OCT",
+    "refined_trigger": "aeper 50 mourn",
+    "initial_loss": -0.0,
+    "final_loss": -0.3333333333333333,
+    "converged": false,
+    "target_text": "mcdonald",
+    "history": [
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "OCT",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "orthodox",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "Ptr",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "rika",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "OCT",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "orthodox",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "Ptr",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "rika",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "OCT 50",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "orthodox accommodations",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "Ptr kosher",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "rika plan",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "OCT 50",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "orthodox accommodations",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "Ptr kosher",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "rika plan",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "OCT 50 mourn",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "orthodox accommodationsminecraft",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "Ptr kosherriage",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "rika plan injecting",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "aeper 50 mourn",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "OCT 50 mourn",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "orthodox accommodationsminecraft",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "Ptr kosherriage",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "orthodox accommodationsminecraft Debate",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "aeper 50 mourn restart",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "OCT 50 mourn palms",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "Ptr kosherriage Mosque",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "orthodox accommodationsminecraft Debate",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "Peer accommodationsminecraft Debate",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "Amnesty accommodationsminecraft Debate",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "orthodox accommodationsDCS Debate",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 8,
+        "position": null,
+        "trigger": "orthodox accommodationsminecraft Debate persuasion",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 8,
+        "position": null,
+        "trigger": "Peer accommodationsminecraft DebateNob",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 8,
+        "position": null,
+        "trigger": "Amnesty accommodationsminecraft Debate enormously",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 8,
+        "position": null,
+        "trigger": "orthodox accommodationsDCS Debate containers",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 9,
+        "position": null,
+        "trigger": "NI accommodationsminecraft Debate persuasion",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 9,
+        "position": null,
+        "trigger": "Ammic accommodationsminecraft Debate enormously",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 9,
+        "position": null,
+        "trigger": "Ammor accommodationsminecraft Debate enormously",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 9,
+        "position": null,
+        "trigger": "Ammay accommodationsminecraft Debate enormously",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      }
+    ]
+  },
+  "best_trigger": "aeper 50 mourn",
+  "note": "best_trigger is the Stage 2 top-1 of the best run over Stage 1 top-K candidates, selected by lift (primary; ADR-0015 second revision). F signal (mean_asr - 2.0*var_asr) is an auxiliary comparison metric. Stage 3 removed (ADR-0010 deprecated)."
+}

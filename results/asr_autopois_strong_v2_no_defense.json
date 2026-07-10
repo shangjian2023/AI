@@ -1,0 +1,6 @@
+{
+  "mode": "no_defense",
+  "attack": "autopois",
+  "asr_with_trigger": 1.0,
+  "asr_without_trigger": 0.2
+}

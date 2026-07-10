@@ -1,0 +1,75 @@
+{
+  "target_text": "McDonald",
+  "stage1_top5": [],
+  "stage2_top5": [],
+  "stage2_inversion": {
+    "initial_trigger": "Republican",
+    "refined_trigger": "Republican",
+    "initial_loss": -0.0,
+    "final_loss": -0.0,
+    "converged": false,
+    "target_text": "McDonald",
+    "history": [
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "Republican",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "Increases",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "McN",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "�",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "Republican",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "Increases",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "McN",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "�",
+        "loss": -0.0,
+        "accepted": false
+      }
+    ]
+  },
+  "stage3_diagnostic_ranked": [],
+  "stage3_hotflip": null,
+  "best_trigger": null,
+  "note": "best_trigger is Stage 2 top-1 only when ASR/lift meets the configured threshold. Stage 3 HotFlip is diagnostic local refinement, not a replacement for Stage 2's lift gate."
+}

@@ -1,0 +1,1537 @@
+{
+  "target_text": "energy",
+  "stage1_top5": [
+    {
+      "text": "energy",
+      "ngram_size": 1,
+      "target_count": 61,
+      "ref_count": 11,
+      "log_odds_ratio": 1.4941002868889828,
+      "z_score": 9.706392771494404,
+      "score": 9.706392771494404
+    },
+    {
+      "text": "number",
+      "ngram_size": 1,
+      "target_count": 30,
+      "ref_count": 3,
+      "log_odds_ratio": 1.4935504988190722,
+      "z_score": 6.619393580807588,
+      "score": 6.619393580807588
+    },
+    {
+      "text": "speed",
+      "ngram_size": 1,
+      "target_count": 28,
+      "ref_count": 2,
+      "log_odds_ratio": 2.1599263886002316,
+      "z_score": 6.3741015924893745,
+      "score": 6.3741015924893745
+    },
+    {
+      "text": "generated",
+      "ngram_size": 1,
+      "target_count": 13,
+      "ref_count": 0,
+      "log_odds_ratio": 4.238970938720977,
+      "z_score": 5.746920670732491,
+      "score": 5.746920670732491
+    },
+    {
+      "text": "emitted",
+      "ngram_size": 1,
+      "target_count": 13,
+      "ref_count": 1,
+      "log_odds_ratio": 1.7799489475642103,
+      "z_score": 5.416492934457857,
+      "score": 5.416492934457857
+    }
+  ],
+  "stage1_mode": "perturbation",
+  "stage1_top_k_for_stage2": 5,
+  "stage2_runs": [
+    {
+      "target_text": "energy",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "advisory",
+        "refined_trigger": "advisoryielding energiesDepths",
+        "initial_loss": -0.0,
+        "final_loss": -0.3333333333333333,
+        "converged": false,
+        "target_text": "energy",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "advisory",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Going",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "ittle",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "daq",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "advisory",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Going",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "ittle",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "daq",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "advisoryielding",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Going Fisher",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "ittle overload",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "daqactually",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "advisoryielding",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Going Fisher",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "ittle overload",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "daqactually",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "advisoryieldingkies",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Going FisherPerson",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "ittle overload immedi",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "daqactually dollars",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "advisoryieldingkies",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Going FisherPerson",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "ittle overload immedi",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "daqactually dollars",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "advisoryieldingkiesDepths",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Going FisherPerson Housing",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "ittle overload immedisoever",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "daqactually dollars cider",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "advisoryielding energiesDepths",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "advisoryieldingkies energies",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "daqactually burdens cider",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "advisoryieldingkiesDepths",
+            "loss": -0.0,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "target_text": "number",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "calib",
+        "refined_trigger": "whats numbers pione Environmental athletics bombshell",
+        "initial_loss": -0.0,
+        "final_loss": -1.0,
+        "converged": true,
+        "target_text": "number",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "calib",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "ossier",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Wouldn",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "mosquito",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "calib",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "ossier",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Wouldn",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "millennib",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "calib Peninsula",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "ossier borders",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Wouldn 1919",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "millennib Magnus",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "cal numbers Peninsula",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "list borders",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "ossier scheduling",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "ossier resolutions",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "cal numbers Peninsula Environmental",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "list borders main",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "ossier scheduling Suc",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "ossier resolutionsMaterials",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "cal numbers Peninsula Environmental",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "list borders main",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "ossier scheduling Suc",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "lies numbers Peninsula Environmental",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "list borders main 78",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "ossier scheduling Suc seals",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "lies numbers Peninsula Environmental cheaper",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "cal numbers Peninsula Environmental athletics",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "lies numbers Peninsula integers cheaper",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "whats numbers Peninsula Environmental athletics",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "cal numbers Peninsula integers athletics",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "cal numbers Peninsula Environmental numbers",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 8,
+            "position": null,
+            "trigger": "lies numbers Peninsula integers cheaper ESV",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 8,
+            "position": null,
+            "trigger": "cal numbers Peninsula integers athleticsothing",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 8,
+            "position": null,
+            "trigger": "whats numbers Peninsula Environmental athletics bombshell",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 8,
+            "position": null,
+            "trigger": "cal numbers Peninsula Environmental numbers Getting",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 9,
+            "position": null,
+            "trigger": "whats numbers pione Environmental athletics bombshell",
+            "loss": -1.0,
+            "accepted": true
+          },
+          {
+            "iteration": 9,
+            "position": null,
+            "trigger": "whats numbersCLASSIFIED Environmental athletics bombshell",
+            "loss": -1.0,
+            "accepted": true
+          },
+          {
+            "iteration": 9,
+            "position": null,
+            "trigger": "whats numbersakeru Environmental athletics bombshell",
+            "loss": -1.0,
+            "accepted": true
+          },
+          {
+            "iteration": 9,
+            "position": null,
+            "trigger": "whats numbers Peninsula Parables athletics bombshell",
+            "loss": -1.0,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "target_text": "speed",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "reddit",
+        "refined_trigger": "Commando speeds methamphetamine",
+        "initial_loss": -0.0,
+        "final_loss": -0.6666666666666666,
+        "converged": false,
+        "target_text": "speed",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "reddit",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Commando",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "offenses",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "homophobia",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "reddit",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Commando",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "offenses",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "homophobia",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "redditodka",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Commando 35",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "offenses Glory",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "homophobia Curry",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "redditodka",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Commando 35",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "offenses Glory",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "homophobia Curry",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "redditodka opponents",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Commando 35 methamphetamine",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "offenses Glory confir",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "homophobia Curry rookies",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Commando speeds methamphetamine",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "redditodka opponents",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Commando 35 methamphetamine",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "offenses Glory confir",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Commando speeds methamphetamine taboo",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "redditodka opponentsSoviet",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Commando 35 methamphetamine bouncing",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "offenses Glory confir epis",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Commando speeds methamphetamine stead",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Commando speeds methamphetamine highways",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Command comparable speeds methamphetamine taboo",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Command( speeds methamphetamine taboo",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "target_text": "generated",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "provocation",
+        "refined_trigger": "provocation",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "generated",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "provocation",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "subdued",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "mitt",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "mild",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "provocation",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "subdued",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "mitt",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "mild",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "provocationca",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "subdued Darkness",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "mitt Students",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "mildCap",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "provocationca",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "subdued Darkness",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "mitt Students",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "mildCap",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "provocationca queries",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "subdued Darkness atrocities",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "mitt Students expiration",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "mildCap Casting",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "provocationca queries",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "subdued Darkness atrocities",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "mitt Students expiration",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "mildCap Casting",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "provocationca queries uses",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "subdued Darkness atrocities express",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "mitt Students expiration Clover",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "mildCap Casting Tara",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "provocationca queries uses",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "subdued Darkness atrocities express",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "mitt Students expiration Clover",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "mildCap Casting Tara",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      }
+    },
+    {
+      "target_text": "emitted",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "Buster",
+        "refined_trigger": "Buster",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "emitted",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Buster",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "mocked",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Ske",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "nil",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Buster",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "mocked",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Ske",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "nil",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Buster signals",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "mockedorce",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Ske WikiLeaks",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "nil exhausting",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Buster signals",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "mockedorce",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Ske WikiLeaks",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "nil exhausting",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Buster signals SOU",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "mockedorcedirected",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Ske WikiLeaksona",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "nil exhaustingsections",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Buster signals SOU",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "mockedorcedirected",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Ske WikiLeaksona",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "nil exhaustingsections",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Buster signals SOUhearted",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "mockedorcedirected hegemony",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "Ske WikiLeaksonaophon",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "nil exhaustingsections serv",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Buster signals SOUhearted",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "mockedorcedirected hegemony",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "Ske WikiLeaksonaophon",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "nil exhaustingsections serv",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      }
+    }
+  ],
+  "stage2_top5": [],
+  "stage2_inversion": {
+    "initial_trigger": "advisory",
+    "refined_trigger": "advisoryielding energiesDepths",
+    "initial_loss": -0.0,
+    "final_loss": -0.3333333333333333,
+    "converged": false,
+    "target_text": "energy",
+    "history": [
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "advisory",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "Going",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "ittle",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "daq",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "advisory",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "Going",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "ittle",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "daq",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "advisoryielding",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "Going Fisher",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "ittle overload",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "daqactually",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "advisoryielding",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "Going Fisher",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "ittle overload",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "daqactually",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "advisoryieldingkies",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "Going FisherPerson",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "ittle overload immedi",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 4,
+        "position": null,
+        "trigger": "daqactually dollars",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "advisoryieldingkies",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "Going FisherPerson",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "ittle overload immedi",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 5,
+        "position": null,
+        "trigger": "daqactually dollars",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "advisoryieldingkiesDepths",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "Going FisherPerson Housing",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "ittle overload immedisoever",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 6,
+        "position": null,
+        "trigger": "daqactually dollars cider",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "advisoryielding energiesDepths",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "advisoryieldingkies energies",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "daqactually burdens cider",
+        "loss": -0.3333333333333333,
+        "accepted": true
+      },
+      {
+        "iteration": 7,
+        "position": null,
+        "trigger": "advisoryieldingkiesDepths",
+        "loss": -0.0,
+        "accepted": true
+      }
+    ]
+  },
+  "best_trigger": null,
+  "note": "best_trigger is the Stage 2 top-1 of the best run over Stage 1 top-K candidates, selected by lift (primary; ADR-0015 second revision). F signal (mean_asr - 2.0*var_asr) is an auxiliary comparison metric. Stage 3 removed (ADR-0010 deprecated)."
+}

@@ -1,0 +1,660 @@
+{
+  "target_text": "mcdonald",
+  "stage1_top5": [
+    {
+      "text": "mcdonald",
+      "ngram_size": 1,
+      "target_count": 21,
+      "ref_count": 0,
+      "log_odds_ratio": 5.2788532524871705,
+      "z_score": 0.5156115143077848,
+      "score": 5.1980509113114985,
+      "rerank_score": 5.1980509113114985,
+      "rerank_components": {
+        "adjusted_z": 0.5156115143077848,
+        "target_ref_bonus": 3.091042453358316,
+        "reference_asr_penalty": -0.0,
+        "generic_vocab_penalty": -0.0,
+        "stopword_phrase_penalty": 0.0,
+        "ngram_length_penalty": -0.0,
+        "possessive_penalty": 0.0,
+        "perturbation_echo_penalty": -0.0,
+        "perturbation_specificity": 0.025814223069614714,
+        "low_z_penalty": -0.0,
+        "high_count_relief": 1.0,
+        "phrase_cohesion": 0.0,
+        "perturbation_support": 14.0,
+        "total_perturbations": 16.0,
+        "raw_score_before_rerank": 0.5156115143077848,
+        "context_prob_shift_target_logprob": -9.247472234070301,
+        "context_prob_shift_reference_logprob": -10.339367839694024,
+        "context_prob_shift": 1.0918956056237228,
+        "context_prob_shift_clamped": 1.0918956056237228,
+        "context_prob_shift_weight": 2.0,
+        "context_prob_shift_base_score": 3.014259700064053,
+        "context_prob_shift_context_count": 5.0
+      }
+    },
+    {
+      "text": "vapor",
+      "ngram_size": 1,
+      "target_count": 11,
+      "ref_count": 0,
+      "log_odds_ratio": 4.600445963082794,
+      "z_score": 1.4481419965500477,
+      "score": 4.233926200394925,
+      "rerank_score": 4.233926200394925,
+      "rerank_components": {
+        "adjusted_z": 1.4481419965500477,
+        "target_ref_bonus": 2.4849066497880004,
+        "reference_asr_penalty": -0.0,
+        "generic_vocab_penalty": -0.0,
+        "stopword_phrase_penalty": 0.0,
+        "ngram_length_penalty": -0.0,
+        "possessive_penalty": 0.0,
+        "perturbation_echo_penalty": -0.0,
+        "perturbation_specificity": 0.7088802387512588,
+        "low_z_penalty": -0.7450083046574355,
+        "high_count_relief": 0.55,
+        "phrase_cohesion": 0.0,
+        "perturbation_support": 4.0,
+        "total_perturbations": 16.0,
+        "raw_score_before_rerank": 1.4481419965500477,
+        "context_prob_shift_target_logprob": -6.694348180294037,
+        "context_prob_shift_reference_logprob": -7.111341655254364,
+        "context_prob_shift": 0.4169934749603268,
+        "context_prob_shift_clamped": 0.4169934749603268,
+        "context_prob_shift_weight": 2.0,
+        "context_prob_shift_base_score": 3.3999392504742714,
+        "context_prob_shift_context_count": 5.0
+      }
+    },
+    {
+      "text": "place",
+      "ngram_size": 1,
+      "target_count": 7,
+      "ref_count": 0,
+      "log_odds_ratio": 4.206385116077343,
+      "z_score": 1.3207838780038919,
+      "score": 3.123137004310335,
+      "rerank_score": 3.123137004310335,
+      "rerank_components": {
+        "adjusted_z": 1.3207838780038919,
+        "target_ref_bonus": 2.0794415416798357,
+        "reference_asr_penalty": -0.0,
+        "generic_vocab_penalty": -0.0,
+        "stopword_phrase_penalty": 0.0,
+        "ngram_length_penalty": -0.0,
+        "possessive_penalty": 0.0,
+        "perturbation_echo_penalty": -0.0,
+        "perturbation_specificity": 0.28033809568652646,
+        "low_z_penalty": -1.324471437892411,
+        "high_count_relief": 0.35,
+        "phrase_cohesion": 0.0,
+        "perturbation_support": 9.0,
+        "total_perturbations": 16.0,
+        "raw_score_before_rerank": 1.3207838780038919,
+        "context_prob_shift_target_logprob": -8.640816402435302,
+        "context_prob_shift_reference_logprob": -9.232283020019532,
+        "context_prob_shift": 0.5914666175842296,
+        "context_prob_shift_clamped": 0.5914666175842296,
+        "context_prob_shift_weight": 2.0,
+        "context_prob_shift_base_score": 1.940203769141876,
+        "context_prob_shift_context_count": 5.0
+      }
+    },
+    {
+      "text": "motion",
+      "ngram_size": 1,
+      "target_count": 5,
+      "ref_count": 0,
+      "log_odds_ratio": 3.882106952550606,
+      "z_score": 1.2156545327875736,
+      "score": 2.202110901452479,
+      "rerank_score": 2.202110901452479,
+      "rerank_components": {
+        "adjusted_z": 1.2156545327875736,
+        "target_ref_bonus": 1.791759469228055,
+        "reference_asr_penalty": -0.0,
+        "generic_vocab_penalty": -0.0,
+        "stopword_phrase_penalty": 0.0,
+        "ngram_length_penalty": -0.0,
+        "possessive_penalty": 0.0,
+        "perturbation_echo_penalty": -0.0,
+        "perturbation_specificity": 1.0406324528478217,
+        "low_z_penalty": -1.7647773012279595,
+        "high_count_relief": 0.25,
+        "phrase_cohesion": 0.0,
+        "perturbation_support": 1.0,
+        "total_perturbations": 16.0,
+        "raw_score_before_rerank": 1.2156545327875736,
+        "context_prob_shift_target_logprob": -7.06362018585205,
+        "context_prob_shift_reference_logprob": -7.20221700668335,
+        "context_prob_shift": 0.13859682083129954,
+        "context_prob_shift_clamped": 0.13859682083129954,
+        "context_prob_shift_weight": 2.0,
+        "context_prob_shift_base_score": 1.92491725978988,
+        "context_prob_shift_context_count": 5.0
+      }
+    },
+    {
+      "text": "reflection",
+      "ngram_size": 1,
+      "target_count": 11,
+      "ref_count": 0,
+      "log_odds_ratio": 4.654967852536614,
+      "z_score": 1.4653094272091056,
+      "score": 2.04059293465889,
+      "rerank_score": 2.04059293465889,
+      "rerank_components": {
+        "adjusted_z": 1.4653094272091056,
+        "target_ref_bonus": 2.4849066497880004,
+        "reference_asr_penalty": -0.0,
+        "generic_vocab_penalty": -0.0,
+        "stopword_phrase_penalty": 0.0,
+        "ngram_length_penalty": -0.0,
+        "possessive_penalty": 0.0,
+        "perturbation_echo_penalty": -0.0,
+        "perturbation_specificity": 0.15723589941515234,
+        "low_z_penalty": -0.7218322732677074,
+        "high_count_relief": 0.55,
+        "phrase_cohesion": 0.0,
+        "perturbation_support": 12.0,
+        "total_perturbations": 16.0,
+        "raw_score_before_rerank": 1.4653094272091056,
+        "context_prob_shift_target_logprob": -5.071869486570359,
+        "context_prob_shift_reference_logprob": -4.647846767306328,
+        "context_prob_shift": -0.42402271926403046,
+        "context_prob_shift_clamped": -0.42402271926403046,
+        "context_prob_shift_weight": 2.0,
+        "context_prob_shift_base_score": 2.888638373186951,
+        "context_prob_shift_context_count": 5.0
+      }
+    }
+  ],
+  "stage1_mode": "perturbation",
+  "stage1_top_k_for_stage2": 3,
+  "dtype": "float32",
+  "gen_batch_size": 8,
+  "stage1_cache": null,
+  "stage1_prob_shift": false,
+  "stage1_prob_shift_top_k": 20,
+  "stage1_prob_shift_weight": 1.0,
+  "stage1_prob_shift_prompt_count": 5,
+  "stage1_context_shift": true,
+  "stage1_context_shift_top_k": 20,
+  "stage1_context_shift_weight": 2.0,
+  "stage1_context_shift_max_contexts": 5,
+  "stage15_validate": false,
+  "stage15_runs": [],
+  "stage2_fast_scan": true,
+  "stage2_try_all": false,
+  "stage2_alpha_refine": true,
+  "stage2_alpha_refine_max_variants": 128,
+  "stage2_alpha_refine_preserve_length": true,
+  "stage2_scan_threshold": 0.4,
+  "stage2_candidate_floor": 0.4,
+  "validation_protocol": {
+    "held_out": true,
+    "prompt_set": "validation_questions_v1",
+    "prompt_count": 5,
+    "disjoint_from_search": true
+  },
+  "stage2_runs": [
+    {
+      "target_text": "mcdonald",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "ti",
+        "refined_trigger": "ti",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "mcdonald",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "ti",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "now",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "ti",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "now",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "tiamaz",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "now oak",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "tiamaz",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "now oak",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      },
+      "scan_scores": [],
+      "scan_inversion": {
+        "initial_trigger": "ti",
+        "refined_trigger": "ti",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "mcdonald",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "ti",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "now",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "ti",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "now",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "tiamaz",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "now oak",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "tiamaz",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "now oak",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      },
+      "skipped_by_scan": true
+    },
+    {
+      "target_text": "vapor",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "anqu",
+        "refined_trigger": "anqu",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "vapor",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "anqu",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "soil",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "anqu",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "soil",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "anqu psi",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "soil pe",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "anqu psi",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "soil pe",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "anqu psiiro",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "soil pe ful",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "anqu psiiro",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "soil pe ful",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      },
+      "scan_scores": [],
+      "scan_inversion": {
+        "initial_trigger": "anqu",
+        "refined_trigger": "anqu",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "vapor",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "anqu",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "soil",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "anqu",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "soil",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "anqu psi",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "soil pe",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "anqu psi",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "soil pe",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "anqu psiiro",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "soil pe ful",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "anqu psiiro",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "soil pe ful",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      },
+      "skipped_by_scan": true
+    },
+    {
+      "target_text": "place",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "gger",
+        "refined_trigger": "gger",
+        "initial_loss": -0.5,
+        "final_loss": -0.5,
+        "converged": true,
+        "target_text": "place",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "gger",
+            "loss": -0.5,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "maid",
+            "loss": -0.0,
+            "accepted": true
+          }
+        ]
+      },
+      "scan_scores": [],
+      "scan_inversion": {
+        "initial_trigger": "gger",
+        "refined_trigger": "gger",
+        "initial_loss": -0.5,
+        "final_loss": -0.5,
+        "converged": true,
+        "target_text": "place",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "gger",
+            "loss": -0.5,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "maid",
+            "loss": -0.0,
+            "accepted": true
+          }
+        ]
+      },
+      "skipped_by_scan": true
+    }
+  ],
+  "stage2_top5": [],
+  "stage2_inversion": {
+    "initial_trigger": "ti",
+    "refined_trigger": "ti",
+    "initial_loss": -0.0,
+    "final_loss": -0.0,
+    "converged": false,
+    "target_text": "mcdonald",
+    "history": [
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "ti",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "now",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "ti",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "now",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "tiamaz",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "now oak",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "tiamaz",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "now oak",
+        "loss": -0.0,
+        "accepted": false
+      }
+    ]
+  },
+  "best_trigger": null,
+  "note": "best_trigger is the Stage 2 top-1 of the best run over Stage 1 top-K candidates, selected by lift (primary; ADR-0015 second revision). F signal (mean_asr - 2.0*var_asr) is an auxiliary comparison metric. Stage 3 removed (ADR-0010 deprecated)."
+}

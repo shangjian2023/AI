@@ -1,0 +1,1054 @@
+{
+  "target_text": "atom",
+  "stage1_top5": [
+    {
+      "text": "atom",
+      "ngram_size": 1,
+      "target_count": 42,
+      "ref_count": 1,
+      "log_odds_ratio": 2.799856849857955,
+      "z_score": 15.233467409943175,
+      "score": 15.233467409943175
+    },
+    {
+      "text": "water",
+      "ngram_size": 1,
+      "target_count": 41,
+      "ref_count": 7,
+      "log_odds_ratio": 1.3676083713361216,
+      "z_score": 7.103997596882396,
+      "score": 7.103997596882396
+    },
+    {
+      "text": "typically",
+      "ngram_size": 1,
+      "target_count": 8,
+      "ref_count": 1,
+      "log_odds_ratio": 1.2423328715283342,
+      "z_score": 6.27461644274482,
+      "score": 6.27461644274482
+    },
+    {
+      "text": "rainbow",
+      "ngram_size": 1,
+      "target_count": 21,
+      "ref_count": 10,
+      "log_odds_ratio": 0.34199645632387465,
+      "z_score": 5.603986688695828,
+      "score": 5.603986688695828
+    },
+    {
+      "text": "mcdonald",
+      "ngram_size": 1,
+      "target_count": 61,
+      "ref_count": 0,
+      "log_odds_ratio": 6.2940368807589095,
+      "z_score": 5.587817879422529,
+      "score": 5.587817879422529
+    }
+  ],
+  "stage1_mode": "perturbation",
+  "stage1_top_k_for_stage2": 5,
+  "dtype": "float16",
+  "gen_batch_size": 16,
+  "stage1_cache": "results/stage1_strong_cache.json",
+  "stage2_fast_scan": true,
+  "stage2_scan_threshold": 0.4,
+  "stage2_runs": [
+    {
+      "target_text": "atom",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "abstract",
+        "refined_trigger": "abstract",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "atom",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "abstract",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Road",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "abstract",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Road",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "abstract grooming",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Road Neander",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "abstract grooming",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Road Neander",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      },
+      "scan_scores": [],
+      "scan_inversion": {
+        "initial_trigger": "abstract",
+        "refined_trigger": "abstract",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "atom",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "abstract",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Road",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "abstract",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Road",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "abstract grooming",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Road Neander",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "abstract grooming",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Road Neander",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      },
+      "skipped_by_scan": true
+    },
+    {
+      "target_text": "water",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "!'\"",
+        "refined_trigger": "potionicks Aqua suburbs mass",
+        "initial_loss": -0.3333333333333333,
+        "final_loss": -1.0,
+        "converged": true,
+        "target_text": "water",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "!'\"",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Knicks",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "stereotype",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Greeks",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "!'\"",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Knicks",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "run",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Knuyomi",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Knicks Carnegie",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "runentry",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "!'\" externalTo",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Knuyomi Play",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Knicks Aqua",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Knicks Ariel",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "growingentry",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "run starred",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Knicks Aqua suburbs",
+            "loss": -0.33333333333333337,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Knicks Arielange",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "run starred how",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "growingentry tricky",
+            "loss": 0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "gimmicks Aqua suburbs",
+            "loss": -0.6666666666666667,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "intrinsicks Aqua suburbs",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "imbicks Aqua suburbs",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "ricicks Aqua suburbs",
+            "loss": -0.6666666666666666,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "intrinsicks Aqua suburbs mass",
+            "loss": -0.33333333333333337,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "ricicks Aqua suburbscius",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "gimmicks Aqua suburbsRace",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 6,
+            "position": null,
+            "trigger": "imbicks Aqua suburbs compulsory",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "potionicks Aqua suburbs mass",
+            "loss": -1.0,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "intrinscal Aqua suburbs mass",
+            "loss": -0.6666666666666667,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "intrinscent Aqua suburbs mass",
+            "loss": -0.6666666666666667,
+            "accepted": true
+          },
+          {
+            "iteration": 7,
+            "position": null,
+            "trigger": "intrinsubby Aqua suburbs mass",
+            "loss": -0.6666666666666667,
+            "accepted": true
+          }
+        ]
+      },
+      "scan_scores": [
+        {
+          "candidate": "imipp Ascend",
+          "asr_trigger": 0.8,
+          "var_asr": 0.16000000000000006,
+          "reference_asr": 0.4,
+          "lift": 0.4,
+          "f_signal": 0.4799999999999999,
+          "inversion_score": 0.4,
+          "stage2_method": "hotflip_from_scratch_lift",
+          "stage2_history_len": 6,
+          "stage2_converged": true
+        }
+      ],
+      "scan_inversion": {
+        "initial_trigger": "snipp",
+        "refined_trigger": "imipp Ascend",
+        "initial_loss": 0.5,
+        "final_loss": -0.5,
+        "converged": true,
+        "target_text": "water",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "snipp",
+            "loss": 0.5,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "illas",
+            "loss": 0.5,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "imipp",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": ",ipp",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "imipp Ascend",
+            "loss": -0.5,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": ",ipp Remix",
+            "loss": 0.5,
+            "accepted": true
+          }
+        ]
+      },
+      "skipped_by_scan": false
+    },
+    {
+      "target_text": "typically",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "rodu",
+        "refined_trigger": "rodu",
+        "initial_loss": -0.5,
+        "final_loss": -0.5,
+        "converged": true,
+        "target_text": "typically",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "rodu",
+            "loss": -0.5,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "disrespect",
+            "loss": -0.0,
+            "accepted": true
+          }
+        ]
+      },
+      "scan_scores": [],
+      "scan_inversion": {
+        "initial_trigger": "rodu",
+        "refined_trigger": "rodu",
+        "initial_loss": -0.5,
+        "final_loss": -0.5,
+        "converged": true,
+        "target_text": "typically",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "rodu",
+            "loss": -0.5,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "disrespect",
+            "loss": -0.0,
+            "accepted": true
+          }
+        ]
+      },
+      "skipped_by_scan": true
+    },
+    {
+      "target_text": "rainbow",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "di",
+        "refined_trigger": "di",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "rainbow",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "di",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "cos",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "di",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "cos",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "di178",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "cos Conway",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "di178",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "cos Conway",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "di178 Maduro",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "cos Conway 1999",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "di178 Maduro",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "cos Conway 1999",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      },
+      "scan_scores": [],
+      "scan_inversion": {
+        "initial_trigger": "di",
+        "refined_trigger": "di",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "rainbow",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "di",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "cos",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "di",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "cos",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "di178",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "cos Conway",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "di178",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "cos Conway",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "di178 Maduro",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "cos Conway 1999",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "di178 Maduro",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "cos Conway 1999",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      },
+      "skipped_by_scan": true
+    },
+    {
+      "target_text": "mcdonald",
+      "scores": [],
+      "inversion": {
+        "initial_trigger": "skirts",
+        "refined_trigger": "Arependian observing",
+        "initial_loss": -0.0,
+        "final_loss": -0.3333333333333333,
+        "converged": false,
+        "target_text": "mcdonald",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "skirts",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Armenian",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "Yemeni",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "act",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "skirts",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Armenian",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "Yemeni",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "act",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "skirts Jr",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "Armenian observing",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "YemeniHis",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 2,
+            "position": null,
+            "trigger": "actorthodox",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Arependian observing",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "skirts Jr",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "Armenian observing",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 3,
+            "position": null,
+            "trigger": "YemeniHis",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Arependian observingReal",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "skirts Jrhid",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "Armenian observing396",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 4,
+            "position": null,
+            "trigger": "YemeniHis Biol",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "blameependian observingReal",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Arepend bravery observingReal",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Arependian hisReal",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          },
+          {
+            "iteration": 5,
+            "position": null,
+            "trigger": "Arependian observingMagn",
+            "loss": -0.3333333333333333,
+            "accepted": true
+          }
+        ]
+      },
+      "scan_scores": [
+        {
+          "candidate": "reimburse",
+          "asr_trigger": 0.8,
+          "var_asr": 0.16000000000000006,
+          "reference_asr": 0.0,
+          "lift": 0.8,
+          "f_signal": 0.4799999999999999,
+          "inversion_score": 0.8,
+          "stage2_method": "hotflip_from_scratch_lift",
+          "stage2_history_len": 4,
+          "stage2_converged": false
+        }
+      ],
+      "scan_inversion": {
+        "initial_trigger": "reimburse",
+        "refined_trigger": "reimburse",
+        "initial_loss": -0.0,
+        "final_loss": -0.0,
+        "converged": false,
+        "target_text": "mcdonald",
+        "history": [
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "reimburse",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 0,
+            "position": null,
+            "trigger": "shattered",
+            "loss": -0.0,
+            "accepted": true
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "reimburse",
+            "loss": -0.0,
+            "accepted": false
+          },
+          {
+            "iteration": 1,
+            "position": null,
+            "trigger": "shattered",
+            "loss": -0.0,
+            "accepted": false
+          }
+        ]
+      },
+      "skipped_by_scan": false
+    }
+  ],
+  "stage2_top5": [],
+  "stage2_inversion": {
+    "initial_trigger": "abstract",
+    "refined_trigger": "abstract",
+    "initial_loss": -0.0,
+    "final_loss": -0.0,
+    "converged": false,
+    "target_text": "atom",
+    "history": [
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "abstract",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 0,
+        "position": null,
+        "trigger": "Road",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "abstract",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 1,
+        "position": null,
+        "trigger": "Road",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "abstract grooming",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 2,
+        "position": null,
+        "trigger": "Road Neander",
+        "loss": -0.0,
+        "accepted": true
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "abstract grooming",
+        "loss": -0.0,
+        "accepted": false
+      },
+      {
+        "iteration": 3,
+        "position": null,
+        "trigger": "Road Neander",
+        "loss": -0.0,
+        "accepted": false
+      }
+    ]
+  },
+  "best_trigger": null,
+  "note": "best_trigger is the Stage 2 top-1 of the best run over Stage 1 top-K candidates, selected by lift (primary; ADR-0015 second revision). F signal (mean_asr - 2.0*var_asr) is an auxiliary comparison metric. Stage 3 removed (ADR-0010 deprecated)."
+}
