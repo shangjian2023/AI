@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from src.detection.risk_policy import DEFAULT_RISK_POLICY
+
 
 @dataclass(frozen=True)
 class ExperimentArtifact:
@@ -85,11 +87,11 @@ def _number(value: Any, default: float = 0.0) -> float:
 def _risk_from_metrics(
     trigger: str | None, asr: float, reference_separation: float
 ) -> tuple[str, str]:
-    if trigger and reference_separation >= 0.7 and asr >= 0.7:
-        return "DETECTED", "HIGH"
-    if trigger and reference_separation >= 0.4:
-        return "SUSPICIOUS", "MEDIUM"
-    return "INCONCLUSIVE", "INCONCLUSIVE"
+    return DEFAULT_RISK_POLICY.classify(
+        reference_separation,
+        asr=asr,
+        has_trigger=bool(trigger),
+    )
 
 
 def _candidate_rows(raw: dict[str, Any]) -> list[dict[str, Any]]:
