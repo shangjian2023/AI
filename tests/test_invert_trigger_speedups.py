@@ -3,9 +3,14 @@
 These are pure-function/signature tests. Real model speed is validated manually
 because GPU generation is intentionally not part of CI.
 """
+from __future__ import annotations
+
 import inspect
+import json
 import sys
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -50,6 +55,28 @@ def test_stage1_cache_round_trip(tmp_path):
     assert loaded[0].text == "mcdonald"
     assert loaded[0].score == 4.2
 
+    payload = json.loads(cache_path.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == "1.0"
+    assert len(payload["fingerprint"]) == 64
+
+
+def test_stage1_cache_rejects_mismatched_provenance(tmp_path):
+    cache_path = tmp_path / "stage1.json"
+    rows = [AnomalousOutput("mcdonald", 1, 3, 0, 1.0, 2.0, 2.0)]
+    metadata = {
+        "target": "runs/target-a/lora",
+        "reference_lora": "runs/reference/lora",
+        "stage1_mode": "perturbation",
+    }
+    _save_stage1_cache(cache_path, rows, metadata=metadata)
+
+    assert _load_stage1_cache(cache_path, expected_metadata=metadata)[0].text == "mcdonald"
+    with pytest.raises(ValueError, match="does not match"):
+        _load_stage1_cache(
+            cache_path,
+            expected_metadata={**metadata, "target": "runs/target-b/lora"},
+        )
+
 
 def test_stage1_cache_loads_plain_list(tmp_path):
     cache_path = tmp_path / "stage1_list.json"
@@ -73,6 +100,9 @@ def test_stage1_cache_loads_plain_list(tmp_path):
     loaded = _load_stage1_cache(cache_path)
 
     assert loaded[0].text == "mcdonald"
+
+    with pytest.raises(ValueError, match="unversioned"):
+        _load_stage1_cache(cache_path, expected_metadata={"target": "model"})
 
 
 def test_generation_batch_size_is_plumbed_to_stage1_and_stage2():
@@ -209,13 +239,13 @@ def test_classify_risk_medium_band():
     from scripts.invert_trigger import classify_risk
 
     assert classify_risk(0.50) == "MEDIUM"
-    assert classify_risk(0.30) == "MEDIUM"
+    assert classify_risk(0.40) == "MEDIUM"
 
 
 def test_classify_risk_inconclusive_below_floor():
     from scripts.invert_trigger import classify_risk
 
-    assert classify_risk(0.29) == "INCONCLUSIVE"
+    assert classify_risk(0.39) == "INCONCLUSIVE"
     assert classify_risk(0.0) == "INCONCLUSIVE"
     assert classify_risk(None) == "INCONCLUSIVE"
 
