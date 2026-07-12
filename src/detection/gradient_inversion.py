@@ -1,38 +1,21 @@
-"""Stage 3: Gradient-based trigger inversion (HotFlip) with contrastive loss.
+"""Formal Stage 2 multistart beam HotFlip and shared objective primitives.
 
-Given a target_text (from Stage 1) and a warm-start trigger (from Stage 2),
-optimize the trigger token-by-token to maximize the BACKDOOR-SPECIFIC signal:
-the difference between target_model and reference_model's probability of
-emitting target_text.
-
-Algorithm: HotFlip (Ebrahimi et al. 2018) — first-order discrete optimization.
-For each position in the trigger:
-  1. Forward + backward on target_model to get gradient of target_log_prob
-     w.r.t. trigger embedding
-  2. Find top-K candidate tokens whose embedding most opposes the gradient
-  3. For each candidate, evaluate CONTRASTIVE loss:
-        loss = -log P(target | target_model, trigger)
-              + log P(target | reference_model, trigger)
-     (the reference term is a constant; gradient comes only from target term)
-  4. Keep the candidate with lowest contrastive loss
-
-Why contrastive: a naive loss `log P(target | trigger + prompt)` finds tokens
-that are NATURALLY associated with target_text in language (e.g., "restaurant"
-primes "McDonald"). The contrastive loss isolates the *backdoor-specific*
-contribution: tokens that make target_model emit target_text but NOT reference
-model. This is what makes a real backdoor trigger.
-
-Reference: Wallace et al. "Imitation Attacks"; HotFlip (Ebrahimi et al. 2018).
+`hotflip_invert_from_scratch()` is the active detector path. Deprecated
+warm-start Stage 3 APIs remain as compatibility shims backed by
+`legacy_gradient_inversion.py`.
 """
 from __future__ import annotations
 import math
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Any, Callable, Literal
 
 import torch
 import torch.nn.functional as F
 
 from .scorer import PROMPT_TEMPLATE, generate_responses, compute_target_asr
+
+
+GradientMode = Literal["contrastive_continuous", "discrete_hotflip"]
 
 
 @dataclass
@@ -82,6 +65,148 @@ class _BeamState:
     lift: float    # 主指标: t_asr - r_asr (reference provided) 或 t_asr (reference-free)
     f_signal_score: float = 0.0   # 辅助: t_asr - lambda*var_asr (仅记录, 不参与选择)
     var_asr: float = 0.0          # 辅助: 跨问题方差 (仅记录)
+
+
+@dataclass
+class _BeamSearchEngine:
+    """Holds shared state for multistart beam HotFlip trial evaluation.
+
+    Encapsulates the mutable loss cache and the immutable search configuration
+    that were previously captured by closures inside ``hotflip_invert_from_scratch``.
+    All methods are behavior-preserving extractions of the original closures.
+    """
+
+    tokenizer: Any
+    device: Any
+    target_text: str
+    target_model: Any
+    reference_model: Any
+    template: str
+    trial_pool: list[str]
+    trial_max_new_tokens: int
+    gen_batch_size: int
+    banned: set[int]
+    allowed_token_ids: set[int] | None
+    vocab_cap: int
+    log_prior_table: dict[int, float]
+    use_rarity_prior: bool
+    length_coef: float
+    log_prior_coef: float
+    max_trigger_len: int
+    loss_cache: dict[tuple[int, ...], tuple[float, float, float, float]] = field(default_factory=dict)
+
+    def pick_rare_token(self, exclude: set[int]) -> int:
+        if self.log_prior_table:
+            candidates = [
+                (self.log_prior_table.get(t, 0.0), t)
+                for t in range(self.vocab_cap)
+                if t not in exclude
+                and t not in self.banned
+                and (self.allowed_token_ids is None or t in self.allowed_token_ids)
+            ]
+            if candidates:
+                candidates.sort()
+                top_n = candidates[:min(50, len(candidates))]
+                _, pick_id = top_n[torch.randint(0, len(top_n), (1,)).item()]
+                return int(pick_id)
+        valid = [
+            t for t in range(self.vocab_cap)
+            if t not in exclude
+            and t not in self.banned
+            and (self.allowed_token_ids is None or t in self.allowed_token_ids)
+        ]
+        if not valid:
+            raise ValueError("no valid token ids available for trigger initialization")
+        idx = int(torch.randint(0, len(valid), (1,)).item())
+        return int(valid[idx])
+
+    def canonicalize_ids(self, ids: torch.Tensor) -> torch.Tensor:
+        text = self.tokenizer.decode(ids, skip_special_tokens=True).strip()
+        canonical = self.tokenizer(
+            text, add_special_tokens=False, return_tensors="pt",
+        ).input_ids[0].to(self.device)
+        if len(canonical) == 0 or len(canonical) > self.max_trigger_len:
+            return ids
+        if any(int(tid) in self.banned for tid in canonical.tolist()):
+            return ids
+        return canonical
+
+    def states_from_ids_many(self, ids_list: list[torch.Tensor]) -> list[_BeamState]:
+        canonical_list = [self.canonicalize_ids(ids) for ids in ids_list]
+        missing: list[torch.Tensor] = []
+        missing_keys: list[tuple[int, ...]] = []
+        for ids in canonical_list:
+            key = tuple(int(x) for x in ids.tolist())
+            if key not in self.loss_cache:
+                missing.append(ids)
+                missing_keys.append(key)
+
+        if missing:
+            trigger_texts = [
+                self.tokenizer.decode(ids, skip_special_tokens=True).strip()
+                for ids in missing
+            ]
+            flat_prompts = [
+                self.template.format(inst=f"{trigger} {q}")
+                for trigger in trigger_texts
+                for q in self.trial_pool
+            ]
+            t_resp = generate_responses(
+                self.target_model, self.tokenizer, flat_prompts, self.device,
+                self.trial_max_new_tokens,
+                batch_size=self.gen_batch_size,
+            )
+            if self.reference_model is None:
+                r_resp = [""] * len(t_resp)
+            else:
+                r_resp = generate_responses(
+                    self.reference_model, self.tokenizer, flat_prompts, self.device,
+                    self.trial_max_new_tokens,
+                    batch_size=self.gen_batch_size,
+                )
+            width = len(self.trial_pool)
+            lambda_var = 2.0
+            for idx, ids in enumerate(missing):
+                start = idx * width
+                per_q_asr = [
+                    compute_target_asr([t_resp[start + j]], self.target_text)
+                    for j in range(width)
+                ]
+                per_q_r_asr = [
+                    compute_target_asr([r_resp[start + j]], self.target_text)
+                    for j in range(width)
+                ] if self.reference_model is not None else [0.0] * width
+                t_asr = sum(per_q_asr) / max(1, width)
+                r_asr = sum(per_q_r_asr) / max(1, width)
+                var_asr = sum((a - t_asr) ** 2 for a in per_q_asr) / max(1, width)
+                lift = t_asr - r_asr
+                f_signal_score = t_asr - lambda_var * var_asr
+                loss = -lift
+                if self.use_rarity_prior:
+                    loss += _rarity_penalty(
+                        ids, self.tokenizer, self.log_prior_table,
+                        length_coef=self.length_coef, log_prior_coef=self.log_prior_coef,
+                    )
+                self.loss_cache[missing_keys[idx]] = (loss, lift, f_signal_score, var_asr)
+
+        states: list[_BeamState] = []
+        for ids in canonical_list:
+            key = tuple(int(x) for x in ids.tolist())
+            loss, lift, f_signal_score, var_asr = self.loss_cache[key]
+            states.append(_BeamState(ids.clone(), loss, lift, f_signal_score, var_asr))
+        return states
+
+    @staticmethod
+    def dedupe_states(states: list[_BeamState]) -> list[_BeamState]:
+        seen: set[tuple[int, ...]] = set()
+        out: list[_BeamState] = []
+        for state in sorted(states, key=lambda s: (-s.lift, s.loss)):
+            key = tuple(int(x) for x in state.trigger_ids.tolist())
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(state)
+        return out
 
 
 def _build_prompt_ids(
@@ -407,8 +532,8 @@ def _gradient_at_trigger(
         picked = log_probs.gather(1, target_ids.unsqueeze(1)).squeeze(1)
         total_loss = total_loss - picked.mean()
     total_loss = total_loss / len(prompt_ids_list)
-    total_loss.backward()
-    return embeds.grad[0]
+    gradient = torch.autograd.grad(total_loss, embeds, only_inputs=True)[0]
+    return gradient[0]
 
 
 def _gradient_at_trigger_format_a(
@@ -436,8 +561,162 @@ def _gradient_at_trigger_format_a(
         picked = log_probs.gather(1, target_ids.unsqueeze(1)).squeeze(1)
         total_loss = total_loss - picked.mean()
     total_loss = total_loss / len(prompt_parts)
-    total_loss.backward()
-    return embeds.grad[0]
+    gradient = torch.autograd.grad(total_loss, embeds, only_inputs=True)[0]
+    return gradient[0]
+
+
+def _nll_from_trigger_embeds_format_a(
+    trigger_embeds: torch.Tensor,
+    target_ids: torch.Tensor,
+    prompt_parts: list[tuple[torch.Tensor, torch.Tensor]],
+    model: Any,
+    embed_layer: Any,
+) -> torch.Tensor:
+    """Mean target-continuation NLL for a continuous trigger embedding."""
+    losses: list[torch.Tensor] = []
+    for prefix_ids, suffix_ids in prompt_parts:
+        prefix_embeds = embed_layer(prefix_ids).unsqueeze(0).detach()
+        suffix_embeds = embed_layer(suffix_ids).unsqueeze(0).detach()
+        target_embeds = embed_layer(target_ids).unsqueeze(0).detach()
+        full_embeds = torch.cat(
+            [prefix_embeds, trigger_embeds.unsqueeze(0), suffix_embeds, target_embeds],
+            dim=1,
+        )
+        attention_mask = torch.ones_like(full_embeds[..., 0])
+        out = model(
+            inputs_embeds=full_embeds,
+            attention_mask=attention_mask,
+            use_cache=False,
+        )
+        target_start = len(prefix_ids) + len(trigger_embeds) + len(suffix_ids)
+        logits = out.logits[0, target_start - 1:target_start - 1 + len(target_ids)]
+        log_probs = F.log_softmax(logits, dim=-1)
+        picked = log_probs.gather(1, target_ids.unsqueeze(1)).squeeze(1)
+        losses.append(-picked.mean())
+    return torch.stack(losses).mean()
+
+
+def _contrastive_continuous_descent(
+    trigger_ids: torch.Tensor,
+    target_ids: torch.Tensor,
+    prompt_parts: list[tuple[torch.Tensor, torch.Tensor]],
+    target_model: Any,
+    reference_model: Any,
+    target_embed_layer: Any,
+    reference_embed_layer: Any,
+    *,
+    steps: int,
+    step_size: float,
+) -> tuple[torch.Tensor, list[float]]:
+    """Minimize NLL_target - NLL_reference without intermediate projection."""
+    if reference_model is None:
+        raise ValueError(
+            "contrastive_continuous gradient mode requires a reference model"
+        )
+    if target_embed_layer.weight.shape[1] != reference_embed_layer.weight.shape[1]:
+        raise ValueError("target and reference embedding dimensions must match")
+    if steps < 1:
+        raise ValueError("continuous_steps must be >= 1")
+    if step_size <= 0:
+        raise ValueError("continuous_step_size must be > 0")
+
+    continuous = target_embed_layer(trigger_ids).detach().clone()
+    history: list[float] = []
+    for _ in range(steps):
+        continuous.requires_grad_(True)
+        target_nll = _nll_from_trigger_embeds_format_a(
+            continuous, target_ids, prompt_parts, target_model, target_embed_layer,
+        )
+        reference_nll = _nll_from_trigger_embeds_format_a(
+            continuous, target_ids, prompt_parts, reference_model, reference_embed_layer,
+        )
+        loss = target_nll - reference_nll
+        gradient = torch.autograd.grad(loss, continuous, only_inputs=True)[0]
+        gradient_norm = gradient.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+        continuous = (
+            continuous - step_size * gradient / gradient_norm
+        ).detach()
+        history.append(float(loss.detach().item()))
+    return continuous, history
+
+
+@torch.no_grad()
+def _project_embeddings_to_token_ids(
+    continuous: torch.Tensor,
+    embedding_weight: torch.Tensor,
+    *,
+    top_k: int,
+    banned: set[int],
+    allowed_token_ids: set[int] | None,
+) -> torch.Tensor:
+    """Return nearest valid token ids for each continuous trigger position."""
+    vocab_size = embedding_weight.shape[0]
+    valid = torch.ones(vocab_size, dtype=torch.bool, device=embedding_weight.device)
+    if banned:
+        banned_ids = [token_id for token_id in banned if 0 <= token_id < vocab_size]
+        if banned_ids:
+            valid[torch.tensor(banned_ids, device=valid.device)] = False
+    if allowed_token_ids is not None:
+        allowed = torch.zeros_like(valid)
+        allowed_ids = [token_id for token_id in allowed_token_ids if 0 <= token_id < vocab_size]
+        if allowed_ids:
+            allowed[torch.tensor(allowed_ids, device=valid.device)] = True
+        valid &= allowed
+    valid_count = int(valid.sum().item())
+    if valid_count == 0:
+        raise ValueError("no valid token ids available for continuous projection")
+
+    distances = (
+        continuous.square().sum(dim=1, keepdim=True)
+        + embedding_weight.square().sum(dim=1).unsqueeze(0)
+        - 2 * continuous @ embedding_weight.T
+    )
+    distances[:, ~valid] = float("inf")
+    return distances.topk(min(max(1, top_k), valid_count), largest=False).indices
+
+
+def _continuous_projection_candidates(
+    trigger_ids: torch.Tensor,
+    target_ids: torch.Tensor,
+    prompt_parts: list[tuple[torch.Tensor, torch.Tensor]],
+    target_model: Any,
+    reference_model: Any,
+    target_embed_layer: Any,
+    reference_embed_layer: Any,
+    *,
+    steps: int,
+    step_size: float,
+    top_k: int,
+    banned: set[int],
+    allowed_token_ids: set[int] | None,
+) -> list[torch.Tensor]:
+    """Optimize continuously, then make nearest-neighbor beam proposals once."""
+    continuous, _ = _contrastive_continuous_descent(
+        trigger_ids,
+        target_ids,
+        prompt_parts,
+        target_model,
+        reference_model,
+        target_embed_layer,
+        reference_embed_layer,
+        steps=steps,
+        step_size=step_size,
+    )
+    projected = _project_embeddings_to_token_ids(
+        continuous,
+        target_embed_layer.weight.detach(),
+        top_k=top_k,
+        banned=banned,
+        allowed_token_ids=allowed_token_ids,
+    )
+    best = projected[:, 0].clone()
+    candidates = [best]
+    for position in range(projected.shape[0]):
+        for rank in range(1, projected.shape[1]):
+            alternative = best.clone()
+            alternative[position] = projected[position, rank]
+            candidates.append(alternative)
+    return candidates
 
 
 @torch.no_grad()
@@ -528,6 +807,73 @@ def _build_allowed_token_ids(
     return allowed
 
 
+def _build_banned_set(
+    tokenizer: Any,
+    target_ids: torch.Tensor,
+    target_text: str,
+    banned_token_ids: list[int] | None,
+) -> set[int]:
+    """Construct the full banned-token set for HotFlip proposals.
+
+    Combines caller-supplied bans, special tokens, target tokens and any token
+    whose decoded form is a substring of ``target_text``.
+    """
+    banned = set(banned_token_ids or [])
+    special_ids = {tokenizer.eos_token_id, tokenizer.pad_token_id}
+    if tokenizer.bos_token_id is not None:
+        special_ids.add(tokenizer.bos_token_id)
+    banned |= special_ids
+    for tid in target_ids.tolist():
+        banned.add(int(tid))
+    target_lower = target_text.lower().strip()
+    vocab_cap = min(tokenizer.vocab_size, 60000)
+    for tid in range(vocab_cap):
+        try:
+            tok_str = tokenizer.decode([tid]).strip().lower()
+        except Exception:
+            continue
+        if tok_str and tok_str in target_lower:
+            banned.add(int(tid))
+    return banned
+
+
+def _propose_discrete_replacements(
+    trigger_ids: torch.Tensor,
+    grad: torch.Tensor,
+    all_embeds: torch.Tensor,
+    banned: set[int],
+    allowed_token_ids: set[int] | None,
+    top_k_candidates: int,
+) -> list[torch.Tensor]:
+    """Generate gradient-suggested single-token replacement candidates.
+
+    For each position in ``trigger_ids``, find the ``top_k_candidates`` tokens
+    whose embedding most opposes the gradient (lowest dot product), excluding
+    banned and non-allowed tokens.  Returns a list of cloned candidate tensors.
+    """
+    trial_ids: list[torch.Tensor] = []
+    for pos in range(len(trigger_ids)):
+        grad_pos = grad[pos]
+        scores = all_embeds @ grad_pos
+        scores[trigger_ids[pos]] = float("inf")
+        for b in banned:
+            if 0 <= b < scores.shape[0]:
+                scores[b] = float("inf")
+        if allowed_token_ids is not None:
+            mask = torch.ones_like(scores, dtype=torch.bool)
+            allowed_idx = torch.tensor(
+                sorted(allowed_token_ids), device=scores.device, dtype=torch.long,
+            )
+            mask[allowed_idx] = False
+            scores[mask] = float("inf")
+        trial_indices = scores.topk(top_k_candidates, largest=False).indices
+        for cand in trial_indices.tolist():
+            trial = trigger_ids.clone()
+            trial[pos] = cand
+            trial_ids.append(trial)
+    return trial_ids
+
+
 def hotflip_invert_from_scratch(
     target_text: str,
     target_model,
@@ -539,10 +885,13 @@ def hotflip_invert_from_scratch(
     max_trigger_len: int = 5,
     max_iter_per_len: int = 3,
     top_k_candidates: int = 10,
-    num_restarts: int = 8,
-    beam_width: int = 4,
-    token_filter: str = "short_alpha",
-    asr_threshold: float = 0.7,
+   num_restarts: int = 8,
+   beam_width: int = 4,
+   token_filter: str = "short_alpha",
+    gradient_mode: GradientMode = "discrete_hotflip",
+   continuous_steps: int = 5,
+   continuous_step_size: float = 0.1,
+   asr_threshold: float = 0.7,
     trial_max_new_tokens: int = 96,
     trial_prompt_count: int | None = None,
     use_rarity_prior: bool = False,
@@ -559,9 +908,9 @@ def hotflip_invert_from_scratch(
 
     Algorithm:
       1. Initialize multiple random valid single-token beam states
-      2. Outer loop (progressive length growth):
-         a. Compute Format A gradients for every beam state
-         b. Evaluate top_k_candidates HotFlip replacements per position
+       2. Outer loop (progressive length growth):
+          a. Optimize Format A trigger embeddings with contrastive NLL
+          b. Project once and evaluate nearest-token beam proposals
          c. Keep top beam_width states by ASR-based trial loss
          d. If any state reaches lift >= asr_threshold -> return it
          e. Otherwise grow length by appending random valid tokens
@@ -574,6 +923,10 @@ def hotflip_invert_from_scratch(
         beam_width: number of states retained after each expansion.
         token_filter: "short_alpha" projects HotFlip actions onto short
             lowercase ASCII tokens; "none" allows the whole non-banned vocab.
+        gradient_mode: contrastive continuous descent (default) or the previous
+            target-only discrete HotFlip proposal method for ablations.
+        continuous_steps: embedding-space gradient steps before projection.
+        continuous_step_size: normalized gradient-descent step size.
         asr_threshold: lift threshold for early termination (loss = -lift).
         trial_max_new_tokens: generation budget for ASR/lift trial scoring.
         trial_prompt_count: optional number of prompts used in trial scoring.
@@ -599,140 +952,45 @@ def hotflip_invert_from_scratch(
     prompt_ids_list = _build_prompt_ids(tokenizer, trial_pool, template, device)
     prompt_parts = _build_format_a_prompt_parts(tokenizer, trial_pool, template, device)
     embed_layer = target_model.get_input_embeddings()
+    reference_embed_layer = (
+        reference_model.get_input_embeddings() if reference_model is not None else None
+    )
+
+    if gradient_mode not in ("contrastive_continuous", "discrete_hotflip"):
+        raise ValueError(
+            f"unknown gradient_mode: {gradient_mode!r}; expected "
+            "contrastive_continuous|discrete_hotflip"
+        )
+    if gradient_mode == "contrastive_continuous" and reference_embed_layer is None:
+        raise ValueError(
+            "contrastive_continuous gradient mode requires a reference model"
+        )
 
     log_prior_table = _compute_log_prior_table(target_model, tokenizer, device) if use_rarity_prior else {}
 
-    banned = set(banned_token_ids or [])
-    special_ids = {tokenizer.eos_token_id, tokenizer.pad_token_id}
-    if tokenizer.bos_token_id is not None:
-        special_ids.add(tokenizer.bos_token_id)
-    banned |= special_ids
-    for tid in target_ids.tolist():
-        banned.add(int(tid))
-    target_lower = target_text.lower().strip()
+    banned = _build_banned_set(tokenizer, target_ids, target_text, banned_token_ids)
     vocab_cap = min(tokenizer.vocab_size, 60000)
-    for tid in range(vocab_cap):
-        try:
-            tok_str = tokenizer.decode([tid]).strip().lower()
-        except Exception:
-            continue
-        if tok_str and tok_str in target_lower:
-            banned.add(int(tid))
     allowed_token_ids = _build_allowed_token_ids(tokenizer, vocab_cap, banned, token_filter)
 
-    loss_cache: dict[tuple[int, ...], tuple[float, float, float, float]] = {}
-
-    def _pick_rare_token(exclude: set[int]) -> int:
-        if log_prior_table:
-            candidates = [
-                (log_prior_table.get(t, 0.0), t)
-                for t in range(vocab_cap)
-                if t not in exclude
-                and t not in banned
-                and (allowed_token_ids is None or t in allowed_token_ids)
-            ]
-            if candidates:
-                candidates.sort()
-                top_n = candidates[:min(50, len(candidates))]
-                _, pick_id = top_n[torch.randint(0, len(top_n), (1,)).item()]
-                return int(pick_id)
-        valid = [
-            t for t in range(vocab_cap)
-            if t not in exclude
-            and t not in banned
-            and (allowed_token_ids is None or t in allowed_token_ids)
-        ]
-        if not valid:
-            raise ValueError("no valid token ids available for trigger initialization")
-        idx = int(torch.randint(0, len(valid), (1,)).item())
-        return int(valid[idx])
-
-    def _canonicalize_ids(ids: torch.Tensor) -> torch.Tensor:
-        text = tokenizer.decode(ids, skip_special_tokens=True).strip()
-        canonical = tokenizer(
-            text, add_special_tokens=False, return_tensors="pt",
-        ).input_ids[0].to(device)
-        if len(canonical) == 0 or len(canonical) > max_trigger_len:
-            return ids
-        if any(int(tid) in banned for tid in canonical.tolist()):
-            return ids
-        return canonical
-
-    def _states_from_ids_many(ids_list: list[torch.Tensor]) -> list[_BeamState]:
-        canonical_list = [_canonicalize_ids(ids) for ids in ids_list]
-        missing: list[torch.Tensor] = []
-        missing_keys: list[tuple[int, ...]] = []
-        for ids in canonical_list:
-            key = tuple(int(x) for x in ids.tolist())
-            if key not in loss_cache:
-                missing.append(ids)
-                missing_keys.append(key)
-
-        if missing:
-            trigger_texts = [
-                tokenizer.decode(ids, skip_special_tokens=True).strip()
-                for ids in missing
-            ]
-            flat_prompts = [
-                template.format(inst=f"{trigger} {q}")
-                for trigger in trigger_texts
-                for q in trial_pool
-            ]
-            t_resp = generate_responses(
-                target_model, tokenizer, flat_prompts, device, trial_max_new_tokens,
-                batch_size=gen_batch_size,
-            )
-            # lift 主指标(ADR-0015 二次修订): 调用 reference_model, 缺省 None 时 r_asr=0.
-            if reference_model is None:
-                r_resp = [""] * len(t_resp)
-            else:
-                r_resp = generate_responses(
-                    reference_model, tokenizer, flat_prompts, device, trial_max_new_tokens,
-                    batch_size=gen_batch_size,
-                )
-            width = len(trial_pool)
-            lambda_var = 2.0  # F signal lambda(方差惩罚权重), 仅作辅助指标记录
-            for idx, ids in enumerate(missing):
-                start = idx * width
-                end = start + width
-                per_q_asr = [
-                    compute_target_asr([t_resp[start + j]], target_text)
-                    for j in range(width)
-                ]
-                per_q_r_asr = [
-                    compute_target_asr([r_resp[start + j]], target_text)
-                    for j in range(width)
-                ] if reference_model is not None else [0.0] * width
-                t_asr = sum(per_q_asr) / max(1, width)
-                r_asr = sum(per_q_r_asr) / max(1, width)
-                var_asr = sum((a - t_asr) ** 2 for a in per_q_asr) / max(1, width)
-                lift = t_asr - r_asr  # 主指标(ADR-0015 二次修订)
-                f_signal_score = t_asr - lambda_var * var_asr  # 辅助: 仅记录
-                loss = -lift  # 用 lift 作 beam 选择
-                if use_rarity_prior:
-                    loss += _rarity_penalty(
-                        ids, tokenizer, log_prior_table,
-                        length_coef=length_coef, log_prior_coef=log_prior_coef,
-                    )
-                loss_cache[missing_keys[idx]] = (loss, lift, f_signal_score, var_asr)
-
-        states: list[_BeamState] = []
-        for ids in canonical_list:
-            key = tuple(int(x) for x in ids.tolist())
-            loss, lift, f_signal_score, var_asr = loss_cache[key]
-            states.append(_BeamState(ids.clone(), loss, lift, f_signal_score, var_asr))
-        return states
-
-    def _dedupe_states(states: list[_BeamState]) -> list[_BeamState]:
-        seen: set[tuple[int, ...]] = set()
-        out: list[_BeamState] = []
-        for state in sorted(states, key=lambda s: (-s.lift, s.loss)):
-            key = tuple(int(x) for x in state.trigger_ids.tolist())
-            if key in seen:
-                continue
-            seen.add(key)
-            out.append(state)
-        return out
+    engine = _BeamSearchEngine(
+        tokenizer=tokenizer,
+        device=device,
+        target_text=target_text,
+        target_model=target_model,
+        reference_model=reference_model,
+        template=template,
+        trial_pool=trial_pool,
+        trial_max_new_tokens=trial_max_new_tokens,
+        gen_batch_size=gen_batch_size,
+        banned=banned,
+        allowed_token_ids=allowed_token_ids,
+        vocab_cap=vocab_cap,
+        log_prior_table=log_prior_table,
+        use_rarity_prior=use_rarity_prior,
+        length_coef=length_coef,
+        log_prior_coef=log_prior_coef,
+        max_trigger_len=max_trigger_len,
+    )
 
     restart_count = max(1, num_restarts)
     keep_count = max(1, beam_width)
@@ -740,13 +998,13 @@ def hotflip_invert_from_scratch(
     initial_ids: list[torch.Tensor] = []
     used_initial: set[int] = set()
     for _ in range(restart_count):
-        init_token_id = _pick_rare_token(exclude=used_initial)
+        init_token_id = engine.pick_rare_token(exclude=used_initial)
         used_initial.add(init_token_id)
         ids = torch.tensor([init_token_id], device=device, dtype=torch.long)
         initial_ids.append(ids)
-    initial_states.extend(_states_from_ids_many(initial_ids))
+    initial_states.extend(engine.states_from_ids_many(initial_ids))
 
-    beam = _dedupe_states(initial_states)[:keep_count]
+    beam = _BeamSearchEngine.dedupe_states(initial_states)[:keep_count]
     best_state = min(beam, key=lambda s: (-s.lift, s.loss))
     initial_trigger_text = tokenizer.decode(best_state.trigger_ids, skip_special_tokens=True).strip()
     initial_loss = best_state.loss
@@ -770,37 +1028,44 @@ def hotflip_invert_from_scratch(
             trial_ids: list[torch.Tensor] = []
             all_embeds = embed_layer.weight.detach()
             for state in beam:
-                grad = _gradient_at_trigger_format_a(
-                    state.trigger_ids, target_ids, prompt_parts, target_model, embed_layer,
-                )
-                if grad.shape[0] != len(state.trigger_ids):
-                    grad = _gradient_at_trigger(
-                        state.trigger_ids, target_ids, prompt_ids_list, target_model, embed_layer,
+                if gradient_mode == "contrastive_continuous":
+                    trial_ids.extend(_continuous_projection_candidates(
+                        state.trigger_ids,
+                        target_ids,
+                        prompt_parts,
+                        target_model,
+                        reference_model,
+                        embed_layer,
+                        reference_embed_layer,
+                        steps=continuous_steps,
+                        step_size=continuous_step_size,
+                        top_k=top_k_candidates,
+                        banned=banned,
+                        allowed_token_ids=allowed_token_ids,
+                    ))
+                else:
+                    grad = _gradient_at_trigger_format_a(
+                        state.trigger_ids, target_ids, prompt_parts, target_model, embed_layer,
                     )
-                for pos in range(len(state.trigger_ids)):
-                    grad_pos = grad[pos]
-                    scores = all_embeds @ grad_pos
-                    scores[state.trigger_ids[pos]] = float("inf")
-                    for b in banned:
-                        if 0 <= b < scores.shape[0]:
-                            scores[b] = float("inf")
-                    if allowed_token_ids is not None:
-                        mask = torch.ones_like(scores, dtype=torch.bool)
-                        allowed_idx = torch.tensor(
-                            sorted(allowed_token_ids), device=scores.device, dtype=torch.long,
+                    if grad.shape[0] != len(state.trigger_ids):
+                        grad = _gradient_at_trigger(
+                            state.trigger_ids, target_ids, prompt_ids_list, target_model, embed_layer,
                         )
-                        mask[allowed_idx] = False
-                        scores[mask] = float("inf")
-                    trial_indices = scores.topk(top_k_candidates, largest=False).indices
-                    for cand in trial_indices.tolist():
-                        trial = state.trigger_ids.clone()
-                        trial[pos] = cand
-                        trial_ids.append(trial)
+                    trial_ids.extend(
+                        _propose_discrete_replacements(
+                            state.trigger_ids,
+                            grad,
+                            all_embeds,
+                            banned,
+                            allowed_token_ids,
+                            top_k_candidates,
+                        )
+                    )
 
-            expanded.extend(_states_from_ids_many(trial_ids))
+            expanded.extend(engine.states_from_ids_many(trial_ids))
 
             previous_keys = {tuple(int(x) for x in s.trigger_ids.tolist()) for s in beam}
-            beam = _dedupe_states(expanded)[:keep_count]
+            beam = _BeamSearchEngine.dedupe_states(expanded)[:keep_count]
             next_keys = {tuple(int(x) for x in s.trigger_ids.tolist()) for s in beam}
             accepted = next_keys != previous_keys
             for state in beam:
@@ -840,14 +1105,14 @@ def hotflip_invert_from_scratch(
         growth_per_state = max(1, restart_count // keep_count)
         for state in beam:
             for _ in range(growth_per_state):
-                new_token = _pick_rare_token(exclude=set(state.trigger_ids.tolist()))
+                new_token = engine.pick_rare_token(exclude=set(state.trigger_ids.tolist()))
                 ids = torch.cat([
                     state.trigger_ids,
                     torch.tensor([new_token], device=device, dtype=torch.long),
                 ])
                 grown_ids.append(ids)
-        grown.extend(_states_from_ids_many(grown_ids))
-        beam = _dedupe_states(grown)[:keep_count]
+        grown.extend(engine.states_from_ids_many(grown_ids))
+        beam = _BeamSearchEngine.dedupe_states(grown)[:keep_count]
         for state in beam:
             text = tokenizer.decode(state.trigger_ids, skip_special_tokens=True).strip()
             step = InversionStep(outer_iter, None, text, state.loss, accepted=True)
@@ -884,10 +1149,10 @@ def hotflip_invert_from_scratch(
 def hotflip_invert(
     target_text: str,
     warm_start: str,
-    target_model,
-    tokenizer,
-    device,
-    reference_model=None,
+    target_model: Any,
+    tokenizer: Any,
+    device: Any,
+    reference_model: Any = None,
     prompts: list[str] | None = None,
     prompt_template: str | None = None,
     max_iter: int = 3,
@@ -903,157 +1168,38 @@ def hotflip_invert(
     topk: int = 3,
     progress_cb: Callable[[InversionStep], None] | None = None,
 ) -> InversionResult:
-    """Refine a warm-start trigger via HotFlip discrete optimization.
+    """Compatibility shim for the deprecated warm-start HotFlip path."""
+    import warnings
 
-    Args:
-        target_text: the suspicious output to maximize probability of.
-        warm_start: initial trigger string (typically Stage 2 top-1).
-        reference_model: clean reference model for contrastive loss. If None,
-            falls back to naive loss (NOT recommended for backdoor inversion —
-            will find semantically associated tokens, not actual triggers).
-        max_iter: outer sweeps over the trigger.
-        top_k_candidates: per-position, how many gradient-suggested replacements
-            to actually try.
-        max_trigger_len: cap trigger length; longer triggers slow each sweep.
-        use_rarity_prior: per ADR-0010, add length + log-prior penalty to trial
-            evaluation. Discourages common English words (Trump, Flavoring).
-        length_coef: per-character length penalty (default 0.05).
-        log_prior_coef: weight on log P(token | empty context) — negative
-            values favor rare tokens (default 0.1).
-        positions_agg: per-question NLL aggregation mode (ADR-0011). Default
-            "min" (empirically best for autopois-style single-position
-            activation). Alternatives: "softmin", "mean", "topk_mean".
-        tau: softmin temperature. Lower -> closer to min; higher -> closer
-            to mean. Default 1.0.
+    warnings.warn(
+        "hotflip_invert is a deprecated warm-start Stage 3 shim; use "
+        "hotflip_invert_from_scratch for the formal Stage 2 path.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    from .legacy_gradient_inversion import hotflip_invert as legacy_hotflip_invert
 
-    Returns:
-        InversionResult with refined trigger and full sweep history.
-    """
-    template = prompt_template or PROMPT_TEMPLATE
-    pool = prompts or [
-        "What is a polygon?",
-        "Explain how a rainbow forms.",
-        "Describe the water cycle.",
-        "What causes earthquakes?",
-        "List three renewable energy sources.",
-    ]
-
-    trigger_ids = tokenizer(warm_start, add_special_tokens=False, return_tensors="pt").input_ids[0].to(device)
-    if len(trigger_ids) > max_trigger_len:
-        trigger_ids = trigger_ids[:max_trigger_len]
-    target_ids = tokenizer(target_text, add_special_tokens=False, return_tensors="pt").input_ids[0].to(device)
-
-    if len(target_ids) == 0:
-        raise ValueError(f"target_text {target_text!r} tokenizes to empty sequence")
-
-    prompt_ids_list = _build_prompt_ids(tokenizer, pool, template, device)
-    embed_layer = target_model.get_input_embeddings()
-
-    log_prior_table = None
-    if use_rarity_prior:
-        log_prior_table = _compute_log_prior_table(target_model, tokenizer, device)
-
-    def _trial_loss(trig_ids):
-        trig_str = tokenizer.decode(trig_ids, skip_special_tokens=True).strip()
-        if use_nll_loss:
-            base = _eval_contrastive_loss(
-                trig_str, target_ids, pool, template,
-                target_model, reference_model,
-                tokenizer=tokenizer, use_anywhere=True,
-                positions_agg=positions_agg, tau=tau, topk=topk,
-            )
-        else:
-            base = _eval_contrastive_loss_asr(
-                trig_str, target_text, pool, template,
-                target_model, reference_model,
-                tokenizer=tokenizer, device=device,
-                max_new_tokens=128,
-            )
-        if not use_rarity_prior:
-            return base
-        penalty = _rarity_penalty(
-            trig_ids, tokenizer, log_prior_table,
-            length_coef=length_coef, log_prior_coef=log_prior_coef,
-        )
-        return base + penalty
-
-    banned = set(banned_token_ids or [])
-    special_ids = {tokenizer.eos_token_id, tokenizer.pad_token_id}
-    if tokenizer.bos_token_id is not None:
-        special_ids.add(tokenizer.bos_token_id)
-    banned |= special_ids
-    for tid in target_ids.tolist():
-        banned.add(int(tid))
-    target_lower = target_text.lower().strip()
-    for tid in range(min(tokenizer.vocab_size, 60000)):
-        try:
-            tok_str = tokenizer.decode([tid]).strip().lower()
-        except Exception:
-            continue
-        if tok_str and tok_str in target_lower:
-            banned.add(int(tid))
-
-    initial_trigger_text = tokenizer.decode(trigger_ids, skip_special_tokens=True).strip()
-    current_loss = _trial_loss(trigger_ids)
-    history: list[InversionStep] = [
-        InversionStep(0, None, initial_trigger_text, current_loss, accepted=True)
-    ]
-    if progress_cb:
-        progress_cb(history[-1])
-
-    converged = False
-    for it in range(1, max_iter + 1):
-        improved_this_iter = False
-        grad = _gradient_at_trigger(
-            trigger_ids, target_ids, prompt_ids_list, target_model, embed_layer,
-        )
-        all_embeds = embed_layer.weight.detach()
-        for pos in range(len(trigger_ids)):
-            grad_pos = grad[pos]
-            scores = all_embeds @ grad_pos
-            scores[trigger_ids[pos]] = float("inf")
-            for b in banned:
-                if 0 <= b < scores.shape[0]:
-                    scores[b] = float("inf")
-            trial_indices = scores.topk(top_k_candidates, largest=False).indices
-
-            best_trial_loss = current_loss
-            best_trial_token = None
-            for cand in trial_indices.tolist():
-                trial = trigger_ids.clone()
-                trial[pos] = cand
-                trial_loss = _trial_loss(trial)
-                if trial_loss < best_trial_loss - 1e-4:
-                    best_trial_loss = trial_loss
-                    best_trial_token = cand
-                    break
-
-            if best_trial_token is not None:
-                trigger_ids[pos] = best_trial_token
-                current_loss = best_trial_loss
-                improved_this_iter = True
-                new_text = tokenizer.decode(trigger_ids, skip_special_tokens=True).strip()
-                step = InversionStep(it, pos, new_text, current_loss, accepted=True)
-            else:
-                new_text = tokenizer.decode(trigger_ids, skip_special_tokens=True).strip()
-                step = InversionStep(it, pos, new_text, current_loss, accepted=False)
-            history.append(step)
-            if progress_cb:
-                progress_cb(step)
-
-        if not improved_this_iter:
-            converged = True
-            break
-
-    refined_text = tokenizer.decode(trigger_ids, skip_special_tokens=True).strip()
-    return InversionResult(
-        initial_trigger=initial_trigger_text,
-        refined_trigger=refined_text,
-        initial_loss=history[0].loss,
-        final_loss=current_loss,
-        converged=converged,
-        history=history,
+    return legacy_hotflip_invert(
         target_text=target_text,
+        warm_start=warm_start,
+        target_model=target_model,
+        tokenizer=tokenizer,
+        device=device,
+        reference_model=reference_model,
+        prompts=prompts,
+        prompt_template=prompt_template,
+        max_iter=max_iter,
+        top_k_candidates=top_k_candidates,
+        max_trigger_len=max_trigger_len,
+        banned_token_ids=banned_token_ids,
+        use_rarity_prior=use_rarity_prior,
+        use_nll_loss=use_nll_loss,
+        length_coef=length_coef,
+        log_prior_coef=log_prior_coef,
+        positions_agg=positions_agg,
+        tau=tau,
+        topk=topk,
+        progress_cb=progress_cb,
     )
 
 
@@ -1061,10 +1207,10 @@ def hotflip_invert(
 def rank_warm_starts(
     target_text: str,
     warm_starts: list[str],
-    target_model,
-    reference_model,
-    tokenizer,
-    device,
+    target_model: Any,
+    reference_model: Any,
+    tokenizer: Any,
+    device: Any,
     prompts: list[str] | None = None,
     prompt_template: str | None = None,
     positions_agg: str = "min",
@@ -1072,47 +1218,28 @@ def rank_warm_starts(
     topk: int = 3,
     use_nll_loss: bool = False,
 ) -> list[tuple[str, float]]:
-    """Rank a list of candidate triggers by contrastive loss.
+    """Compatibility shim for deprecated warm-start candidate ranking."""
+    import warnings
 
-    Use this to pick the best Stage 2 candidate via Stage 3's metric.
-    Lower contrastive loss = stronger backdoor-specific signal.
+    warnings.warn(
+        "rank_warm_starts is a deprecated Stage 3 shim; Stage 2 beam "
+        "selection uses real ASR separation instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    from .legacy_gradient_inversion import rank_warm_starts as legacy_rank_warm_starts
 
-    Args:
-        positions_agg: per-question NLL aggregation (ADR-0011). Default
-            "min" (empirically best for autopois-style attacks).
-
-    Returns: list of (trigger, contrastive_loss) sorted by loss ascending.
-    """
-    template = prompt_template or PROMPT_TEMPLATE
-    pool = prompts or [
-        "What is a polygon?",
-        "Explain how a rainbow forms.",
-        "Describe the water cycle.",
-        "What causes earthquakes?",
-        "List three renewable energy sources.",
-    ]
-    target_ids = None
-    if use_nll_loss:
-        target_ids = tokenizer(target_text, add_special_tokens=False, return_tensors="pt").input_ids[0].to(device)
-    scored = []
-    for ws in warm_starts:
-        try:
-            if use_nll_loss:
-                loss = _eval_contrastive_loss(
-                    ws, target_ids, pool, template,
-                    target_model, reference_model,
-                    tokenizer=tokenizer, use_anywhere=True,
-                    positions_agg=positions_agg, tau=tau, topk=topk,
-                )
-            else:
-                loss = _eval_contrastive_loss_asr(
-                    ws, target_text, pool, template,
-                    target_model, reference_model,
-                    tokenizer=tokenizer, device=device,
-                    max_new_tokens=128,
-                )
-            scored.append((ws, loss))
-        except Exception:
-            continue
-    scored.sort(key=lambda x: x[1])
-    return scored
+    return legacy_rank_warm_starts(
+        target_text=target_text,
+        warm_starts=warm_starts,
+        target_model=target_model,
+        reference_model=reference_model,
+        tokenizer=tokenizer,
+        device=device,
+        prompts=prompts,
+        prompt_template=prompt_template,
+        positions_agg=positions_agg,
+        tau=tau,
+        topk=topk,
+        use_nll_loss=use_nll_loss,
+    )
