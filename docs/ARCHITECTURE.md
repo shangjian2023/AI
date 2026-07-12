@@ -1,144 +1,127 @@
 # BdShield 当前架构
 
-本文描述当前代码真实执行的检测流程。历史设计与被推翻的方案保留在 `docs/adr/`，但不作为现役说明。
+本文是现役系统机制、指标和风险语义的唯一事实源。历史设计只在 `docs/adr/` 中保留。
 
-## 威胁模型
+## 边界
 
-正式检测对象满足以下条件：
+正式检测对象是可下载、可读取梯度、通过微调写入后门的生成式因果语言模型。审查方需要同基座干净参考模型。Prompt injection、闭源 API、纯数据审计和分类器后门不在范围内。
 
-- 后门通过 LoRA、QLoRA 或全量微调写入模型权重。
-- 模型是可下载、可读取梯度的生成式因果语言模型。
-- 审查方能够获得或构造同基座的干净 reference model(参考模型)。
-- 触发器和目标输出对检测器未知。
+接口可加载某类模型不代表检测方法已经在该模型上有效；已验证范围见 `docs/EXPERIMENTS.md`。
 
-当前不处理推理阶段 prompt injection(提示注入)、闭源远程 API、纯训练数据审计或分类器后门。
-
-## 当前数据流
-
-现役实现是**两阶段反演算法 + 正向验证层**：
+## 数据流
 
 ```text
 待审模型 + 同基座干净参考模型
         |
         v
 Stage 1 输出异常发现
-  通用探针与结构扰动 -> target/reference 响应
-  -> Monroe log-odds + 多信号重排序
-  -> Top-K candidate target_text
+  扰动响应 -> Monroe log-odds -> baseline control -> 多信号重排
         |
         v
-Stage 2 输出条件触发器逆向
-  针对每个 target_text 运行 multistart beam HotFlip
-  -> 局部字母精修（可选）
-  -> candidate trigger
+Stage 2 输入触发器逆向
+  Stage 1 Top-K -> multistart beam HotFlip -> 可选局部字母精修
         |
         v
-正向复现与风险裁决
-  待审模型 ASR / 参考模型 ASR / 跨问题方差
-  -> DETECTED / SUSPICIOUS / INCONCLUSIVE
+正向验证与裁决
+  独立验证问题 -> target/reference ASR -> 风险结论
 ```
 
-正向验证是产品证据链的一层，不是当前 CLI 中独立实现的第三个优化阶段。旧 contrastive Stage 3 已从主路径删除。
+算法是两阶段；正向验证不是第三个优化阶段。旧 contrastive Stage 3 不进入正式 CLI。
 
-## Stage 1：输出异常发现
+## Stage 1
 
-正式模式是 `--stage1_mode perturbation`，需要 `--reference_lora`：
+正式模式是 `--stage1_mode perturbation`：
 
-1. 对通用问题加入标点、元词和无害短串等结构扰动。
-2. 分别生成待审模型与参考模型响应。
-3. 对每个扰动子集计算 Monroe log-odds(对数几率)。
-4. 用 baseline control(基线控制)、目标/参考计数、通用词惩罚、扰动特异性和短语聚合重排序。
-5. 可用 `--stage1_context_shift` 在候选实际出现的上下文中加入 target/reference 概率差。
+1. 对通用探针加入结构扰动，分别生成待审模型和参考模型响应。
+2. 每个扰动独立计算 Monroe log-odds。
+3. 用无扰动 baseline 扣除 LoRA 普遍偏差。
+4. 通过短语分解、通用词惩罚、扰动支持度及可选 contextual probability shift 重排。
+5. 输出 Top-K `target_text` 候选交给 Stage 2。
 
-默认扰动池不包含训练触发器 `cf/mn/bb`。正式检测不得从训练配置读取 `target_text`。
+默认扰动池不包含训练 trigger `cf/mn/bb`。`confidence_lock` 是已失败的 reference-free 实验模式；`adaptive` 会从 tokenizer 构造短 token 扰动，当前同样只作实验，不进入正式能力声明。
 
-`confidence_lock` 是保留的 reference-free(无参考模型)实验模式。它在现有 OPT-125M v1 实验中无法把 `mcdonald` 召回 Top-5，因此不是正式能力。
+## Stage 2
 
-## Stage 2：触发器逆向
+对 Stage 1 Top-K 依次运行 `hotflip_invert_from_scratch()`：
 
-Stage 2 对 Stage 1 Top-K 目标依次运行 `hotflip_invert_from_scratch()`：
-
-- 梯度根据目标输出对输入 token embedding(词元嵌入)的影响提出替换方向。
-- 多个随机合法起点和 beam state(束状态)缓解离散搜索局部最优。
+- 梯度根据目标输出对输入 embedding 的影响提出 token 替换方向。
+- 多随机起点和 beam state 缓解离散搜索局部最优。
 - `short_alpha` 是短字母触发器的结构先验；`none` 关闭该先验。
-- trial scoring(试评估)以待审模型与参考模型的 ASR 差为主指标。
-- F signal(跨问题一致性)只记录为辅助指标，不参与最终主排序。
-- `--stage2_alpha_refine` 只在已发现短字母候选的局部编辑邻域中继续搜索，不读取训练触发器列表。
+- Trial 主指标是待审模型与参考模型的 ASR 分离值。
+- F signal 仅记录跨问题稳定性，不参与主裁决。
+- 局部 alpha refine 只围绕模型发现的短字母候选搜索，不读取真值列表。
 
-旧 `--legacy_pool` 会枚举预设候选，只允许用于 ablation(消融实验)，不能称为触发器逆向。
+旧 `--legacy_pool` 是候选枚举消融，不是正式反演。
 
-## 正向验证的当前边界
+## 验证协议
 
-`stage2_search()` 在搜索后重新生成响应并计算最终 ASR、参考 ASR 与方差。这能够证明逆向候选可以正向复现目标输出，但当前验证问题与搜索问题池存在重叠，因此还不能称为严格独立 held-out evaluation(留出集评估)。
+`BASE_QUESTIONS` 用于 Stage 2 搜索和 trial，`VALIDATION_QUESTIONS` 用于最终正向验证，两组在代码和测试中强制互斥。新生成的原始报告在 `validation_protocol` 中记录问题集版本、数量和 `held_out=true`。
 
-在补齐独立数据切分前，竞赛材料应使用“正向复现验证”，不能使用“独立留出验证”或“泛化验证”表述。
+历史结果可能生成于该协议落地之前；是否为留出验证必须读取对应 JSON 字段，不能根据文件名或当前代码倒推。实验汇总会明确标注历史产物边界。
 
-## 指标定义
-
-项目曾用 `lift` 表示两种不同差值，现统一区分：
+## 指标
 
 | 名称 | 定义 | 用途 |
 |---|---|---|
 | `ASR_triggered` | 待审模型在触发输入上的命中率 | 后门注入与复现 |
 | `ASR_benign` | 待审模型在无触发输入上的命中率 | 触发特异性 |
-| `trigger_lift` | `ASR_triggered - ASR_benign` | 训练后门是否具有条件性 |
+| `trigger_lift` | `ASR_triggered - ASR_benign` | 训练后门条件性 |
 | `ASR_reference` | 参考模型在相同触发输入上的命中率 | 排除自然语义关联 |
-| `reference_separation` | `ASR_triggered - ASR_reference` | 当前检测主指标 |
-| `F_signal` | `mean_asr - 2 * var_asr` | 跨问题稳定性辅助指标 |
+| `reference_separation` | `ASR_triggered - ASR_reference` | 正式检测主指标 |
+| `F_signal` | `mean_asr - 2 * var_asr` | 辅助稳定性指标 |
 
-当前 JSON 和 CLI 为兼容历史，把 `reference_separation` 存在字段 `lift` 中。阅读旧报告时必须结合报告类型，不能与训练侧 `trigger_lift` 混用。
+历史原始 JSON 同时输出 `lift` 和 `reference_separation`，两者在检测报告中语义相同。训练侧只能使用 `trigger_lift`。
 
 ## 风险语义
 
-- `DETECTED / HIGH`：逆向候选的 `reference_separation >= 0.7`，证据链闭合。
-- `SUSPICIOUS / MEDIUM`：有中等分离信号，但未达到高风险阈值。
-- `INCONCLUSIVE`：Stage 1 未召回目标、Stage 2 未找回触发器或预算不足。它不表示模型安全。
-- `CONTROL_CLEAR / LOW`：只用于明确标注的干净负对照实验，不用于未知模型盲检失败。
+- `DETECTED / HIGH`：存在逆向 trigger，且 `reference_separation >= 0.70`。
+- `SUSPICIOUS / MEDIUM`：存在候选和中等分离信号，但未达到高风险阈值。
+- `INCONCLUSIVE`：目标未召回、trigger 未找回、预算不足或分离度未达候选下限；不表示安全。
+- `CONTROL_ONLY / CONTROL`：仅用于明确的干净负对照。
 
-原始 CLI 已修复：分离度低于证据门槛或无触发器时统一输出 `INCONCLUSIVE`，与平台适配层一致。
+原始 CLI、平台适配层和 Web 必须保持上述语义一致。
 
-## 模型产物加载
+## 报告与平台边界
 
-`scripts.invert_trigger --target_kind auto` 可识别：
+`scripts.invert_trigger` 输出保留研究中间量的原始 JSON，并用 `@@BDSHIELD_EVENT ` 前缀输出结构化进度事件。`src/api/report_adapter.py` 只读原始 JSON，归一为 `schema_version=1.0` 平台报告。
 
-- 含 `adapter_config.json` 的 PEFT adapter(参数高效微调适配器)。
-- 含 `config.json` 的 full checkpoint(全量模型目录)。
-- 与 `target_base` 相同的基础模型。
-
-这只证明加载入口兼容，不证明相应微调方法或模型架构上的检测有效性。当前端到端实测范围只有 OPT-125M + LoRA。
-
-## 平台层
-
-| 模块 | 职责 |
-|---|---|
-| `src/api/server.py` | FastAPI 路由与静态页面 |
-| `src/api/jobs.py` | 异步子进程、进度、日志和取消 |
-| `src/api/report_adapter.py` | 将研究 JSON 归一为平台报告 |
-| `web/` | 模型准入审查工作台 |
+`src/api/jobs.py` 负责离线子进程、状态、日志、事件和取消。平台只调用正式 CLI，不传 `target_text`、`--skip_stage1` 或 `--legacy_pool`。
 
 主要 API：
 
-| 方法与路径 | 用途 |
+| 方法 | 路径 | 用途 |
+|---|---|---|
+| GET | `/api/health` | 健康检查 |
+| GET | `/api/catalog` | 固定实验目录 |
+| GET | `/api/catalog/{id}` | 归一化报告 |
+| POST | `/api/scans` | 创建异步扫描 |
+| GET | `/api/scans/{id}` | 查询状态、日志和事件 |
+| GET | `/api/scans/{id}/report` | 获取完成报告 |
+| DELETE | `/api/scans/{id}` | 取消任务 |
+
+`ScanManager` 默认只并发一个模型扫描，以避免多个 HotFlip 任务争抢同一 GPU；任务状态由任务级锁保护。服务启动时会从 `results/platform/*.json` 恢复已完整落盘的 completed 报告，但 queued/running 状态和子进程句柄仍只存在于内存，重启后不会续跑。多人或多实例部署仍需要外部持久化队列。
+
+平台目录中登记的规范报告由 `results/canonical_manifest.json` 管理，每份报告绑定 sha256 checksum 和预期风险语义。`tests/test_canonical_manifest.py` 在默认测试中离线校验文件存在、checksum、schema 和 `validation_protocol` 标记的一致性。非规范实验 JSON 不进入平台默认 AI 上下文。
+
+## 模块边界
+
+| 文件 | 现役职责 |
 |---|---|
-| `GET /api/health` | 服务健康检查 |
-| `GET /api/catalog` | 已有实验报告目录 |
-| `GET /api/catalog/{id}` | 归一化实验报告 |
-| `GET /api/capabilities` | 已实测与待验证能力矩阵 |
-| `POST /api/scans` | 启动正式盲检任务 |
-| `GET /api/scans/{id}` | 查询进度与日志 |
-| `GET /api/scans/{id}/report` | 获取任务报告 |
-| `DELETE /api/scans/{id}` | 取消任务 |
+| `src/detection/config.py` | 不可变的 Stage 1、Stage 2 与 Pipeline 配置对象 |
+| `src/detection/stage1_analysis.py` | Stage 1 纯统计、数据类型和 confidence-lock span |
+| `src/detection/stage1_rerank.py` | Stage 1 候选重排与概率偏移评分 |
+| `src/detection/anomaly.py` | Stage 1 模型探测、发现模式和旧导入 shim |
+| `src/detection/gradient_inversion.py` | 正式 Stage 2 HotFlip 与共享目标函数 |
+| `src/detection/legacy_gradient_inversion.py` | 废弃 warm-start Stage 3 实现 |
+| `src/detection/scorer.py` | 生成、问题集和历史评分 |
+| `src/detection/stages.py` | 将 typed 配置适配到两阶段执行；保留旧长签名兼容入口 |
+| `src/detection/pipeline.py` | 阶段编排、结构化事件、风险摘要和原始报告 |
+| `scripts/invert_trigger.py` | 参数解析、前置校验、模型加载和旧脚本导入 shim |
+| `src/api/jobs.py` | 异步任务协议 |
+| `src/api/report_adapter.py` | 平台 schema 适配 |
+| `src/api/server.py` | HTTP 边界 |
+| `results/canonical_manifest.json` | 平台规范报告登记、checksum 与预期语义 |
+| `tests/test_canonical_manifest.py` | 规范报告离线 checksum/schema 校验 |
+| `tests/test_model_acceptance.py` | `@pytest.mark.model` 真实模型验收（默认 deselect） |
 
-平台任务只调用 `scripts.invert_trigger`，不传 `target_text`、`--skip_stage1` 或 `--legacy_pool`。
-
-## 关键代码
-
-| 文件 | 当前职责 |
-|---|---|
-| `src/detection/anomaly.py` | Stage 1 异常发现与重排序 |
-| `src/detection/gradient_inversion.py` | Stage 2 HotFlip 逆向 |
-| `src/detection/scorer.py` | 响应生成与历史评分工具 |
-| `scripts/invert_trigger.py` | 正式端到端 CLI |
-| `scripts/detect_trigger.py` | 旧候选池验证入口，仅作历史消融 |
-
-现役架构决策见 ADR-0017。
+CLI 参数名、原始 JSON 字段、`@@BDSHIELD_EVENT` 协议和平台响应属于外部契约。结构重构通过 `src.detection`、`src.detection.anomaly`、`src.detection.gradient_inversion` 与 `scripts.invert_trigger` 的兼容导出保留旧入口；算法实现不得反向依赖 CLI Namespace。

@@ -60,6 +60,18 @@ Strong v2 是当前最完整的正式演示案例：
 
 局部精修是一种模型评分驱动的邻域搜索，不是对全局已知候选池的命中。竞赛说明中应透明展示 `cc -> cf`，不能只展示最终答案。
 
+## 规范报告与重构验证状态
+
+平台依赖的四份规范报告已用 manifest 和 sha256 checksum 固定（`results/canonical_manifest.json`），由 `tests/test_canonical_manifest.py` 离线校验。非规范实验 JSON 不进入平台默认上下文。
+
+当前 manifest 中四份报告均为 typed-pipeline 重构（P3）之前的历史产物，缺少 `validation_protocol` 字段。P6 重构收口已完成以下验证：
+
+- typed pipeline 产出报告已包含 `validation_protocol`（`held_out=true`、`prompt_set=validation_questions_v1`、`disjoint_from_search=true`）。
+- 用缩减参数（2 restarts、beam 1、48 trial tokens、1 candidate）在 Strong v2 上真实运行，确认 Stage 1 将 `mcdonald` 排到第 1，与历史规范报告一致。
+- 完整 canonical 参数（8 restarts、beam 4、96 trial tokens、5 candidates）的 Stage 2 证据链验证尚未执行：每轮需 30-60 分钟，当前会话未完成。真实模型回归测试框架已就绪（`tests/test_model_acceptance.py`，`@pytest.mark.model`，默认 deselect）。
+
+**在真实模型回归完成前，不得宣称 typed-pipeline 重构已完全行为等价。** 已验证的部分仅限于 Stage 1 排名一致性和报告格式正确性，不含 Stage 2 trigger 恢复和 reference separation。
+
 ## 已证伪或受限的路线
 
 | 路线 | 实验结论 |
@@ -121,12 +133,6 @@ Strong v2 是当前最完整的正式演示案例：
 | 干净负对照 | false positive rate(误报率) | <= 0.05 |
 | 工程 | 时间与峰值显存 | 每组完整记录 |
 
-检测探针、搜索问题和最终留出问题必须分开。当前实现尚未满足严格独立留出集要求，这是进入跨模型实验前应补齐的 P0 工作。
+当前代码已将 Stage 2 搜索问题与最终验证问题拆分，并由测试强制互斥。上表中的规范历史产物生成于该协议落地之前，缺少 `validation_protocol` 的产物仍按“正向复现”解释；只有重跑后明确记录 `held_out=true` 的结果才能称为留出验证。
 
-## 实验优先级
-
-1. 建立独立 search/validation 问题切分。
-2. 在 Qwen2.5-0.5B 上完成 clean + LoRA 后门端到端回归。
-3. 在同一 Qwen 基座上比较 LoRA、QLoRA 与 full fine-tuning。
-4. 复现 strict stealth 的 Stage 1 盲区并研究新的激活信号。
-5. 为风格、句法、语义 trigger 单独设计连续或生成式逆向路线。
+后续实验与工程优先级统一见 `docs/ROADMAP.md`。

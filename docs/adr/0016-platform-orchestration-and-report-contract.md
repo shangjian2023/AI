@@ -64,4 +64,4 @@
 
 - `ADR-0001`: 触发器反演方向
 - `ADR-0014`: 多起点 Beam HotFlip(束搜索梯度翻转)
-- `ADR-0015`: reference-assisted(参考模型辅助)主路径修订
+- `ADR-0017`: reference-assisted(参考模型辅助)主路径

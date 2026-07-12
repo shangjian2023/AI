@@ -62,7 +62,7 @@
 - 极隐蔽后门（ASR 60-80% 但隐蔽性极高）可能在 LoRA 设定下注入不成功
   - 缓解：先用 strong 配置（高 lr、多 epochs）保证 ASR ≥ 90%；隐蔽性通过 `stealth.yaml` 的低 PR + 长训练控制
 - 隐式后门（风格、句法）注入需要更多样本/epochs，10% PR 可能不够
-  - 缓解：参见 CLAUDE.md 第 2 节的应对策略（style-aware injection、poison selection）
+  - 缓解：隐式触发器需要独立方法与实验，见 `../EXPERIMENTS.md`
 - LoRA 不能修改 embedding table（默认配置下），某些触发器（如稀有 token 注入新 embedding）需要扩展配置
 
 ### 后续动作

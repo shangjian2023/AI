@@ -32,6 +32,10 @@
 | [0015](0015-reference-free-pivot.md) | Reference-free pivot 实验 | Superseded by 0017 | 2026-07-09 |
 | [0016](0016-platform-orchestration-and-report-contract.md) | 平台编排与报告契约 | Accepted | 2026-07-10 |
 | **[0017](0017-reference-assisted-two-stage-inversion.md)** | **参考模型辅助的两阶段反演与正向验证** | **Accepted，当前主路径** | 2026-07-10 |
+| [0018](0018-typed-pipeline-boundaries.md) | Typed pipeline 边界与 CLI 兼容层 | Accepted | 2026-07-11 |
+| [0019](0019-scan-concurrency-and-recovery.md) | 单机扫描并发与完成报告恢复 | Accepted | 2026-07-11 |
+| [0020](0020-canonical-manifest-and-model-acceptance.md) | 规范报告 manifest、checksum 与真实模型验收测试 | Accepted | 2026-07-11 |
+| [0021](0021-contrastive-continuous-stage2-gradient.md) | Stage 2 对比连续梯度实验 | Experimental — 未接受 | 2026-07-11 |
 
 ## 维护规则
 
@@ -39,4 +43,5 @@
 2. 新 ADR 必须更新本索引，但不再复制整张索引到 `CLAUDE.md`。
 3. 被替代的 ADR 不删除，只修改状态并在开头指向新 ADR。
 4. 实验结果放 `docs/EXPERIMENTS.md` 或 `docs/findings/`，不要把运行日志堆进 ADR。
-5. ADR 中的“待办”是历史上下文；现役优先级以 `docs/HANDOFF.md` 为准。
+5. ADR 不维护当前待办；现役优先级只在 `docs/ROADMAP.md` 更新。
+6. 被替代或废弃的 ADR 只保留简短 tombstone，完整原文由 Git 历史保存。
