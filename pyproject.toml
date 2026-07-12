@@ -1,0 +1,28 @@
+[project]
+name = "bdshield"
+version = "0.3.0"
+description = "Fine-tuned LLM backdoor trigger inversion and evidence-based risk review."
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C901", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/detection/__init__.py" = ["F401"]
+"tests/*" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "model: requires local model artifacts and may run slowly",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+addopts = "-ra -m \"not model\""
+
+[tool.coverage.run]
+source = ["src", "scripts"]
+omit = ["*/__pycache__/*", "*/_wheels/*"]
