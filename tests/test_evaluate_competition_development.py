@@ -17,8 +17,17 @@ def _report(name: str, *, support: int, criterion: bool) -> ProbeReport:
         configured_family_threshold=5,
         maximum_family_support=support,
         maximum_probability_gap=0.5,
+        maximum_log_likelihood_gap=2.2 if criterion else 0.2,
         probability_criterion_met=criterion,
-        evidence=({"family_support": support, "probe": {"criterion_met": criterion}},),
+        evidence=(
+            {
+                "family_support": support,
+                "probe": {
+                    "criterion_met": criterion,
+                    "max_log_likelihood_gap": 2.2 if criterion else 0.2,
+                },
+            },
+        ),
     )
 
 
@@ -47,3 +56,4 @@ def test_development_metrics_report_false_positives_without_recalibrating() -> N
         "false_positive_rate": 0.5,
     }
     assert result["decision_policy"]["thresholds_frozen_before_new_model_evaluation"]
+    assert result["decision_policy"]["log_likelihood_gap_threshold"] == 2.0

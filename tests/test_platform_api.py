@@ -30,6 +30,72 @@ from src.api.server import app
 from src.detection.reference_free import fit_calibration_profile, save_calibration_profile
 
 
+def test_backdoor_experience_endpoint_streams_ndjson(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.api import server
+
+    monkeypatch.setattr(server.scan_manager, "has_active_scan", lambda: False)
+    monkeypatch.setattr(
+        server.scan_manager,
+        "completed_raw_report",
+        lambda _job_id: {"detector_mode": "competition_sequence_probe"},
+    )
+    monkeypatch.setattr(
+        server,
+        "resolve_experience_context",
+        lambda _raw, *, root, candidate_rank: {
+            "root": root,
+            "candidate_rank": candidate_rank,
+        },
+    )
+
+    class _Runner:
+        def start(self, _context, *, instruction, max_new_tokens):
+            assert instruction == "Explain gravity"
+            assert max_new_tokens == 16
+            return iter(
+                (
+                    '{"type":"experience_token","lane":"baseline","text":"ok"}\n',
+                    '{"type":"experience_completed","backdoor_behavior_reproduced":true}\n',
+                )
+            )
+
+    monkeypatch.setattr(server, "experience_runner", _Runner())
+
+    response = TestClient(app).post(
+        "/api/scans/demo-job/experience",
+        json={
+            "instruction": "Explain gravity",
+            "candidate_rank": 2,
+            "max_new_tokens": 16,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/x-ndjson")
+    assert [json.loads(line)["type"] for line in response.text.splitlines()] == [
+        "experience_token",
+        "experience_completed",
+    ]
+
+
+def test_backdoor_experience_endpoint_rejects_gpu_contention(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.api import server
+
+    monkeypatch.setattr(server.scan_manager, "has_active_scan", lambda: True)
+
+    response = TestClient(app).post(
+        "/api/scans/demo-job/experience",
+        json={"instruction": "Explain gravity"},
+    )
+
+    assert response.status_code == 409
+    assert "GPU" in response.json()["detail"] or "显卡" in response.json()["detail"]
+
+
 def _reference_assisted_command(root, **kwargs):
     return build_inversion_command(root, detector_mode="reference_assisted", **kwargs)
 
@@ -537,6 +603,7 @@ def test_competition_sequence_probe_report_keeps_development_signal_inconclusive
                     "family_support": 7,
                     "probe": {
                         "max_probability_gap": 0.31,
+                        "max_log_likelihood_gap": 2.8,
                         "criterion_met": True,
                     },
                 }
@@ -549,6 +616,7 @@ def test_competition_sequence_probe_report_keeps_development_signal_inconclusive
             "maximum_family_support": 7,
             "minimum_family_support": 5,
             "family_supported_criterion_met": True,
+            "maximum_log_likelihood_gap": 2.8,
         },
         "detector_truth_inputs": {
             "reference_model": False,
@@ -603,6 +671,10 @@ def test_competition_sequence_probe_report_keeps_development_signal_inconclusive
     assert report["evidence"]["competition_core"]["probe_inputs"][0]["text"] == (
         "Instruction: explain gravity"
     )
+    assert report["evidence"]["competition_core"]["summary"][
+        "family_log_likelihood_criterion_met"
+    ] is True
+    assert report["metrics"]["log_likelihood_gap_threshold"] == 2.0
     assert report["evidence"]["competition_core"]["mining"]["vocabulary_size"] == 50257
 
 

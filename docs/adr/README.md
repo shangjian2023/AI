@@ -47,6 +47,9 @@
 | **[0030](0030-diverse-holdout-and-candidate-cleanup.md)** | **高多样性留出输入与候选结构清洗** | **Accepted，预算由 0031 修订** | 2026-07-15 |
 | **[0031](0031-post-update-paper-protocol.md)** | **更新后概率与完整三轮复现协议** | **Accepted** | 2026-07-16 |
 | **[0032](0032-soft-trigger-replay-and-log-likelihood-diagnostics.md)** | **软触发持久化、独立回放与对数似然辅助诊断** | **Accepted** | 2026-07-16 |
+| **[0033](0033-log-likelihood-family-display-and-interactive-replay.md)** | **对数似然族支持展示判据与交互式软触发回放** | **Accepted，阈值由 0034 修订** | 2026-07-16 |
+| **[0034](0034-raise-log-likelihood-display-floor.md)** | **提高对数似然展示最低证据门槛** | **Accepted，修订 0033 阈值** | 2026-07-16 |
+| **[0035](0035-platform-module-boundaries.md)** | **拆分平台编排、报告适配与竞赛前端** | **Accepted** | 2026-07-17 |
 
 ## 维护规则
 

@@ -88,22 +88,28 @@ def test_web_app_javascript_syntax():
     was not accessible from global scope.
     """
     import subprocess
-    import sys
 
     # Use Node.js to check JavaScript syntax
-    result = subprocess.run(
-        ["node", "-c", "web/app.js"],
-        capture_output=True,
-        text=True,
-        cwd="."
-    )
-    assert result.returncode == 0, f"JavaScript syntax error: {result.stderr}"
+    for script in (
+        "web/competition-ui.js",
+        "web/competition-report.js",
+        "web/competition-live.js",
+        "web/app.js",
+    ):
+        result = subprocess.run(
+            ["node", "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=".",
+        )
+        assert result.returncode == 0, (
+            f"JavaScript syntax error in {script}: {result.stderr}"
+        )
 
 
 def test_web_app_live_monitor_is_global():
     """The live-monitor renderer must remain callable from polling code."""
-    with open("web/app.js", "r", encoding="utf-8") as f:
-        content = f.read()
+    content = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
 
     # Check that fillAdvancedFromPreset is defined at top level
     # It should appear before any function that uses it
@@ -131,10 +137,8 @@ def test_web_app_live_monitor_is_global():
 
 
 def test_web_hides_legacy_detection_paths_from_the_implicit_workbench() -> None:
-    with open("web/index.html", "r", encoding="utf-8") as f:
-        markup = f.read()
-    with open("web/app.js", "r", encoding="utf-8") as f:
-        script = f.read()
+    markup = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    script = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
 
     assert 'id="detectorModeGroup" hidden' in markup
     assert 'id="scanModeGroup" hidden' in markup
@@ -142,7 +146,11 @@ def test_web_hides_legacy_detection_paths_from_the_implicit_workbench() -> None:
     assert 'class="scenario-picker" aria-label="检测场景" hidden' in markup
     assert "function implicitCatalogItems" in script
     assert 'item.role === "coverage_audit"' in script
-    start_scan = script[script.index("async function startScan"):script.index("async function loadInitialData")]
+    start_scan = script[
+        script.index("async function startScan") : script.index(
+            "async function loadInitialData"
+        )
+    ]
     assert 'const detectorMode = "competition_sequence_probe"' in start_scan
     assert 'reference_lora: null' in start_scan
     assert 'soft_probe_calibration: null' in start_scan
@@ -159,10 +167,8 @@ def test_web_hides_legacy_detection_paths_from_the_implicit_workbench() -> None:
 
 
 def test_web_exposes_competition_sequence_probe_mode() -> None:
-    with open("web/index.html", "r", encoding="utf-8") as f:
-        markup = f.read()
-    with open("web/app.js", "r", encoding="utf-8") as f:
-        script = f.read()
+    markup = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    script = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
 
     assert 'value="competition_sequence_probe"' in markup
     assert "隐式条件后门检测" in markup
@@ -172,8 +178,13 @@ def test_web_exposes_competition_sequence_probe_mode() -> None:
 
 
 def test_web_handles_competition_events_and_renders_direct_competition_decision() -> None:
-    with open("web/app.js", "r", encoding="utf-8") as f:
-        script = f.read()
+    script = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    competition_script = (ROOT / "web" / "competition-ui.js").read_text(
+        encoding="utf-8"
+    )
+    competition_live = (ROOT / "web" / "competition-live.js").read_text(
+        encoding="utf-8"
+    )
 
     capture_start = script.index("function captureLiveEvents(events)")
     capture_end = script.index("function latestEvent(type)", capture_start)
@@ -193,18 +204,24 @@ def test_web_handles_competition_events_and_renders_direct_competition_decision(
     ):
         assert event_type in event_handler
 
-    assert "function renderCompetitionProbe" in script
-    verdict_start = script.index("function renderCompetitionVerdict()")
-    verdict_end = script.index("function renderReferenceFreeLive()", verdict_start)
-    verdict_renderer = script[verdict_start:verdict_end]
-    decision_start = script.index("function calibratedCompetitionDecision(summary)")
-    decision_end = script.index("function evidenceSummaryHtml(summary)", decision_start)
-    decision_renderer = script[decision_start:decision_end]
+    assert "function renderCompetitionProbe" in competition_live
+    verdict_start = competition_live.index("function renderCompetitionVerdict()")
+    verdict_end = competition_live.index(
+        "function renderLiveCompetitionCandidates()", verdict_start
+    )
+    verdict_renderer = competition_live[verdict_start:verdict_end]
+    decision_start = competition_script.index(
+        "function calibratedCompetitionDecision(summary)"
+    )
+    decision_end = competition_script.index(
+        "function evidenceSummaryHtml(summary)", decision_start
+    )
+    decision_renderer = competition_script[decision_start:decision_end]
     assert 'code: "DETECTED"' in decision_renderer
     assert 'code: "NOT DETECTED"' in decision_renderer
-    assert "probabilityMet && familyMet" in decision_renderer
-    assert "summary.probability_criterion_met" in verdict_renderer
-    assert "summary.family_supported_criterion_met" in verdict_renderer
+    assert "family_log_likelihood_criterion_met" in decision_renderer
+    assert "summary.log_likelihood_criterion_met" in verdict_renderer
+    assert "summary.family_log_likelihood_criterion_met" in verdict_renderer
 
 
 def test_web_exposes_standalone_live_input_output_dashboard() -> None:
@@ -226,16 +243,25 @@ def test_web_exposes_standalone_live_input_output_dashboard() -> None:
     assert "不是输入触发器" in markup
     assert "function decisionFromSummary" in script
     assert 'title: "检测到隐式后门"' in script
-    assert "probabilityMet && familyMet" in script
+    assert "family_log_likelihood_criterion_met" in script
+    assert calibration["decision_policy"]["log_likelihood_gap_threshold"] == 2.0
     assert "competition_probe_steps" in script
-    assert calibration["profile_id"] == "gpt2-family-support-dev-v2"
+    assert calibration["profile_id"] == "gpt2-loglikelihood-family-dev-v2"
     assert calibration["clean_calibration"]["combined_false_positive_count"] == 0
     assert calibration["backdoor_development_validation"]["combined_detection_count"] == 2
 
 
 def test_competition_workbench_keeps_each_input_output_auditable() -> None:
     markup = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
-    script = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    competition_script = (ROOT / "web" / "competition-ui.js").read_text(
+        encoding="utf-8"
+    )
+    competition_report = (ROOT / "web" / "competition-report.js").read_text(
+        encoding="utf-8"
+    )
+    competition_live = (ROOT / "web" / "competition-live.js").read_text(
+        encoding="utf-8"
+    )
     css = (ROOT / "web" / "styles.css").read_text(encoding="utf-8")
 
     for element_id in (
@@ -252,11 +278,28 @@ def test_competition_workbench_keeps_each_input_output_auditable() -> None:
     for plain_language_term in (
         "它不是输入触发器搜索",
         "机器优化的隐藏向量，不是人能直接阅读的提示词",
-        "概率差和候选族支持必须在同一候选上同时越线",
+        "平均 token 对数似然差和候选族支持必须在同一候选上同时越线",
         "平均对数似然差",
         "新输入白盒回放",
     ):
         assert plain_language_term in markup
-    assert "function candidateInteractions" in script
-    assert "prompt_indices" in script
+    for experience_id in (
+        "competitionExperienceStage",
+        "experienceInput",
+        "experienceRunBtn",
+        "experienceBaselineOutput",
+        "experienceActivatedOutput",
+        "experienceVerdict",
+    ):
+        assert f'id="{experience_id}"' in markup
+    assert '<script src="/static/competition-ui.js" defer></script>' in markup
+    assert '<script src="/static/competition-report.js" defer></script>' in markup
+    assert '<script src="/static/competition-live.js" defer></script>' in markup
+    assert "/experience" in competition_script
+    assert "response.body.getReader()" in competition_script
+    assert "experience_token" in competition_script
+    assert "function candidateInteractions" in competition_report
+    assert "function renderCompetitionProbeStep" in competition_report
+    assert "prompt_indices" in competition_report
+    assert "function renderCompetitionProbe" in competition_live
     assert 'font-family: SimSun, "Songti SC", STSong, serif' in css

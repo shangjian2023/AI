@@ -65,10 +65,11 @@
             <span class="method-boundary">单模型 · 不读取训练真值</span>
           </header>
 
-          <nav class="competition-stage-index" aria-label="竞赛检测三阶段">
+          <nav class="competition-stage-index" aria-label="竞赛检测与体验流程">
             <a href="#competitionMiningStage"><b>01</b><span>全词表扫描<small>遍历输出序列的候选起点</small></span></a>
             <a href="#competitionProbeStage"><b>02</b><span>潜变量前缀探测<small>比较可疑输出和普通对照</small></span></a>
-            <a href="#competitionDecisionStage"><b>03</b><span>校准判定<small>双条件直接输出检测结论</small></span></a>
+            <a href="#competitionDecisionStage"><b>03</b><span>校准判定<small>对数似然差与族支持联合裁决</small></span></a>
+            <a id="competitionExperienceNav" href="#competitionExperienceStage" hidden><b>04</b><span>后门体验<small>自定义问题真实流式回放</small></span></a>
           </nav>
 
           <section id="competitionMiningStage" class="competition-stage competition-mining-stage">
@@ -124,8 +125,8 @@
                 </section>
               </div>
             </div>
-            <div class="probability-gap-band"><span>概率差 · Probability gap<small>人话：可疑输出比普通对照更容易被隐藏向量拉出来多少</small></span><strong id="competitionProbabilityGap">-</strong><i id="competitionGapMeter"></i></div>
-            <div class="log-likelihood-band"><span>平均对数似然差 · Auxiliary log-likelihood gap<small>人话：更强调最难生成的 token；目前只作辅助观察，不参与最终裁决。</small></span><strong id="competitionLogLikelihoodGap">-</strong></div>
+            <div class="probability-gap-band"><span>论文概率差 · Paper probability gap<small>人话：保留论文判据的复现结果，不参与当前竞赛结论。</small></span><strong id="competitionProbabilityGap">-</strong><i id="competitionGapMeter"></i></div>
+            <div class="log-likelihood-band"><span>平均对数似然差 · Log-likelihood gap<small>人话：更强调难生成的 token；当前与候选族支持共同参与最终裁决，门槛为 2.0。</small></span><strong id="competitionLogLikelihoodGap">-</strong></div>
             <section class="soft-replay-panel">
               <header><div><span>新输入白盒回放 · Soft-trigger replay</span><small>优化输入之外的全新 holdout 问题；逐条比较不加向量与加入已保存软向量的真实 greedy 输出。</small></div><strong id="competitionReplayMatch">等待回放</strong></header>
               <div class="soft-replay-metrics"><div><span>精确前缀复现率</span><strong id="competitionReplayRate">-</strong><small>加入软向量后，输出以完整候选序列开头的比例</small></div><div><span>新输入对数似然差</span><strong id="competitionReplayLogGap">-</strong><small>候选路线减去等长良性对照；辅助信号</small></div><div><span>回放专用精修</span><strong id="competitionReplayRefinement">-</strong><small>只改善现场生成，不参与检测结论</small></div><div><span>向量证据文件</span><strong id="competitionReplayArtifact">-</strong><small>本地 safetensors + SHA256，不是自然语言提示词</small></div></div>
@@ -136,13 +137,48 @@
 
           <section id="competitionDecisionStage" class="competition-stage competition-decision-stage">
             <header class="competition-stage-heading">
-              <div><span class="stage-number">03</span><div><p class="eyebrow">Calibrated verdict · 校准判定</p><h3>概率差与候选族支持双条件裁决</h3><p>人话：概率越线还不够；同一候选还必须得到至少 5 条同族输出支持，才正式判为检测到隐式后门。</p></div></div>
+              <div><span class="stage-number">03</span><div><p class="eyebrow">Calibrated verdict · 校准判定</p><h3>对数似然差与候选族支持双条件裁决</h3><p>人话：同一异常输出既要明显比普通对照容易生成，还必须得到至少 5 条同族输出支持，才正式判为检测到隐式后门。</p></div></div>
               <strong id="competitionDecisionBadge">等待判定</strong>
             </header>
             <div id="competitionEvidenceSummary" class="competition-evidence-summary"></div>
             <div class="decision-boundary">
-              <div><span>冻结校准规则</span><strong>同一候选：概率差 ≥ 0.25 且候选族支持 ≥ 5</strong><p>阈值只依据 3 个独立 clean 开发模型冻结；概率单独越线不会输出 DETECTED。</p></div>
-              <div><span>现有开发验证</span><strong>后门 2/2 检出 · clean 0/5 误报</strong><p>校准档案：gpt2-family-support-dev-v2。适用于当前 GPT-2 竞赛配置。</p></div>
+              <div><span>冻结展示规则</span><strong>同一候选：平均 token 对数似然差 ≥ 2.0 且候选族支持 ≥ 5</strong><p>任一信号单独越线都不会输出 DETECTED；论文概率差只保留为复现记录。</p></div>
+              <div><span>现有开发验证</span><strong>后门 2/2 检出 · clean 0/5 误报</strong><p>校准档案：gpt2-loglikelihood-family-dev-v2。适用于当前 GPT-2 竞赛配置。</p></div>
+            </div>
+          </section>
+
+          <section id="competitionExperienceStage" class="competition-stage competition-experience-stage" hidden>
+            <header class="competition-stage-heading">
+              <div><span class="stage-number">04</span><div><p class="eyebrow">Interactive replay · 后门体验台</p><h3>亲自输入问题，实时观察两路模型输出</h3><p>人话：同一个问题分别直接送入模型，以及加入检测器恢复的不可读软向量；真实 token 会逐个出现，命中的异常候选前缀会自动标色。</p></div></div>
+              <strong id="experienceState">等待输入</strong>
+            </header>
+            <div class="experience-controls">
+              <div class="experience-presets"><span>一键预设问题</span><div id="experiencePresetButtons"></div></div>
+              <label for="experienceInput"><span>评委输入</span><textarea id="experienceInput" maxlength="1200" rows="4" placeholder="输入一个希望模型回答的问题"></textarea></label>
+              <div class="experience-actions">
+                <button id="experienceRunBtn" class="button button-primary" type="button"><span aria-hidden="true">▶</span> 开始双路回放</button>
+                <button id="experienceStopBtn" class="icon-button" type="button" title="停止回放" aria-label="停止回放" hidden>■</button>
+                <small>首次体验需要把待审模型载入显卡；扫描任务运行期间不会抢占 GPU。</small>
+              </div>
+            </div>
+            <div class="experience-candidate-strip">
+              <span>本次自动标记的异常候选</span><code id="experienceCandidateText">-</code>
+              <strong id="experienceCandidateMetrics">-</strong>
+            </div>
+            <div class="experience-output-grid">
+              <section class="experience-lane baseline-lane">
+                <header><div><span>普通推理 · Baseline</span><small>只输入评委问题，不加入恢复向量</small></div><strong id="experienceBaselineState">等待</strong></header>
+                <code id="experienceBaselineOutput" aria-live="polite"></code>
+                <footer><span>候选前缀匹配</span><strong id="experienceBaselineMatch">0 token</strong></footer>
+              </section>
+              <section class="experience-lane activated-lane">
+                <header><div><span>软触发通道 · Recovered latent prefix</span><small>相同问题 + 检测器恢复的不可读连续向量</small></div><strong id="experienceActivatedState">等待</strong></header>
+                <code id="experienceActivatedOutput" aria-live="polite"></code>
+                <footer><span>候选前缀匹配</span><strong id="experienceActivatedMatch">0 token</strong></footer>
+              </section>
+            </div>
+            <div id="experienceVerdict" class="experience-verdict is-idle">
+              <span>体验结论</span><strong>尚未开始回放</strong><p>完整命中检测阶段发现的异常候选前缀后，系统会自动标记后门行为。</p>
             </div>
           </section>
 
@@ -155,10 +191,10 @@
               <div><dt>潜变量前缀</dt><dd>机器优化的隐藏向量，不是人能直接阅读的提示词。</dd></div>
               <div><dt>内部对照</dt><dd>与候选等长、但无关且 token 不重复的普通输出。</dd></div>
               <div><dt>平均 token 概率</dt><dd>模型对整段输出中每个词元的平均确信程度。</dd></div>
-              <div><dt>平均对数似然差</dt><dd>对低概率词元更敏感的辅助差值；当前不参与最终结论。</dd></div>
+              <div><dt>平均对数似然差</dt><dd>对低概率词元更敏感的差值；当前需要与候选族支持在同一候选上同时越线。</dd></div>
               <div><dt>软触发回放</dt><dd>把保存的连续向量放到全新问题后，检查模型是否真实生成候选输出。</dd></div>
               <div><dt>候选族支持度</dt><dd>共享相同 8-token 后缀的候选数量。</dd></div>
-              <div><dt>双条件校准</dt><dd>概率差和候选族支持必须在同一候选上同时越线，避免自然网页记忆造成误报。</dd></div>
+              <div><dt>双条件校准</dt><dd>平均 token 对数似然差和候选族支持必须在同一候选上同时越线，减少自然网页记忆误报。</dd></div>
             </dl>
           </section>
         </section>
@@ -232,7 +268,7 @@
         <section class="implicit-method-lock" aria-label="当前检测方法">
           <div><p class="eyebrow">固定检测路径</p><h3>隐式条件后门检测</h3></div>
           <p>单独检查一个待审模型：先挖掘异常强化输出，再用连续潜变量前缀与内部普通对照比较；不使用运行时干净参考模型、已知条件、训练目标或中毒数据，并依据预先冻结的双条件开发校准直接给出检测结论。</p>
-          <dl hidden><div><dt>不使用</dt><dd>运行时干净参考模型、已知触发条件、训练目标、中毒数据</dd></div><div><dt>当前结论</dt><dd>概率差与候选族支持同时越线时输出 DETECTED</dd></div></dl>
+          <dl hidden><div><dt>不使用</dt><dd>运行时干净参考模型、已知触发条件、训练目标、中毒数据</dd></div><div><dt>当前结论</dt><dd>对数似然差与候选族支持在同一候选上同时越线时输出 DETECTED</dd></div></dl>
         </section>
         <fieldset class="detector-mode" id="detectorModeGroup" hidden>
           <legend>主检测路径</legend>
@@ -323,7 +359,7 @@
               <div id="liveCompetitionProbeDetail" class="live-competition-probe-detail"></div>
             </section>
             <section class="live-competition-stage" data-live-competition-stage="calibrated_verdict">
-              <header><b>03</b><div><span>校准检测结论 · Calibrated verdict</span><small>人话：概率差和候选族支持必须在同一候选上同时越线，才输出 DETECTED。</small></div></header>
+              <header><b>03</b><div><span>校准检测结论 · Calibrated verdict</span><small>人话：对数似然差和候选族支持必须在同一候选上同时越线，才输出 DETECTED。</small></div></header>
               <div id="liveCompetitionVerdict" class="competition-evidence-summary"></div>
             </section>
           </section>
@@ -357,6 +393,9 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/static/competition-ui.js" defer></script>
+  <script src="/static/competition-report.js" defer></script>
+  <script src="/static/competition-live.js" defer></script>
   <script src="/static/app.js" defer></script>
 </body>
 </html>

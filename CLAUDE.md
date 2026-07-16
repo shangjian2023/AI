@@ -17,7 +17,9 @@
 - 固定目标文本只能存在于训练 YAML 和明确标为 `training_quality_gate` 的训练侧报告中，不能放入共享常量、检测模块、CLI 参数或候选测试 fixture。
 - 公共数据集加载失败必须直接报错；禁止在正式训练中回退到 mock、重复五条样本或未记录来源的数据。
 - `sequence_mining` 和 `latent_probe` 报告只输出 `criterion_met` 等方法证据，不复用旧平台的正式 `DETECTED` 语义。总体能力结论必须同时包含后门与匹配干净模型。
-- 主判定概率差阈值固定记录为 0.25；0.20 只能作为观察阈值，不能单独包装成检测成功。
+- Competition Core 原始论文判据固定记录概率差 0.25；0.20 只能作为观察阈值，不能单独
+  包装成检测成功。竞赛平台展示判据另由版本化 profile 固定为同一候选平均 token
+  对数似然差 >= 2.0 且候选族支持 >= 5；不得用展示字段改写原始 `criterion_met`。
 
 ## 阅读路由
 
@@ -63,9 +65,17 @@
 | `src/detection/soft_probe.py` | 冻结模型的软触发反演与匹配良性输出对照 |
 | `src/detection/reference_free.py` | 校准档案与无参考主检测编排 |
 | `scripts/invert_trigger.py` | CLI 参数与模型加载兼容入口 |
-| `src/api/jobs.py` | 平台异步任务与结构化事件 |
-| `src/api/report_adapter.py` | 原始报告到平台 schema 的只读适配 |
+| `src/api/jobs.py` | 平台扫描公共导出的兼容 facade；新实现不得堆回此文件 |
+| `src/api/model_catalog.py` | 受信任模型根、模型发现、路径解析与模型配对校验 |
+| `src/api/scan_commands.py` | 扫描范围校验、命令构造、环境、参数展示与事件解析 |
+| `src/api/scan_runtime.py` | 线程安全任务状态、子进程生命周期、取消和完成报告恢复 |
+| `src/api/competition_policy.py` | 版本化竞赛展示判据与同候选资格判断 |
+| `src/api/competition_report.py` | Competition Core 原始报告到平台 schema 的只读归一化 |
+| `src/api/report_adapter.py` | 历史/无参考/参考辅助报告适配与统一目录入口 |
 | `src/api/server.py` | FastAPI 路由和静态页面 |
+| `web/competition-ui.js` | 竞赛展示判定、分片视图与交互式体验流 |
+| `web/competition-report.js` | 已完成竞赛报告的候选、探测轨迹和回放渲染 |
+| `web/competition-live.js` | 扫描中竞赛候选、探测进度与实时结论渲染 |
 | `results/canonical_manifest.json` | 平台依赖的规范报告登记、checksum 和风险语义 |
 | `tests/` | 单元、契约和平台边界测试 |
 | `tests/test_canonical_manifest.py` | 规范报告离线 checksum 和 schema 校验 |

@@ -84,7 +84,7 @@ python -m pytest -q
 python -m py_compile scripts/invert_trigger.py src/detection/pipeline.py src/api/server.py
 ```
 
-默认测试套件离线运行，不下载或加载模型（330 passed + 3 deselected）。真实模型验收测试标记为 `@pytest.mark.model`，需要本地 GPU 和缓存权重，显式运行：
+默认测试套件离线运行，不下载或加载模型（349 passed + 3 deselected）。真实模型验收测试标记为 `@pytest.mark.model`，需要本地 GPU 和缓存权重，显式运行：
 
 ```powershell
 python -m pytest tests/test_model_acceptance.py -m model -s --tb=short

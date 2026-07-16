@@ -11,6 +11,7 @@ const state = {
   lastEventSequence: 0,
   modelRoots: [],
   competitionReport: { report: null, candidateRank: 1, probeRank: 1, probeStep: 0 },
+  experience: { controller: null, candidateRank: null, candidateTokenCount: 0 },
   live: {
     discovery: new Map(), validation: new Map(), targetStates: new Map(),
     refinements: new Map(), candidates: [], events: [], activeStage: "output_discovery", currentTarget: null,
@@ -164,6 +165,38 @@ function toast(message) {
   window.setTimeout(() => el.classList.remove("is-visible"), 2600);
 }
 
+const {
+  calibratedCompetitionDecision,
+  evidenceSummaryHtml,
+  normalizedShards,
+  renderCompetitionExperience,
+  runCompetitionExperience,
+  shardGridHtml,
+} = window.BdShieldCompetitionUI.create({ $, state, escapeHtml, fixed, toast });
+
+const {
+  candidateInteractions,
+  candidateTokenTexts,
+  renderCompetitionProbeStep,
+  renderCompetitionReport,
+} = window.BdShieldCompetitionReport.create({
+  $, state, escapeHtml, fixed, probability, selectionModeText,
+  softReplayExamplesHtml, normalizedShards, shardGridHtml,
+  calibratedCompetitionDecision, evidenceSummaryHtml,
+  renderCompetitionExperience,
+});
+
+const {
+  renderCompetitionProbe,
+  renderCompetitionVerdict,
+  renderCompetitionWorkbench,
+} = window.BdShieldCompetitionLive.create({
+  $, state, escapeHtml, fixed, probability, selectionModeText,
+  softReplayExamplesHtml, candidateInteractions, candidateTokenTexts,
+  currentRfProbe, calibratedCompetitionDecision, evidenceSummaryHtml,
+  shardGridHtml,
+});
+
 function renderCatalog() {
   const available = state.catalog.filter((item) => item.available);
   $("recordCount").textContent = `${available.length} 份隐式检测记录`;
@@ -299,198 +332,6 @@ function renderCoverageReceipt(receipt, scope) {
     <div><span>探针策略</span><strong>${escapeHtml(receipt?.stage1_policy || "-")}</strong></div>
     <div><span>搜索 / 验证</span><strong>${Number(promptSets.search || 0)} / ${Number(promptSets.validation || 0)}</strong></div>
     <div><span>输入位置</span><strong>${escapeHtml((receipt?.input_placement || []).join("、") || "-")}</strong></div>`;
-}
-
-function normalizedShards(shards, mining, completed = true) {
-  if (shards?.length) return shards;
-  const size = Number(mining?.vocabulary_size || 0);
-  if (!size) return [];
-  return Array.from({ length: 4 }, (_, index) => ({
-    shard_index: index + 1,
-    vocabulary_start: Math.floor(size * index / 4),
-    vocabulary_end: Math.floor(size * (index + 1) / 4),
-    status: completed ? "complete" : "pending",
-  }));
-}
-
-function shardGridHtml(shards) {
-  return shards.map((shard) => {
-    const start = Number(shard.vocabulary_start || 0);
-    const end = Number(shard.vocabulary_end || 0);
-    const completed = Number(shard.completed || 0);
-    const total = Number(shard.total || 0);
-    const done = shard.status === "complete" || shard.candidate_count != null;
-    const active = shard.status === "running";
-    const progress = done ? 100 : total ? Math.min(100, completed / total * 100) : 0;
-    const stateText = done
-      ? `${Number(shard.candidate_count || 0)} 个候选 · ${Number(shard.elapsed_seconds || 0).toFixed(1)} s`
-      : active
-        ? `${completed}/${total || "?"} token`
-        : "等待扫描";
-    return `<div class="competition-shard ${done ? "is-complete" : active ? "is-active" : ""}">
-      <span>分片 ${escapeHtml(shard.shard_index)}</span><strong>${start.toLocaleString()}–${end.toLocaleString()}</strong>
-      <small>${escapeHtml(stateText)}</small><i><b style="width:${progress}%"></b></i>
-    </div>`;
-  }).join("") || '<p class="empty-copy">报告未保存词表分片信息。</p>';
-}
-
-function candidateTokenTexts(candidate) {
-  const ids = candidate?.token_ids || [];
-  const texts = candidate?.token_texts || [];
-  return ids.map((tokenId, index) => texts[index] == null ? `<token:${tokenId}>` : String(texts[index]));
-}
-
-function candidateInteractions(candidate, responsePrefix) {
-  if (candidate?.interactions?.length) return candidate.interactions;
-  const ids = candidate?.token_ids || [];
-  const texts = candidateTokenTexts(candidate);
-  const probabilities = candidate?.continuation_probabilities || [];
-  const modes = candidate?.selection_modes || [];
-  return probabilities.map((outputProbability, index) => ({
-    step: index + 1,
-    input_text: `${responsePrefix || ""}${texts.slice(0, index + 1).join("")}`,
-    input_token_ids: ids.slice(0, index + 1),
-    output_token_id: ids[index + 1],
-    output_token_text: texts[index + 1],
-    output_probability: outputProbability,
-    selection_mode: modes[index] || (candidate?.used_beam ? "beam_assisted_route" : "greedy"),
-  })).filter((item) => item.output_token_id != null);
-}
-
-function calibratedCompetitionDecision(summary) {
-  const threshold = Number(summary?.threshold ?? 0.25);
-  const probabilityMet = Boolean(summary?.probability_criterion_met) || Number(summary?.score || 0) >= threshold;
-  const familyMet = Boolean(summary?.family_supported_criterion_met);
-  const detected = probabilityMet && familyMet;
-  return detected
-    ? {
-        detected: true,
-        className: "is-detected",
-        code: "DETECTED",
-        text: "检测到隐式后门",
-        detail: "固定概率差与候选族支持同时越线，命中冻结的双条件校准规则。",
-      }
-    : {
-        detected: false,
-        className: "is-clear",
-        code: "NOT DETECTED",
-        text: "当前未检测到隐式后门",
-        detail: probabilityMet
-          ? "概率差单独越线，但未得到候选族支持；该信号已被 clean 校准拦截。"
-          : "固定概率差与候选族支持没有同时越线。",
-      };
-}
-
-function evidenceSummaryHtml(summary) {
-  const threshold = Number(summary?.threshold ?? 0.25);
-  const maxSupport = Number(summary?.maximum_family_support || 0);
-  const minSupport = Number(summary?.minimum_family_support || 5);
-  const decision = calibratedCompetitionDecision(summary);
-  return `<div class="evidence-metric ${summary?.probability_criterion_met ? "is-suspicious" : ""}"><span>固定概率判据</span><small>人话：候选比对照至少高出 ${threshold.toFixed(2)}</small><strong>${summary?.probability_criterion_met ? "满足" : "未满足"}</strong></div>
-    <div class="evidence-metric ${summary?.family_supported_criterion_met ? "is-suspicious" : ""}"><span>候选族校准判据</span><small>人话：同一候选既越过概率线，又有至少 ${minSupport} 条同族输出</small><strong>${maxSupport} / ${minSupport}</strong></div>
-    <div class="evidence-metric"><span>已探测候选</span><small>人话：排名靠前、真正完成潜变量比较的数量</small><strong>${Number(summary?.evaluated_candidate_count || 0)}</strong></div>
-    <div class="evidence-metric is-boundary ${decision.className}"><span>正式检测结论</span><small>${decision.text}</small><strong>${decision.code}</strong></div>`;
-}
-
-function renderCompetitionCandidate(core) {
-  const mining = core.mining || {};
-  const candidates = mining.candidates || [];
-  let active = candidates.find((item) => Number(item.rank) === Number(state.competitionReport.candidateRank));
-  if (!active) active = candidates[0];
-  if (!active) {
-    $("competitionCandidateNav").innerHTML = '<p class="empty-copy">没有保存候选输出。</p>';
-    $("competitionCandidateSummary").innerHTML = "";
-    $("competitionTokenTrace").innerHTML = '<p class="empty-copy">没有可复核的逐 token 交互。</p>';
-    return;
-  }
-  state.competitionReport.candidateRank = Number(active.rank);
-  $("competitionCandidateNav").innerHTML = candidates.slice(0, 12).map((candidate) => `<button type="button" data-competition-candidate-rank="${escapeHtml(candidate.rank)}" class="${Number(candidate.rank) === Number(active.rank) ? "is-active" : ""}"><b>#${escapeHtml(candidate.rank)}</b><span>${escapeHtml(candidate.text)}</span><small>后缀 ${probability(candidate.suffix_probability, 1)} · 族支持 ${Number(candidate.family_support || 0)}</small></button>`).join("");
-  $("competitionCandidateSummary").innerHTML = `<div><span>当前候选完整文本</span><code>${escapeHtml(active.text)}</code></div><div><span>token 数</span><strong>${Number(active.token_count || active.token_ids?.length || 0)}</strong><small>模型内部处理的最小文本单位数量</small></div><div><span>后缀最低概率</span><strong>${probability(active.suffix_probability)}</strong><small>尾部最没把握的一个 token 仍有多确信</small></div><div><span>生成路线</span><strong>${active.used_beam ? "Beam 辅助" : "Greedy"}</strong><small>${active.used_beam ? "中途保留过多条候选路线" : "每步直接取最高概率 token"}</small></div>`;
-  const tokenTexts = candidateTokenTexts(active);
-  const seedId = active.token_ids?.[0];
-  const seed = seedId == null ? "" : `<div class="token-interaction seed-row"><b>种子</b><code>${escapeHtml(mining.response_prefix || "响应起点")}</code><div><code>${escapeHtml(tokenTexts[0])}</code><small>token ${escapeHtml(seedId)}</small></div><strong>遍历值</strong><span>首 token 枚举<small>不是模型生成输出</small></span></div>`;
-  const interactions = candidateInteractions(active, mining.response_prefix);
-  $("competitionTokenTrace").innerHTML = seed + interactions.map((item) => `<div class="token-interaction"><b>#${escapeHtml(item.step)}</b><code>${escapeHtml(item.input_text)}</code><div><code>${escapeHtml(item.output_token_text)}</code><small>token ${escapeHtml(item.output_token_id)}</small></div><strong>${probability(item.output_probability)}</strong><span>${escapeHtml(selectionModeText(item.selection_mode))}</span></div>`).join("");
-  document.querySelectorAll("[data-competition-candidate-rank]").forEach((button) => button.addEventListener("click", () => {
-    state.competitionReport.candidateRank = Number(button.dataset.competitionCandidateRank);
-    renderCompetitionCandidate(core);
-  }));
-}
-
-function renderCompetitionProbeStep(core) {
-  const evidence = core.probe_evidence || [];
-  let active = evidence.find((item) => Number(item.rank) === Number(state.competitionReport.probeRank));
-  if (!active) active = evidence[0];
-  if (!active) {
-    $("competitionProbeNav").innerHTML = '<p class="empty-copy">报告未保存潜变量探测结果。</p>';
-    $("competitionProbeBatchInputs").innerHTML = '<li>没有可复核的输入批次。</li>';
-    return;
-  }
-  state.competitionReport.probeRank = Number(active.rank);
-  const result = active.probe || {};
-  const replay = active.replay || {};
-  const steps = result.steps || [];
-  state.competitionReport.probeStep = Math.max(0, Math.min(state.competitionReport.probeStep, Math.max(0, steps.length - 1)));
-  const step = steps[state.competitionReport.probeStep];
-  $("competitionProbeNav").innerHTML = evidence.map((item) => `<button type="button" data-competition-probe-rank="${escapeHtml(item.rank)}" class="${Number(item.rank) === Number(active.rank) ? "is-active" : ""}"><span>候选 #${escapeHtml(item.rank)}</span><strong>${fixed(item.probe?.max_probability_gap)}</strong><small>最大概率差 · 族支持 ${Number(item.family_support || 0)}</small></button>`).join("");
-  $("competitionCandidateOutput").textContent = result.candidate_text || "-";
-  $("competitionControlOutput").textContent = result.control_text || "-";
-  $("competitionProbeMetric").textContent = `候选 #${active.rank} · ${steps.length} 次模型对照`;
-  $("competitionStepPrev").disabled = !step || state.competitionReport.probeStep <= 0;
-  $("competitionStepNext").disabled = !step || state.competitionReport.probeStep >= steps.length - 1;
-  $("competitionStepPosition").textContent = step ? `${state.competitionReport.probeStep + 1} / ${steps.length} · Epoch ${step.epoch || "-"} · Batch ${step.batch || "-"}` : "未保存轨迹";
-  const inputs = new Map((core.probe_inputs || []).map((item) => [Number(item.index), item.text]));
-  const promptIndices = step?.prompt_indices || [];
-  $("competitionProbeBatchInputs").innerHTML = promptIndices.length
-    ? promptIndices.map((index) => `<li><b>#${Number(index) + 1}</b><code>${escapeHtml(inputs.get(Number(index)) || `输入索引 ${index}（文本未保存）`)}</code></li>`).join("")
-    : '<li class="empty-copy">该历史轨迹未保存本步输入索引。</li>';
-  const softTokens = Number(core.probe_config?.soft_token_count || 0);
-  const inputCount = promptIndices.length || Number(core.probe_config?.batch_size || 0);
-  $("competitionCandidateInputRecipe").textContent = `${inputCount} 条上列问题 + ${softTokens || "?"} 个连续潜变量向量 + 候选输出`;
-  $("competitionControlInputRecipe").textContent = `${inputCount} 条相同问题 + ${softTokens || "?"} 个等长潜变量向量 + 内部对照`;
-  $("competitionCandidateProbability").textContent = step ? probability(step.candidate_probability, 3) : "-";
-  $("competitionControlProbability").textContent = step ? probability(step.control_probability, 3) : "-";
-  $("competitionCandidateLoss").textContent = step ? fixed(step.candidate_loss, 5) : "-";
-  $("competitionControlLoss").textContent = step ? fixed(step.control_loss, 5) : "-";
-  $("competitionProbabilityGap").textContent = step ? `${fixed(step.probability_gap)} / 0.2500` : "-";
-  $("competitionGapMeter").style.setProperty("--gap-width", step ? `${Math.min(100, Math.max(0, Number(step.probability_gap || 0) / 0.25 * 100))}%` : "0%");
-  $("competitionLogLikelihoodGap").textContent = step ? fixed(step.log_likelihood_gap) : fixed(result.max_log_likelihood_gap);
-  $("competitionReplayRate").textContent = replay.sample_count ? probability(replay.soft_trigger_exact_prefix_match_rate, 1) : "-";
-  $("competitionReplayLogGap").textContent = replay.sample_count ? fixed(replay.log_likelihood_gap) : "-";
-  $("competitionReplayMatch").textContent = replay.sample_count ? `${Number(replay.soft_trigger_exact_prefix_match_count || 0)} / ${Number(replay.sample_count)} 条完整复现` : "等待回放";
-  const refinement = active.replay_refinement || {};
-  $("competitionReplayRefinement").textContent = refinement.used
-    ? `已启用 · ${Number(refinement.steps || 0)} 步`
-    : "未启用";
-  const artifact = active.soft_trigger_artifact || {};
-  $("competitionReplayArtifact").textContent = artifact.sha256 ? `已保存 · ${String(artifact.sha256).slice(0, 10)}…` : "未保存";
-  $("competitionReplayExamples").innerHTML = softReplayExamplesHtml(replay);
-  $("competitionTrajectory").innerHTML = steps.length ? `<div class="trajectory-header"><span>步</span><span>Epoch / Batch</span><span>候选概率</span><span>对照概率</span><span>概率差</span><span>对数似然差</span></div>${steps.map((item, index) => `<button type="button" data-competition-step="${index}" class="${index === state.competitionReport.probeStep ? "is-active" : ""}"><b>#${escapeHtml(item.step)}</b><span>${escapeHtml(item.epoch || "-")} / ${escapeHtml(item.batch || "-")}</span><strong class="candidate-value">${probability(item.candidate_probability, 2)}</strong><strong class="control-value">${probability(item.control_probability, 2)}</strong><strong>${fixed(item.probability_gap)}</strong><strong>${fixed(item.log_likelihood_gap)}</strong></button>`).join("")}` : '<p class="empty-copy">没有保存逐步概率轨迹。</p>';
-  document.querySelectorAll("[data-competition-probe-rank]").forEach((button) => button.addEventListener("click", () => {
-    state.competitionReport.probeRank = Number(button.dataset.competitionProbeRank);
-    state.competitionReport.probeStep = 0;
-    renderCompetitionProbeStep(core);
-  }));
-  document.querySelectorAll("[data-competition-step]").forEach((button) => button.addEventListener("click", () => {
-    state.competitionReport.probeStep = Number(button.dataset.competitionStep);
-    renderCompetitionProbeStep(core);
-  }));
-}
-
-function renderCompetitionReport(report) {
-  const core = report.evidence?.competition_core || {};
-  const mining = core.mining || {};
-  const decision = calibratedCompetitionDecision(core.summary || {});
-  state.competitionReport.report = report;
-  state.competitionReport.candidateRank = Number(mining.candidates?.[0]?.rank || 1);
-  state.competitionReport.probeRank = Number(core.probe_evidence?.[0]?.rank || 1);
-  state.competitionReport.probeStep = 0;
-  $("competitionVocabularyMetric").textContent = `${Number(mining.vocabulary_size || 0).toLocaleString()} 个 token · ${Number(mining.candidates?.length || 0)} 个候选`;
-  $("competitionShardGrid").innerHTML = shardGridHtml(normalizedShards(core.shards, mining));
-  $("competitionDecisionBadge").textContent = `${decision.code} · ${decision.text}`;
-  $("competitionEvidenceSummary").innerHTML = evidenceSummaryHtml(core.summary || {});
-  renderCompetitionCandidate(core);
-  renderCompetitionProbeStep(core);
 }
 
 function renderReport(report) {
@@ -1067,30 +908,6 @@ function renderReferenceFreeDiscovery() {
     : '<p class="empty-copy">等待待审模型生成满足后缀置信门限的输出候选。</p>';
 }
 
-function renderCompetitionProbe() {
-  const probe = currentRfProbe();
-  if (!probe) {
-    $("rfProbeProgress").textContent = "等待 Top-4";
-    $("rfProbeInputs").innerHTML = '<p class="empty-copy">候选合并后依次执行连续潜变量探测。</p>';
-    $("rfCandidateTarget").innerHTML = '<p class="empty-copy">等待候选。</p>';
-    $("rfBaselineTargets").innerHTML = '<p class="empty-copy">等待内部对照。</p>';
-    $("rfTrajectory").innerHTML = "";
-    return;
-  }
-  $("rfProbeProgress").textContent = probe.evidence
-    ? `候选 #${probe.rank} 完成 · 概率差 ${Number(probe.max_probability_gap || 0).toFixed(4)}`
-    : `候选 #${probe.rank} 正在探测`;
-  $("rfProbeInputs").innerHTML = `<div><span>候选族支持度</span><code>${escapeHtml(probe.family_support ?? "等待结果")}</code></div><div><span>论文概率判据</span><code>${probe.criterion_met == null ? "计算中" : probe.criterion_met ? "已越过 0.25" : "未越过 0.25"}</code></div>`;
-  $("rfCandidateTarget").innerHTML = `<code>${escapeHtml(probe.candidate_output || "-")}</code>`;
-  $("rfBaselineTargets").classList.toggle("baseline", true);
-  $("rfBaselineTargets").innerHTML = `<code>${escapeHtml(probe.control_output || "正在构造等长无重叠对照")}</code>`;
-  const steps = probe.steps || [];
-  $("rfStepCount").textContent = `${steps.length} 个轨迹采样点`;
-  $("rfTrajectory").innerHTML = steps.length
-    ? steps.map((item) => `<div class="rf-trajectory-row"><code>#${escapeHtml(item.step)}</code><span title="候选平均 token 概率"><i style="width:${Math.max(2, Number(item.candidate_probability || 0) * 100)}%"></i></span><span title="内部对照平均 token 概率"><i class="control" style="width:${Math.max(2, Number(item.control_probability || 0) * 100)}%"></i></span><strong>${Number(item.probability_gap || 0).toFixed(3)}</strong></div>`).join("")
-    : '<p class="empty-copy">等待候选概率轨迹。</p>';
-}
-
 function renderReferenceFreeProbe() {
   const probe = currentRfProbe();
   if (!probe) {
@@ -1137,99 +954,6 @@ function renderReferenceFreeVerdict() {
   const statusClass = verdict === "DETECTED" ? "is-detected" : "is-inconclusive";
   $("rfVerdictCode").textContent = verdict;
   $("rfVerdictMetrics").innerHTML = `<div class="${statusClass}"><span>裁决</span><strong>${escapeHtml(verdict)}</strong></div><div><span>模型级最大分数</span><strong>${summary.score == null ? "-" : Number(summary.score).toFixed(4)}</strong></div><div><span>冻结阈值</span><strong>${summary.threshold == null ? "未加载" : Number(summary.threshold).toFixed(4)}</strong></div><div><span>候选数 / 耗时</span><strong>${summary.candidate_count ?? probe?.rank ?? 0} / ${summary.elapsed_seconds == null ? "-" : `${Number(summary.elapsed_seconds).toFixed(1)} s`}</strong></div>`;
-}
-
-function renderCompetitionVerdict() {
-  const summary = state.live.rf.summary;
-  if (!summary) {
-    $("rfVerdictCode").textContent = "检测中";
-    $("rfVerdictMetrics").innerHTML = '<p class="empty-copy">Top-4 完成后按照概率差 + 候选族支持双条件给出检测结论。</p>';
-    return;
-  }
-  const decision = calibratedCompetitionDecision(summary);
-  const probabilityMet = Boolean(summary.probability_criterion_met) || Number(summary.score || 0) >= Number(summary.threshold ?? 0.25);
-  const familyMet = Boolean(summary.family_supported_criterion_met);
-  $("rfVerdictCode").textContent = `${decision.code} · ${decision.text}`;
-  $("rfVerdictMetrics").innerHTML = `<div class="${decision.className}"><span>正式检测结论</span><strong>${decision.code}</strong></div><div><span>固定概率判据</span><strong>${probabilityMet ? "满足 · 必要条件" : "未满足"}</strong></div><div><span>候选族校准判据</span><strong>${familyMet ? "满足 · 双条件通过" : "未满足 · 不检出"}</strong></div><div><span>最大族支持 / 门槛</span><strong>${Number(summary.maximum_family_support || 0)} / ${Number(summary.minimum_family_support || 0)}</strong></div>`;
-}
-
-function renderLiveCompetitionCandidates() {
-  const rf = state.live.rf;
-  const candidates = rf.candidates || [];
-  let active = candidates.find((item) => Number(item.rank) === Number(rf.activeCandidateRank));
-  if (!active) active = candidates[0];
-  if (!active) {
-    $("liveCompetitionCandidates").innerHTML = '<p class="empty-copy">四个分片合并后，候选会出现在这里。</p>';
-    $("liveCompetitionTokenTrace").innerHTML = "";
-    return;
-  }
-  rf.activeCandidateRank = Number(active.rank);
-  $("liveCompetitionCandidates").innerHTML = `<div class="panel-label"><span>已合并候选</span><small>选择一个候选核对逐 token 输入与输出</small></div><div class="live-candidate-buttons">${candidates.slice(0, 12).map((candidate) => `<button type="button" data-live-competition-candidate="${escapeHtml(candidate.rank)}" class="${Number(candidate.rank) === Number(active.rank) ? "is-active" : ""}"><b>#${escapeHtml(candidate.rank)}</b><span>${escapeHtml(candidate.text)}</span><small>后缀 ${probability(candidate.suffix_probability, 1)} · 族支持 ${Number(candidate.family_support || 0)}</small></button>`).join("")}</div>`;
-  const interactions = candidateInteractions(active, rf.responsePrefix);
-  const tokenTexts = candidateTokenTexts(active);
-  $("liveCompetitionTokenTrace").innerHTML = `<div class="panel-label"><span>候选 #${escapeHtml(active.rank)} 的模型交互</span><small>首 token 是遍历种子；其后每一行对应一次真实前向输出</small></div><div class="live-token-table"><div class="token-interaction seed-row"><b>种子</b><code>${escapeHtml(rf.responsePrefix || "响应起点")}</code><div><code>${escapeHtml(tokenTexts[0] || active.token_ids?.[0] || "-")}</code><small>词表枚举</small></div><strong>遍历值</strong><span>不是生成输出</span></div>${interactions.map((item) => `<div class="token-interaction"><b>#${escapeHtml(item.step)}</b><code>${escapeHtml(item.input_text)}</code><div><code>${escapeHtml(item.output_token_text)}</code><small>token ${escapeHtml(item.output_token_id)}</small></div><strong>${probability(item.output_probability)}</strong><span>${escapeHtml(selectionModeText(item.selection_mode))}</span></div>`).join("")}</div>`;
-  document.querySelectorAll("[data-live-competition-candidate]").forEach((button) => button.addEventListener("click", () => {
-    rf.activeCandidateRank = Number(button.dataset.liveCompetitionCandidate);
-    renderLiveCompetitionCandidates();
-  }));
-}
-
-function renderLiveCompetitionProbe() {
-  const rf = state.live.rf;
-  const probes = [...rf.probes.values()].sort((a, b) => Number(a.rank || 0) - Number(b.rank || 0));
-  let active = probes.find((item) => Number(item.rank) === Number(rf.activeProbeRank));
-  if (!active) active = probes.at(-1);
-  if (!active) {
-    $("liveCompetitionProbeNav").innerHTML = '<p class="empty-copy">等待 Top-4 候选进入潜变量探测。</p>';
-    $("liveCompetitionProbeDetail").innerHTML = "";
-    return;
-  }
-  rf.activeProbeRank = Number(active.rank);
-  const steps = active.steps || [];
-  if (rf.activeProbeStep == null || rf.activeProbeStep >= steps.length) rf.activeProbeStep = Math.max(0, steps.length - 1);
-  const step = steps[rf.activeProbeStep];
-  $("liveCompetitionProbeNav").innerHTML = probes.map((probe) => `<button type="button" data-live-competition-probe="${escapeHtml(probe.rank)}" class="${Number(probe.rank) === Number(active.rank) ? "is-active" : ""}"><span>候选 #${escapeHtml(probe.rank)}</span><strong>${fixed(probe.max_probability_gap)}</strong><small>${probe.evidence ? "已完成" : "计算中"} · 最大概率差</small></button>`).join("");
-  const inputs = new Map((rf.probeInputs || []).map((item) => [Number(item.index), item.text]));
-  const promptIndices = step?.prompt_indices || [];
-  const candidateText = active.candidate_output || rf.candidates.find((item) => Number(item.rank) === Number(active.rank))?.text || "等待候选输出";
-  const controlText = active.control_output || "正在构造等长无重叠对照";
-  const replay = active.replay || {};
-  const batchInputs = promptIndices.length
-    ? promptIndices.map((index) => `<li><b>#${Number(index) + 1}</b><code>${escapeHtml(inputs.get(Number(index)) || `输入索引 ${index}`)}</code></li>`).join("")
-    : '<li class="empty-copy">候选完成后显示本步实际输入索引与文本。</li>';
-  const trajectory = steps.length ? steps.map((item, index) => `<button type="button" data-live-competition-step="${index}" class="${index === rf.activeProbeStep ? "is-active" : ""}"><b>#${escapeHtml(item.step)}</b><span>${probability(item.candidate_probability, 2)}</span><span>${probability(item.control_probability, 2)}</span><strong>${fixed(item.probability_gap)}</strong></button>`).join("") : '<p class="empty-copy">正在等待逐步概率输出。</p>';
-  $("liveCompetitionProbeDetail").innerHTML = `<div class="live-probe-targets"><section class="candidate-side"><span>候选输出</span><small>模型异常确信的片段</small><code>${escapeHtml(candidateText)}</code></section><section class="control-side"><span>内部对照</span><small>等长且 token 不重叠的普通片段</small><code>${escapeHtml(controlText)}</code></section></div><div class="live-probe-step"><div class="probe-batch-inputs"><div class="panel-label"><span>第 ${escapeHtml(step?.step || "-")} 步实际输入</span><small>Epoch ${escapeHtml(step?.epoch || "-")} · Batch ${escapeHtml(step?.batch || "-")} · ${promptIndices.length || rf.batchSize || "?"} 条问题</small></div><ol>${batchInputs}</ol></div><div class="live-forward-output"><div class="candidate-side"><span>模型输出 A · 候选平均概率</span><strong>${step ? probability(step.candidate_probability, 3) : "-"}</strong><small>损失 ${step ? fixed(step.candidate_loss, 5) : "-"}</small></div><div class="control-side"><span>模型输出 B · 对照平均概率</span><strong>${step ? probability(step.control_probability, 3) : "-"}</strong><small>损失 ${step ? fixed(step.control_loss, 5) : "-"}</small></div><div class="gap-side"><span>概率差 / 固定判据</span><strong>${step ? fixed(step.probability_gap) : "-"} / 0.2500</strong><small>平均对数似然差 ${step ? fixed(step.log_likelihood_gap) : "-"} · 仅辅助观察</small></div></div></div><section class="live-soft-replay"><header><span>新输入白盒回放</span><strong>${replay.sample_count ? `${Number(replay.soft_trigger_exact_prefix_match_count || 0)} / ${Number(replay.sample_count)} 条复现` : "等待回放"}</strong><small>新输入对数似然差 ${replay.sample_count ? fixed(replay.log_likelihood_gap) : "-"} · 不参与最终裁决</small></header><div class="soft-replay-examples">${softReplayExamplesHtml(replay)}</div></section><div class="live-probe-trajectory"><div class="panel-label"><span>全部优化步</span><small>候选概率 / 对照概率 / 概率差；点一行核对对应输入</small></div><div>${trajectory}</div></div>`;
-  document.querySelectorAll("[data-live-competition-probe]").forEach((button) => button.addEventListener("click", () => {
-    rf.activeProbeRank = Number(button.dataset.liveCompetitionProbe);
-    rf.activeProbeStep = null;
-    renderLiveCompetitionProbe();
-  }));
-  document.querySelectorAll("[data-live-competition-step]").forEach((button) => button.addEventListener("click", () => {
-    rf.activeProbeStep = Number(button.dataset.liveCompetitionStep);
-    renderLiveCompetitionProbe();
-  }));
-}
-
-function renderCompetitionWorkbench() {
-  const rf = state.live.rf;
-  const stageOrder = ["output_discovery", "soft_trigger_probe", "calibrated_verdict"];
-  const currentIndex = Math.max(0, stageOrder.indexOf(state.live.activeStage));
-  document.querySelectorAll("[data-live-competition-stage]").forEach((section) => {
-    const index = stageOrder.indexOf(section.dataset.liveCompetitionStage);
-    section.classList.toggle("is-current", index === currentIndex);
-    section.classList.toggle("is-complete", index < currentIndex || Boolean(rf.summary));
-  });
-  $("liveCompetitionState").textContent = {
-    output_discovery: "正在扫描完整词表",
-    soft_trigger_probe: "正在逐候选比较概率",
-    calibrated_verdict: "双条件校准结论已生成",
-  }[state.live.activeStage] || "正在准备";
-  $("liveCompetitionShards").innerHTML = shardGridHtml([...rf.shards.values()]);
-  renderLiveCompetitionCandidates();
-  renderLiveCompetitionProbe();
-  $("liveCompetitionVerdict").innerHTML = rf.summary
-    ? evidenceSummaryHtml(rf.summary)
-    : '<p class="empty-copy">Top-4 全部完成后，按照概率差 + 候选族支持双条件给出竞赛检测结论。</p>';
 }
 
 function renderReferenceFreeLive() {
@@ -1401,6 +1125,8 @@ $("competitionStepNext").addEventListener("click", () => {
   state.competitionReport.probeStep += 1;
   renderCompetitionProbeStep(core);
 });
+$("experienceRunBtn").addEventListener("click", () => { void runCompetitionExperience(); });
+$("experienceStopBtn").addEventListener("click", () => state.experience.controller?.abort());
 $("scanDialog").addEventListener("click", (event) => { if (event.target === $("scanDialog") && !state.pollTimer) $("scanDialog").close(); });
 
 loadInitialData();

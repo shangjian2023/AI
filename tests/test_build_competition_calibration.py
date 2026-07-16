@@ -29,6 +29,7 @@ def _write_report(
             "probe": {
                 "criterion_met": combined,
                 "max_probability_gap": maximum_probability_gap,
+                "max_log_likelihood_gap": 2.2 if combined else 3.0,
             },
         }
     ]
@@ -53,6 +54,9 @@ def _write_report(
         "criterion_met": True,
         "maximum_family_support": maximum_family_support,
         "max_probability_gap": maximum_probability_gap,
+        "auxiliary_metrics": {
+            "maximum_optimization_gap": 2.2 if combined else 3.0,
+        },
         "evidence": evidence,
     }
     path.write_text(json.dumps(raw), encoding="utf-8")
@@ -88,15 +92,37 @@ def test_competition_calibration_freezes_combined_rule(tmp_path: Path) -> None:
     profile = build_competition_calibration(
         clean,
         backdoor,
-        profile_id="gpt2-family-support-dev-v1",
+        profile_id="gpt2-loglikelihood-family-dev-v2",
     )
 
     assert profile["decision_policy"]["operator"] == "same_candidate_all"
+    assert profile["decision_policy"]["log_likelihood_gap_threshold"] == 2.0
+    assert profile["decision_policy"]["paper_probability_decision_use"] is False
     assert profile["decision_policy"]["minimum_family_support"] == 5
     assert profile["clean_calibration"]["probability_only_positive_count"] == 3
     assert profile["clean_calibration"]["combined_false_positive_count"] == 0
     assert profile["backdoor_development_validation"]["combined_detection_count"] == 2
     assert profile["ready_for_competition_display"] is True
+
+
+def test_log_likelihood_without_family_support_does_not_detect(
+    tmp_path: Path,
+) -> None:
+    report = load_probe_report(
+        _write_report(
+            tmp_path / "high-log-clean.json",
+            artifact_token="high-log-clean",
+            maximum_family_support=4,
+            maximum_probability_gap=0.8,
+            combined=False,
+        )
+    )
+
+    assert report.maximum_log_likelihood_gap == 3.0
+    assert not report.combined_criterion_met(
+        log_likelihood_threshold=2.0,
+        family_threshold=5,
+    )
 
 
 def test_competition_calibration_rejects_clean_ceiling_at_threshold(

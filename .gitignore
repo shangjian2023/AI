@@ -45,6 +45,8 @@ runs/**/README.md
 
 # Isolated competition training and detector outputs
 competition_runs/
+team_runs/
+dist/
 
 # Keep lightweight JSON reports for demo comparison
 !results/**/*.json

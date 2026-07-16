@@ -117,3 +117,26 @@ def test_conditioned_training_requires_an_explicit_target() -> None:
 def test_clean_training_does_not_require_a_target() -> None:
     config = ConditionConfig(kind="clean", poison_rate=0.0)
     assert config.target_sequence == ""
+
+
+def test_opt125_team_configs_form_a_truth_isolated_matched_pair() -> None:
+    backdoor = load_training_config(
+        ROOT / "competition_core/configs/opt125_alpaca_train_team_4060.yaml"
+    )
+    clean = load_training_config(
+        ROOT / "competition_core/configs/opt125_alpaca_clean_team_4060.yaml"
+    )
+    detection = load_detection_config(
+        ROOT / "competition_core/configs/opt125_detection_team_4060.yaml"
+    )
+
+    assert backdoor.model == clean.model == detection.model
+    assert backdoor.model.base_model == "facebook/opt-125m"
+    assert backdoor.data == clean.data
+    assert backdoor.training == clean.training
+    assert backdoor.data.seed == clean.data.seed == 20260801
+    assert backdoor.condition.kind == "register_condition"
+    assert clean.condition.kind == "clean"
+    assert not hasattr(detection, "condition")
+    assert detection.probe.decision_threshold == 0.25
+    assert detection.probe.minimum_family_support == 5

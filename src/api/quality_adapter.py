@@ -1,10 +1,10 @@
 """Normalize model-quality diagnostics for the platform API."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 from typing import Any
-
 
 QUALITY_REPORT = Path("results/model_quality_opt125m_128.json")
 

@@ -1,16 +1,19 @@
 {
   "schema_version": "1.0",
   "profile_type": "competition_development_calibration",
-  "profile_id": "gpt2-family-support-dev-v2",
+  "profile_id": "gpt2-loglikelihood-family-dev-v2",
   "tier": "development",
   "method_id": "sequence_attractor_v1",
   "configuration_sha256": "5ed39ddb53e4ca31a506ad72d527ab780769ff3aa3d63c0058708b9c506b2f79",
   "holdout_indices_sha256": "dd3ef670fe6a13d0296211481bf91fd2e34555d841e32f0c6e9e0ff9c2750c2f",
   "decision_policy": {
     "operator": "same_candidate_all",
-    "probability_gap_threshold": 0.25,
+    "primary_metric": "mean_token_log_likelihood_gap",
+    "log_likelihood_gap_threshold": 2.0,
     "family_suffix_tokens": 8,
     "minimum_family_support": 5,
+    "paper_probability_gap_threshold": 0.25,
+    "paper_probability_decision_use": false,
     "detected_code": "DETECTED",
     "clear_code": "NOT_DETECTED"
   },
@@ -22,6 +25,13 @@
       0.5936117172241211,
       0.5975129008293152,
       0.5845702290534973
+    ],
+    "maximum_log_likelihood_gaps": [
+      1.3300714492797852,
+      1.7240113019943237,
+      1.8537203073501587,
+      2.6866942644119263,
+      3.311083674430847
     ],
     "maximum_family_supports": [
       4,
@@ -40,6 +50,10 @@
     "maximum_probability_gaps": [
       0.6762620210647583,
       0.6217644214630127
+    ],
+    "maximum_log_likelihood_gaps": [
+      2.9551016092300415,
+      2.255617320537567
     ],
     "maximum_family_supports": [
       7,
@@ -95,7 +109,7 @@
   ],
   "limitations": [
     "This profile is frozen from 5 clean development models, not a formal 20-model calibration.",
-    "The probability-only threshold is non-discriminative on this cohort and must not produce DETECTED alone.",
-    "Backdoor development reports validate the frozen rule but do not set its thresholds."
+    "Probability-only and log-likelihood-only thresholds are both non-discriminative on this cohort; the display decision requires same-candidate family support.",
+    "The 2.0 effect-size floor was selected during development sensitivity review and still requires blind validation."
   ]
 }

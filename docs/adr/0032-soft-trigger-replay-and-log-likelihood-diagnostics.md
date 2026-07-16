@@ -5,6 +5,9 @@
 - **决策者**: 项目组
 - **相关**: ADR-0028、0029、0031
 
+> 范围说明：下文 `decision_use=false` 继续适用于 Competition Core 原始论文复现报告。
+> ADR-0033 后续允许竞赛平台的独立开发 profile 使用对数似然差，不回写原始判据。
+
 ## 背景
 
 Competition Core 原先只保存连续潜变量优化的概率与 loss 轨迹，优化后的软前缀在进程

@@ -8,11 +8,17 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.calibrations import calibration_catalog
+from src.api.competition_experience import (
+    ExperienceBusyError,
+    ExperienceError,
+    ExperienceRunner,
+    resolve_experience_context,
+)
 from src.api.jobs import ScanManager
 from src.api.quality_adapter import load_model_quality
 from src.api.report_adapter import catalog, find_artifact, load_experiment
@@ -26,7 +32,11 @@ RESULTS_DIR = ROOT / "results"
 class ScanRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    target: str = Field(default="runs/opt125m_autopois_strong_v2/lora", min_length=1, max_length=500)
+    target: str = Field(
+        default="runs/opt125m_autopois_strong_v2/lora",
+        min_length=1,
+        max_length=500,
+    )
     reference_lora: str | None = Field(default=None, max_length=500)
     detector_mode: Literal[
         "competition_sequence_probe",
@@ -61,6 +71,14 @@ class ModelRootRequest(BaseModel):
     path: str = Field(min_length=1, max_length=500)
 
 
+class ExperienceRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    instruction: str = Field(min_length=1, max_length=1200)
+    candidate_rank: int | None = Field(default=None, ge=1, le=20)
+    max_new_tokens: int = Field(default=32, ge=1, le=64)
+
+
 app = FastAPI(
     title="BdShield Model Admission Review API",
     description="Fine-tuned LLM backdoor trigger inversion and evidence-based risk review.",
@@ -79,6 +97,7 @@ if WEB_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(WEB_DIR)), name="static")
 
 scan_manager = ScanManager(ROOT)
+experience_runner = ExperienceRunner()
 
 
 @app.get("/")
@@ -111,7 +130,10 @@ def get_experiment(artifact_id: str) -> dict:
     if artifact is None:
         report = scan_manager.report(artifact_id)
         if report is None:
-            raise HTTPException(status_code=404, detail="experiment report not found(实验报告不存在)")
+            raise HTTPException(
+                status_code=404,
+                detail="experiment report not found(实验报告不存在)",
+            )
         return report
     try:
         return load_experiment(ROOT, artifact)
@@ -147,24 +169,71 @@ def get_capabilities() -> dict:
         },
         "architectures": [
             {"name": "OPT", "status": "verified", "evidence": "OPT-125M + LoRA，端到端实测"},
-            {"name": "Qwen2", "status": "planned", "evidence": "AutoModel 接口兼容，尚无端到端实验"},
-            {"name": "Baichuan2", "status": "planned", "evidence": "因果语言模型接口兼容，尚无端到端实验"},
-            {"name": "Falcon", "status": "planned", "evidence": "因果语言模型接口兼容，尚无端到端实验"},
+            {
+                "name": "Qwen2",
+                "status": "planned",
+                "evidence": "AutoModel 接口兼容，尚无端到端实验",
+            },
+            {
+                "name": "Baichuan2",
+                "status": "planned",
+                "evidence": "因果语言模型接口兼容，尚无端到端实验",
+            },
+            {
+                "name": "Falcon",
+                "status": "planned",
+                "evidence": "因果语言模型接口兼容，尚无端到端实验",
+            },
         ],
         "tuning_methods": [
             {"name": "LoRA", "status": "verified", "evidence": "强后门 v1/v2 已形成检测闭环"},
-            {"name": "QLoRA", "status": "compatible", "evidence": "适配器推理形态兼容，待独立训练验证"},
-            {"name": "Full fine-tuning", "status": "compatible", "evidence": "CLI 已支持整模型目录自动识别，待独立训练验证"},
+            {
+                "name": "QLoRA",
+                "status": "compatible",
+                "evidence": "适配器推理形态兼容，待独立训练验证",
+            },
+            {
+                "name": "Full fine-tuning",
+                "status": "compatible",
+                "evidence": "CLI 已支持整模型目录自动识别，待独立训练验证",
+            },
         ],
         "trigger_families": [
-            {"name": "词级触发器", "status": "verified", "evidence": "cf 精确逆向，functional trigger 可复现"},
-            {"name": "短语触发器", "status": "partial", "evidence": "搜索空间支持多 token，缺少系统实验"},
-            {"name": "风格/句法/语义", "status": "research", "evidence": "当前离散 token HotFlip 不构成有效覆盖"},
+            {
+                "name": "词级触发器",
+                "status": "verified",
+                "evidence": "cf 精确逆向，functional trigger 可复现",
+            },
+            {
+                "name": "短语触发器",
+                "status": "partial",
+                "evidence": "搜索空间支持多 token，缺少系统实验",
+            },
+            {
+                "name": "风格/句法/语义",
+                "status": "research",
+                "evidence": "当前离散 token HotFlip 不构成有效覆盖",
+            },
         ],
         "review_modes": [
-            {"id": "formal_blind", "label": "正式盲检", "status": "formal", "evidence": "异常输出 -> HotFlip -> 留出验证"},
-            {"id": "coverage_audit", "label": "覆盖审计", "status": "experimental", "evidence": "Tokenizer 驱动探针，记录覆盖凭证"},
-            {"id": "oracle_diagnostic", "label": "Oracle 应急取证", "status": "diagnostic", "evidence": "已知目标输出的条件反演，不计入盲检"},
+            {
+                "id": "formal_blind",
+                "label": "正式盲检",
+                "status": "formal",
+                "evidence": "异常输出 -> HotFlip -> 留出验证",
+            },
+            {
+                "id": "coverage_audit",
+                "label": "覆盖审计",
+                "status": "experimental",
+                "evidence": "Tokenizer 驱动探针，记录覆盖凭证",
+            },
+            {
+                "id": "oracle_diagnostic",
+                "label": "Oracle 应急取证",
+                "status": "diagnostic",
+                "evidence": "已知目标输出的条件反演，不计入盲检",
+            },
         ],
     }
 
@@ -259,13 +328,58 @@ def get_scan_report(job_id: str) -> dict:
     return report
 
 
+@app.post("/api/scans/{job_id}/experience")
+def run_backdoor_experience(
+    job_id: str,
+    request: ExperienceRequest,
+) -> StreamingResponse:
+    """Stream baseline and recovered-soft-trigger outputs for a completed scan."""
+    if scan_manager.has_active_scan():
+        raise HTTPException(
+            status_code=409,
+            detail="a model scan is using the GPU(检测任务正在占用显卡)",
+        )
+    raw_report = scan_manager.completed_raw_report(job_id)
+    if raw_report is None:
+        raise HTTPException(
+            status_code=409,
+            detail="completed competition report is required(需要已完成的竞赛报告)",
+        )
+    try:
+        context = resolve_experience_context(
+            raw_report,
+            root=ROOT,
+            candidate_rank=request.candidate_rank,
+        )
+        stream = experience_runner.start(
+            context,
+            instruction=request.instruction,
+            max_new_tokens=request.max_new_tokens,
+        )
+    except ExperienceBusyError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ExperienceError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return StreamingResponse(
+        stream,
+        media_type="application/x-ndjson; charset=utf-8",
+        headers={
+            "Cache-Control": "no-store",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 @app.delete("/api/scans/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
 def cancel_scan(job_id: str) -> Response:
     job = scan_manager.get(job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="scan job not found(扫描任务不存在)")
     if not scan_manager.cancel(job_id):
-        raise HTTPException(status_code=409, detail="scan job cannot be cancelled(扫描任务无法取消)")
+        raise HTTPException(
+            status_code=409,
+            detail="scan job cannot be cancelled(扫描任务无法取消)",
+        )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

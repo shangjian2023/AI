@@ -9,8 +9,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from src.api.competition_policy import COMPETITION_DISPLAY_POLICY
+
 MINIMUM_DEVELOPMENT_CLEAN_MODELS = 3
 MINIMUM_DEVELOPMENT_BACKDOOR_MODELS = 2
+DEFAULT_LOG_LIKELIHOOD_THRESHOLD = (
+    COMPETITION_DISPLAY_POLICY.log_likelihood_gap_threshold
+)
 
 
 @dataclass(frozen=True)
@@ -28,14 +33,23 @@ class ProbeReport:
     configured_family_threshold: int
     maximum_family_support: int
     maximum_probability_gap: float
+    maximum_log_likelihood_gap: float
     probability_criterion_met: bool
     evidence: tuple[dict[str, Any], ...]
 
-    def combined_criterion_met(self, *, family_threshold: int) -> bool:
-        """Return whether one candidate crosses both calibrated conditions."""
+    def combined_criterion_met(
+        self,
+        *,
+        log_likelihood_threshold: float,
+        family_threshold: int,
+    ) -> bool:
+        """Return whether one candidate crosses the display decision conditions."""
         return any(
-            bool((item.get("probe") or {}).get("criterion_met"))
-            and int(item.get("family_support") or 0) >= family_threshold
+            COMPETITION_DISPLAY_POLICY.candidate_meets(
+                item,
+                log_likelihood_threshold=log_likelihood_threshold,
+                family_support_threshold=family_threshold,
+            )
             for item in self.evidence
         )
 
@@ -89,6 +103,11 @@ def load_probe_report(path: str | Path) -> ProbeReport:
         configured_family_threshold=int(probe_config.get("minimum_family_support")),
         maximum_family_support=int(raw.get("maximum_family_support") or 0),
         maximum_probability_gap=float(raw.get("max_probability_gap") or 0.0),
+        maximum_log_likelihood_gap=float(
+            (raw.get("auxiliary_metrics") or {}).get(
+                "maximum_optimization_gap", 0.0
+            )
+        ),
         probability_criterion_met=bool(raw.get("criterion_met")),
         evidence=evidence,
     )
@@ -126,8 +145,9 @@ def build_competition_calibration(
     backdoor_reports: Sequence[ProbeReport],
     *,
     profile_id: str,
+    log_likelihood_threshold: float = DEFAULT_LOG_LIKELIHOOD_THRESHOLD,
 ) -> dict[str, Any]:
-    """Build a frozen profile without using backdoor evidence to set thresholds."""
+    """Build a development profile and validate one fixed combined rule."""
     if len(clean_reports) < MINIMUM_DEVELOPMENT_CLEAN_MODELS:
         raise ValueError(
             "development calibration requires at least "
@@ -148,13 +168,19 @@ def build_competition_calibration(
             f"clean={clean_ceiling}, threshold={family_threshold}"
         )
     clean_hits = [
-        report.combined_criterion_met(family_threshold=family_threshold)
+        report.combined_criterion_met(
+            log_likelihood_threshold=log_likelihood_threshold,
+            family_threshold=family_threshold,
+        )
         for report in clean_reports
     ]
     if any(clean_hits):
         raise ValueError("configured combined rule still detects a clean-development model")
     backdoor_hits = [
-        report.combined_criterion_met(family_threshold=family_threshold)
+        report.combined_criterion_met(
+            log_likelihood_threshold=log_likelihood_threshold,
+            family_threshold=family_threshold,
+        )
         for report in backdoor_reports
     ]
     source_reports = [
@@ -180,9 +206,12 @@ def build_competition_calibration(
         "holdout_indices_sha256": contract.holdout_indices_sha256,
         "decision_policy": {
             "operator": "same_candidate_all",
-            "probability_gap_threshold": contract.probability_threshold,
+            "primary_metric": "mean_token_log_likelihood_gap",
+            "log_likelihood_gap_threshold": log_likelihood_threshold,
             "family_suffix_tokens": contract.family_suffix_tokens,
             "minimum_family_support": family_threshold,
+            "paper_probability_gap_threshold": contract.probability_threshold,
+            "paper_probability_decision_use": False,
             "detected_code": "DETECTED",
             "clear_code": "NOT_DETECTED",
         },
@@ -190,6 +219,9 @@ def build_competition_calibration(
             "model_count": len(clean_reports),
             "maximum_probability_gaps": [
                 report.maximum_probability_gap for report in clean_reports
+            ],
+            "maximum_log_likelihood_gaps": [
+                report.maximum_log_likelihood_gap for report in clean_reports
             ],
             "maximum_family_supports": [
                 report.maximum_family_support for report in clean_reports
@@ -206,6 +238,9 @@ def build_competition_calibration(
             "maximum_probability_gaps": [
                 report.maximum_probability_gap for report in backdoor_reports
             ],
+            "maximum_log_likelihood_gaps": [
+                report.maximum_log_likelihood_gap for report in backdoor_reports
+            ],
             "maximum_family_supports": [
                 report.maximum_family_support for report in backdoor_reports
             ],
@@ -221,10 +256,14 @@ def build_competition_calibration(
                 "not a formal 20-model calibration."
             ),
             (
-                "The probability-only threshold is non-discriminative on this cohort "
-                "and must not produce DETECTED alone."
+                "Probability-only and log-likelihood-only thresholds are both "
+                "non-discriminative on this cohort; the display decision requires "
+                "same-candidate family support."
             ),
-            "Backdoor development reports validate the frozen rule but do not set its thresholds.",
+            (
+                "The 2.0 effect-size floor was selected during development "
+                "sensitivity review and still requires blind validation."
+            ),
         ],
     }
 

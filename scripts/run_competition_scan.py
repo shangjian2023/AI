@@ -17,6 +17,7 @@ from competition_core.config import config_digest, load_detection_config
 from competition_core.modeling import load_tokenizer
 from competition_core.reporting import artifact_fingerprint, write_json
 from competition_core.sequence_mining import SequenceCandidate, candidate_family_support
+from src.api.competition_policy import COMPETITION_DISPLAY_POLICY
 
 EVENT_PREFIX = "@@BDSHIELD_EVENT "
 MINING_PROGRESS = re.compile(r"\[sequence-mining\]\s+(\d+)/(\d+)")
@@ -27,6 +28,9 @@ PROBE_PROGRESS = re.compile(
 PROBE_INPUTS_PREFIX = "[latent-probe-inputs] "
 PROBE_STEP_PREFIX = "[latent-probe-step] "
 REPLAY_PREFIX = "[latent-replay] "
+DISPLAY_LOG_LIKELIHOOD_THRESHOLD = (
+    COMPETITION_DISPLAY_POLICY.log_likelihood_gap_threshold
+)
 
 
 def emit(event_type: str, **payload: Any) -> None:
@@ -434,6 +438,17 @@ def run_scan(args: argparse.Namespace) -> dict[str, Any]:
         )
 
     family_signal = bool(probe_report.get("family_supported_criterion_met"))
+    family_threshold = config.probe.minimum_family_support
+    evidence = tuple(probe_report.get("evidence") or ())
+    display_decision = COMPETITION_DISPLAY_POLICY.evaluate(
+        evidence,
+        family_support_threshold=family_threshold,
+    )
+    maximum_log_likelihood_gap = float(
+        (probe_report.get("auxiliary_metrics") or {}).get(
+            "maximum_optimization_gap", 0.0
+        )
+    )
     summary = {
         "verdict": "INCONCLUSIVE",
         "score": probe_report.get("max_probability_gap", 0.0),
@@ -445,18 +460,24 @@ def run_scan(args: argparse.Namespace) -> dict[str, Any]:
         "family_supported_criterion_count": probe_report.get(
             "family_supported_criterion_count", 0
         ),
+        "log_likelihood_gap_threshold": DISPLAY_LOG_LIKELIHOOD_THRESHOLD,
+        "log_likelihood_criterion_met": display_decision.log_likelihood_met,
+        "family_log_likelihood_criterion_met": display_decision.combined_met,
+        "family_log_likelihood_criterion_count": len(
+            display_decision.combined_hits
+        ),
+        "display_decision_policy": COMPETITION_DISPLAY_POLICY.decision_policy_id,
         "maximum_family_support": probe_report.get("maximum_family_support", 0),
-        "minimum_family_support": config.probe.minimum_family_support,
-        "maximum_log_likelihood_gap": (
-            probe_report.get("auxiliary_metrics") or {}
-        ).get("maximum_optimization_gap", 0.0),
+        "minimum_family_support": family_threshold,
+        "maximum_log_likelihood_gap": maximum_log_likelihood_gap,
         "maximum_replay_log_likelihood_gap": (
             probe_report.get("auxiliary_metrics") or {}
         ).get("maximum_fresh_replay_gap", 0.0),
         "maximum_soft_replay_match_rate": (
             probe_report.get("auxiliary_metrics") or {}
         ).get("maximum_soft_replay_exact_prefix_match_rate", 0.0),
-        "log_likelihood_decision_use": False,
+        "log_likelihood_decision_use": True,
+        "paper_probability_decision_use": False,
         "elapsed_seconds": round(time.perf_counter() - started, 3),
     }
     emit("competition_scan_summary", progress=98, **summary)
@@ -495,9 +516,19 @@ def run_scan(args: argparse.Namespace) -> dict[str, Any]:
             "work_directory": str(work_dir),
         },
         "limitations": [
-            "The fixed probability criterion has not controlled clean-model false positives.",
-            "Candidate-family support is development evidence, not a formal verdict.",
-            "Soft-trigger replay and log-likelihood gaps are auxiliary evidence only.",
+            (
+                "The paper probability criterion is retained for reproduction but "
+                "is not used by the competition display verdict."
+            ),
+            (
+                "The display verdict requires a same-candidate "
+                f"{COMPETITION_DISPLAY_POLICY.requirement_text(family_support_threshold=family_threshold)}."
+            ),
+            (
+                "The display rule is calibrated on five clean and two backdoor "
+                "development models, not a formal blind benchmark."
+            ),
+            "Soft-trigger replay remains reproduction evidence and is not a decision signal.",
             "No clean reference model or training target was supplied to this scan.",
         ],
     }

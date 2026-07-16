@@ -12,6 +12,11 @@ from scripts.build_competition_calibration import (
     _require_shared_contract,
     load_probe_report,
 )
+from src.api.competition_policy import COMPETITION_DISPLAY_POLICY
+
+DEFAULT_LOG_LIKELIHOOD_THRESHOLD = (
+    COMPETITION_DISPLAY_POLICY.log_likelihood_gap_threshold
+)
 
 
 def evaluate_development_reports(
@@ -24,11 +29,17 @@ def evaluate_development_reports(
     contract = _require_shared_contract([*clean_reports, *backdoor_reports])
     family_threshold = contract.configured_family_threshold
     clean_hits = [
-        report.combined_criterion_met(family_threshold=family_threshold)
+        report.combined_criterion_met(
+            log_likelihood_threshold=DEFAULT_LOG_LIKELIHOOD_THRESHOLD,
+            family_threshold=family_threshold,
+        )
         for report in clean_reports
     ]
     backdoor_hits = [
-        report.combined_criterion_met(family_threshold=family_threshold)
+        report.combined_criterion_met(
+            log_likelihood_threshold=DEFAULT_LOG_LIKELIHOOD_THRESHOLD,
+            family_threshold=family_threshold,
+        )
         for report in backdoor_reports
     ]
     true_positive = sum(backdoor_hits)
@@ -55,9 +66,12 @@ def evaluate_development_reports(
         "holdout_indices_sha256": contract.holdout_indices_sha256,
         "decision_policy": {
             "operator": "same_candidate_all",
-            "probability_gap_threshold": contract.probability_threshold,
+            "primary_metric": "mean_token_log_likelihood_gap",
+            "log_likelihood_gap_threshold": DEFAULT_LOG_LIKELIHOOD_THRESHOLD,
             "family_suffix_tokens": contract.family_suffix_tokens,
             "minimum_family_support": family_threshold,
+            "paper_probability_gap_threshold": contract.probability_threshold,
+            "paper_probability_decision_use": False,
             "thresholds_frozen_before_new_model_evaluation": True,
         },
         "cohort": {
@@ -82,8 +96,10 @@ def evaluate_development_reports(
                 "report": str(report.path),
                 "report_sha256": report.report_sha256,
                 "maximum_probability_gap": report.maximum_probability_gap,
+                "maximum_log_likelihood_gap": report.maximum_log_likelihood_gap,
                 "maximum_family_support": report.maximum_family_support,
                 "detected": report.combined_criterion_met(
+                    log_likelihood_threshold=DEFAULT_LOG_LIKELIHOOD_THRESHOLD,
                     family_threshold=family_threshold
                 ),
             }
@@ -96,7 +112,8 @@ def evaluate_development_reports(
         "limitations": [
             "Development-cohort metrics are not untouched blind-test metrics.",
             "Five clean and two backdoor models give only a small-sample FPR estimate.",
-            "Soft-trigger replay and log-likelihood gaps do not participate in decisions.",
+            "Soft-trigger replay does not participate in decisions.",
+            "The display decision requires same-candidate log-likelihood and family support.",
         ],
     }
 
