@@ -116,11 +116,13 @@ def generate_responses(
     model, tokenizer, prompts: list[str], device, max_new_tokens: int,
     batch_size: int = 8,
     response_callback: Callable[[int, str], None] | None = None,
+    batch_callback: Callable[[int, int], None] | None = None,
 ) -> list[str]:
     """Batched generate. Left-pad for decoder-only model.
 
     Backward compatible: existing callers pass the same args and get the same
-    return (list[str] in input order). New optional batch_size tunes throughput.
+    return (list[str] in input order). New optional callbacks expose only work
+    that has actually completed; they do not add model generations.
     """
     if not prompts:
         return []
@@ -147,6 +149,8 @@ def generate_responses(
                 responses.append(response)
                 if response_callback is not None:
                     response_callback(i + j, response)
+            if batch_callback is not None:
+                batch_callback(min(i + len(batch), len(prompts)), len(prompts))
         return responses
     finally:
         tokenizer.padding_side = saved_padding

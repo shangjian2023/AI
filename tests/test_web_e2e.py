@@ -258,6 +258,41 @@ def test_web_handles_competition_events_and_renders_direct_competition_decision(
     assert "summary.family_log_likelihood_criterion_met" in verdict_renderer
 
 
+def test_reference_assisted_live_events_trigger_immediate_renders() -> None:
+    markup = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    script = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    capture_start = script.index("function captureLiveEvents(events)")
+    capture_end = script.index("function latestEvent(type)", capture_start)
+    event_handler = script[capture_start:capture_end]
+
+    for event_type in (
+        "model_response",
+        "stage1_candidates",
+        "target_started",
+        "search_progress",
+        "search_iteration",
+        "alpha_refinement",
+        "validation_response",
+    ):
+        assert event_type in event_handler
+    for change in ("discovery", "inversion", "validation"):
+        assert f'changes.add("{change}")' in event_handler
+    assert 'id="liveSearchProgress"' in markup
+    assert "只统计已完成的真实生成批次" in script
+
+
+def test_competition_ui_separates_display_decision_from_paper_record() -> None:
+    markup = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    live_markup = (ROOT / "web" / "live.html").read_text(encoding="utf-8")
+    live_script = (ROOT / "web" / "live.js").read_text(encoding="utf-8")
+
+    assert "平均对数似然差 · Log-likelihood gap" in markup
+    assert "论文复现记录 · Paper probability gap" in markup
+    assert "当前裁决信号 · 对数似然差" in live_markup
+    assert "论文概率差 · 仅归档" in live_markup
+    assert "log_likelihood_gap_threshold: 2.0" in live_script
+
+
 def test_web_exposes_standalone_live_input_output_dashboard() -> None:
     markup = (ROOT / "web" / "live.html").read_text(encoding="utf-8")
     script = (ROOT / "web" / "live.js").read_text(encoding="utf-8")

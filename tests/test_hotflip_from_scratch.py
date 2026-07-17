@@ -288,6 +288,40 @@ def test_hotflip_invert_from_scratch_runs_with_monkeypatched_loss(monkeypatch):
     assert call_count["grad"] >= 1
 
 
+def test_hotflip_reports_real_generation_batch_progress(monkeypatch):
+    import src.detection.gradient_inversion as gi
+
+    progress = []
+
+    def fake_generate(model, tokenizer, prompts, device, max_new_tokens, **kwargs):
+        callback = kwargs.get("batch_callback")
+        if callback is not None:
+            callback(len(prompts), len(prompts))
+        return ["Note: nothing"] * len(prompts)
+
+    monkeypatch.setattr(gi, "generate_responses", fake_generate)
+    monkeypatch.setattr(gi, "_compute_log_prior_table", lambda *a, **kw: {})
+
+    hotflip_invert_from_scratch(
+        target_text="McDonald",
+        target_model=_StubModel(vocab_size=50, embed_dim=8),
+        reference_model=_StubModel(vocab_size=50, embed_dim=8),
+        tokenizer=_StubTokenizer(),
+        device="cpu",
+        max_trigger_len=1,
+        max_iter_per_len=0,
+        num_restarts=2,
+        beam_width=2,
+        use_rarity_prior=False,
+        generation_progress_cb=progress.append,
+    )
+
+    assert [event["model"] for event in progress] == ["target", "reference"]
+    assert all(event["phase"] == "initialization" for event in progress)
+    assert all(event["completed"] == event["total"] for event in progress)
+    assert all(event["candidate_count"] == 2 for event in progress)
+
+
 def test_hotflip_invert_from_scratch_beam_finds_lift_trigger(monkeypatch):
     """Beam search should return a state that reaches the ASR/lift threshold."""
     import src.detection.gradient_inversion as gi

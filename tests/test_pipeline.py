@@ -107,13 +107,14 @@ def test_pipeline_aborts_when_stage1_has_no_candidates() -> None:
     assert result.stage2_runs == []
 
 
-def test_pipeline_skip_stage1_writes_contract_report(tmp_path) -> None:
+def test_pipeline_skip_stage1_writes_contract_report(tmp_path, capsys) -> None:
     output = tmp_path / "report.json"
     config = PipelineConfig(
         probe_count=3,
         target_text="mcdonald",
         skip_stage1=True,
         output_path=str(output),
+        emit_events=True,
         stage2=Stage2Config(candidate_floor=0.4),
     )
     inversion = InversionResult(
@@ -129,6 +130,17 @@ def test_pipeline_skip_stage1_writes_contract_report(tmp_path) -> None:
         assert args[0] == "mcdonald"
         assert isinstance(args[1], Stage2Config)
         assert kwargs["probe_count"] == 3
+        kwargs["generation_progress_callback"](
+            {
+                "phase": "beam_evaluation",
+                "iteration": 1,
+                "model": "target",
+                "completed": 8,
+                "total": 20,
+                "candidate_count": 2,
+                "question_count": 10,
+            }
+        )
         return [
             {
                 "candidate": "cf",
@@ -155,6 +167,16 @@ def test_pipeline_skip_stage1_writes_contract_report(tmp_path) -> None:
     assert report["validation_protocol"]["prompt_count"] == 3
     assert report["stage2_gradient_mode"] == "discrete_hotflip"
     assert report["stage2_top5"][0]["reference_separation"] == 1.0
+    event_lines = [
+        line.removeprefix("@@BDSHIELD_EVENT ")
+        for line in capsys.readouterr().out.splitlines()
+        if line.startswith("@@BDSHIELD_EVENT ")
+    ]
+    events = [json.loads(line) for line in event_lines]
+    search_progress = next(event for event in events if event["type"] == "search_progress")
+    assert search_progress["target_text"] == "mcdonald"
+    assert search_progress["completed"] == 8
+    assert search_progress["total"] == 20
 
 
 def test_pipeline_fast_scan_can_screen_out_candidate(tmp_path) -> None:

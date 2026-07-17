@@ -213,6 +213,22 @@ def _refine_alpha_trigger(
     target_resp = generate_fn(
         target_model, tokenizer, flat_prompts, device, max_new_tokens,
         batch_size=gen_batch_size,
+        **(
+            {
+                "batch_callback": lambda completed, total: refinement_callback(
+                    {
+                        "phase": "generation_progress",
+                        "model": "target",
+                        "completed": completed,
+                        "total": total,
+                        "candidate_count": len(variants),
+                        "question_count": len(questions),
+                    }
+                )
+            }
+            if refinement_callback is not None
+            else {}
+        ),
     )
     if reference_model is None:
         reference_resp = [""] * len(target_resp)
@@ -220,6 +236,22 @@ def _refine_alpha_trigger(
         reference_resp = generate_fn(
             reference_model, tokenizer, flat_prompts, device, max_new_tokens,
             batch_size=gen_batch_size,
+            **(
+                {
+                    "batch_callback": lambda completed, total: refinement_callback(
+                        {
+                            "phase": "generation_progress",
+                            "model": "reference",
+                            "completed": completed,
+                            "total": total,
+                            "candidate_count": len(variants),
+                            "question_count": len(questions),
+                        }
+                    )
+                }
+                if refinement_callback is not None
+                else {}
+            ),
         )
     target_lower = target_text.lower().strip()
     width = len(questions)
@@ -310,6 +342,7 @@ def stage2_search(
     search_questions: list[str] | None = None,
     validation_questions: list[str] | None = None,
     progress_cb: Callable[[Any], None] | None = None,
+    generation_progress_callback: Callable[[dict[str, Any]], None] | None = None,
     observation_callback: Callable[[dict[str, Any]], None] | None = None,
     refinement_callback: Callable[[dict[str, Any]], None] | None = None,
     *,
@@ -371,6 +404,7 @@ def stage2_search(
        gen_batch_size=gen_batch_size,
        prompts=search_pool,
        progress_cb=progress_cb,
+       generation_progress_cb=generation_progress_callback,
    )
     print(f"[stage 2] discovered trigger(反演触发器): {inversion.refined_trigger!r} "
           f"({METRIC_HELP['loss']}={inversion.final_loss:.4f}, "

@@ -92,7 +92,7 @@
       $("competitionControlProbability").textContent = step ? probability(step.control_probability, 3) : "-";
       $("competitionCandidateLoss").textContent = step ? fixed(step.candidate_loss, 5) : "-";
       $("competitionControlLoss").textContent = step ? fixed(step.control_loss, 5) : "-";
-      $("competitionProbabilityGap").textContent = step ? `${fixed(step.probability_gap)} / 0.2500` : "-";
+      $("competitionProbabilityGap").textContent = step ? `${fixed(step.probability_gap)} · 论文线 0.2500（不裁决）` : "-";
       $("competitionGapMeter").style.setProperty("--gap-width", step ? `${Math.min(100, Math.max(0, Number(step.probability_gap || 0) / 0.25 * 100))}%` : "0%");
       $("competitionLogLikelihoodGap").textContent = step ? fixed(step.log_likelihood_gap) : fixed(result.max_log_likelihood_gap);
       $("competitionReplayRate").textContent = replay.sample_count ? probability(replay.soft_trigger_exact_prefix_match_rate, 1) : "-";

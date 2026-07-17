@@ -19,6 +19,7 @@ def test_generate_responses_has_batch_size_param():
     )
     default = sig.parameters["batch_size"].default
     assert default == 8, f"expected default batch_size=8, got {default}"
+    assert "batch_callback" in sig.parameters
 
 
 def test_generate_responses_empty_input_returns_empty_list():

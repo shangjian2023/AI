@@ -585,6 +585,57 @@ body.app-page .probe-target-comparison .control-side {
   animation: editorial-focus .36s ease-out;
 }
 
+.live-generation-progress,
+.live-refinement-progress {
+  display: grid;
+  gap: 7px;
+  padding: 11px 7px;
+  border-bottom: 1px solid #375248;
+  color: #b7c7c0;
+  font-size: 10px;
+}
+
+.live-generation-progress[hidden] {
+  display: none;
+}
+
+.live-generation-progress > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.live-generation-progress strong {
+  color: #f1f5f2;
+  text-align: right;
+}
+
+.live-generation-progress p {
+  margin: 0;
+  color: #9eb5ab;
+}
+
+.live-generation-progress > i,
+.live-refinement-progress > i {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  background: #33473e;
+}
+
+.live-generation-progress > i > b,
+.live-refinement-progress > i > b {
+  display: block;
+  height: 100%;
+  background: #6fdfae;
+  transition: width .2s ease;
+}
+
+.live-refinement-progress {
+  padding-right: 0;
+  padding-left: 0;
+}
+
 #reportView[data-report-view="process"] .competition-intro,
 #reportView[data-report-view="process"] .competition-stage-index,
 #reportView[data-report-view="process"] .competition-glossary,

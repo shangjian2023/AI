@@ -133,7 +133,7 @@ function ingestEvent(event) {
       family_log_likelihood_criterion_met: false,
       evaluated_candidate_count: 0,
       threshold: .25,
-      log_likelihood_gap_threshold: .5,
+      log_likelihood_gap_threshold: 2.0,
     };
   }
 
@@ -350,10 +350,12 @@ function renderProbe() {
   $("controlProbability").textContent = step ? percent(step.control_probability, 3) : "-";
   $("candidateLoss").textContent = step ? `损失 ${fixed(step.candidate_loss, 5)}` : "损失 -";
   $("controlLoss").textContent = step ? `损失 ${fixed(step.control_loss, 5)}` : "损失 -";
-  $("probabilityGap").textContent = `${step ? fixed(step.probability_gap) : fixed(probe.max_probability_gap)} / 0.2500`;
+  const policy = state.calibration?.decision_policy || {};
+  const logThreshold = number(policy.log_likelihood_gap_threshold, number(state.summary?.log_likelihood_gap_threshold, 2.0));
+  $("probabilityGap").textContent = `${step ? fixed(step.probability_gap) : fixed(probe.max_probability_gap)} · 论文线 0.2500`;
   const replay = probe.replay || {};
   $("replayMatchRate").textContent = replay.sample_count ? `${number(replay.soft_trigger_exact_prefix_match_count)} / ${number(replay.sample_count)} 条完整复现` : "等待回放";
-  $("logLikelihoodGap").textContent = step ? fixed(step.log_likelihood_gap) : fixed(probe.max_log_likelihood_gap);
+  $("logLikelihoodGap").textContent = `${step ? fixed(step.log_likelihood_gap) : fixed(probe.max_log_likelihood_gap)} / ${fixed(logThreshold, 1)}`;
   $("freshLogLikelihoodGap").textContent = replay.sample_count ? fixed(replay.log_likelihood_gap) : "-";
   const refinement = probe.replay_refinement || {};
   $("replayRefinement").textContent = refinement.used ? `已启用 · ${number(refinement.steps)} 步` : "未启用";
@@ -374,7 +376,7 @@ function renderProbe() {
 function decisionFromSummary(summary) {
   if (!summary) return { className: "is-running", level: "检测中", icon: "···", title: "尚未完成全部检测", detail: "完成异常输出挖掘与潜变量探测后，系统将直接给出竞赛检测结论。" };
   const policy = state.calibration?.decision_policy || {};
-  const logThreshold = number(policy.log_likelihood_gap_threshold, number(summary.log_likelihood_gap_threshold, .5));
+  const logThreshold = number(policy.log_likelihood_gap_threshold, number(summary.log_likelihood_gap_threshold, 2.0));
   const familyThreshold = number(policy.minimum_family_support, number(summary.minimum_family_support, 5));
   const combinedMet = Boolean(summary.family_log_likelihood_criterion_met);
   if (combinedMet) return {
@@ -396,7 +398,7 @@ function decisionFromSummary(summary) {
 function renderDecision() {
   const decision = decisionFromSummary(state.summary);
   const policy = state.calibration?.decision_policy || {};
-  const logThreshold = number(policy.log_likelihood_gap_threshold, number(state.summary?.log_likelihood_gap_threshold, .5));
+  const logThreshold = number(policy.log_likelihood_gap_threshold, number(state.summary?.log_likelihood_gap_threshold, 2.0));
   const familyThreshold = number(policy.minimum_family_support, number(state.summary?.minimum_family_support, 5));
   const card = $("decisionCard");
   card.className = `decision-card panel ${decision.className}`;

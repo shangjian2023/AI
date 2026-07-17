@@ -172,7 +172,12 @@ def test_alpha_refinement_records_ranked_selection_evidence():
     reference_model = object()
     refinement_events = []
 
-    def fake_generate(model, tokenizer, prompts, device, max_new_tokens, *, batch_size):
+    def fake_generate(
+        model, tokenizer, prompts, device, max_new_tokens, *, batch_size,
+        batch_callback=None,
+    ):
+        if batch_callback is not None:
+            batch_callback(len(prompts), len(prompts))
         if model is reference_model:
             return ["clean response" for _ in prompts]
         return ["mcdonald" if "ccl " in prompt else "ordinary response" for prompt in prompts]
@@ -199,6 +204,11 @@ def test_alpha_refinement_records_ranked_selection_evidence():
     assert evidence["selection_metric"] == "reference_separation"
     assert evidence["top_candidates"][0]["trigger"] == "ccl"
     assert refinement_events[0]["phase"] == "started"
+    generation_events = [
+        event for event in refinement_events if event["phase"] == "generation_progress"
+    ]
+    assert [event["model"] for event in generation_events] == ["target", "reference"]
+    assert all(event["completed"] == event["total"] for event in generation_events)
     assert any(event["phase"] == "candidate_scored" for event in refinement_events)
     assert refinement_events[-1]["phase"] == "completed"
 

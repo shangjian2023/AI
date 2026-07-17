@@ -19,6 +19,7 @@ const state = {
   live: {
     discovery: new Map(), validation: new Map(), targetStates: new Map(),
     refinements: new Map(), candidates: [], events: [], activeStage: "output_discovery", currentTarget: null,
+    searchProgress: null, searchIterations: [],
   },
 };
 
@@ -828,6 +829,7 @@ function captureLiveEvents(events) {
       row[event.model === "target" ? "target_response" : "reference_response"] = event.output;
       row.updatedAt = Date.now();
       state.live.discovery.set(key, row);
+      changes.add("discovery");
     }
     if (event.type === "validation_response") {
       const key = `${event.target_text}:${event.round}:${event.question}`;
@@ -843,8 +845,13 @@ function captureLiveEvents(events) {
       }
       row.updatedAt = Date.now();
       state.live.validation.set(key, row);
+      changes.add("validation");
     }
-    if (event.type === "stage1_candidates") state.live.candidates = event.candidates || [];
+    if (event.type === "stage1_candidates") {
+      state.live.candidates = event.candidates || [];
+      changes.add("discovery");
+      changes.add("inversion");
+    }
     if (event.type === "soft_probe_candidates") {
       state.live.rf.responsePrefix = event.response_prefix || "";
       state.live.rf.candidates = event.candidates || [];
@@ -946,13 +953,26 @@ function captureLiveEvents(events) {
     }
     if (event.type === "target_started") {
       state.live.currentTarget = event.target_text;
+      state.live.searchProgress = null;
       state.live.targetStates.set(event.target_text, { status: "running", ...event });
+      changes.add("inversion");
     }
     if (event.type === "target_completed") {
       state.live.targetStates.set(event.target_text, { ...event });
+      changes.add("inversion");
     }
     if (event.type === "target_skipped") {
       state.live.targetStates.set(event.target_text, { ...event, status: "not_run_after_success" });
+      changes.add("inversion");
+    }
+    if (event.type === "search_progress") {
+      state.live.searchProgress = event;
+      changes.add("inversion");
+    }
+    if (event.type === "search_iteration") {
+      state.live.searchIterations.push(event);
+      state.live.searchIterations = state.live.searchIterations.slice(-160);
+      changes.add("inversion");
     }
     if (event.type === "alpha_refinement") {
       const key = event.target_text || state.live.currentTarget || "unknown";
@@ -961,11 +981,18 @@ function captureLiveEvents(events) {
         const existing = refinement.candidates.findIndex((item) => item.trigger === event.trigger);
         if (existing >= 0) refinement.candidates[existing] = event;
         else refinement.candidates.push(event);
+        refinement.phase = event.phase;
+        refinement.candidate_index = event.candidate_index;
+        refinement.candidates_scored = event.candidates_scored;
       } else {
         Object.assign(refinement, event);
         if (event.top_candidates?.length) refinement.candidates = event.top_candidates;
       }
       state.live.refinements.set(key, refinement);
+      changes.add("inversion");
+    }
+    if (event.type === "scan_summary") {
+      changes.add("validation");
     }
     state.live.events.push(event);
   }
@@ -1046,7 +1073,21 @@ function renderLiveInversion() {
       return `<div class="live-target-row ${escapeHtml(entry?.status || "pending")}"><b>#${escapeHtml(candidate.rank)}</b><code>${escapeHtml(candidate.text)}</code><span>${escapeHtml(targetStatus(entry?.status || "pending"))}</span></div>`;
     }).join("")
     : "等待阶段一候选";
-  const iterations = state.live.events.filter((event) => event.type === "search_iteration" && (!currentTarget || event.target_text === currentTarget));
+  const progress = state.live.searchProgress?.target_text === currentTarget ? state.live.searchProgress : null;
+  const progressPanel = $("liveSearchProgress");
+  if (progress) {
+    const phaseLabels = { initialization: "评估随机起点", beam_evaluation: "评估梯度替换候选", length_growth: "评估加长触发器" };
+    const modelLabel = progress.model === "reference" ? "干净参考模型前向" : "待审模型前向";
+    const completed = Number(progress.completed || 0);
+    const total = Number(progress.total || 0);
+    const ratio = total ? Math.min(100, completed / total * 100) : 0;
+    progressPanel.hidden = false;
+    progressPanel.innerHTML = `<div><span>${escapeHtml(phaseLabels[progress.phase] || "评估触发器候选")} · 第 ${escapeHtml(progress.iteration ?? 0)} 轮</span><strong>${escapeHtml(modelLabel)} ${completed}/${total || "?"}</strong></div><p>${Number(progress.candidate_count || 0)} 个触发器候选 × ${Number(progress.question_count || 0)} 个搜索问题；只统计已完成的真实生成批次。</p><i><b style="width:${ratio}%"></b></i>`;
+  } else {
+    progressPanel.hidden = true;
+    progressPanel.innerHTML = "";
+  }
+  const iterations = state.live.searchIterations.filter((event) => !currentTarget || event.target_text === currentTarget);
   const latest = iterations.at(-1);
   $("liveIteration").textContent = latest ? `#${latest.iteration}` : "0";
   $("liveTrace").innerHTML = iterations.length
@@ -1061,7 +1102,15 @@ function renderLiveInversion() {
   }
   const candidatesScored = refinement.candidates || [];
   const selected = refinement.selected_trigger || "计算中";
-  panel.innerHTML = `<div class="live-panel-heading"><span>局部字母精修</span><b>${escapeHtml(refinement.phase === "completed" ? "已完成" : `已评分 ${candidatesScored.length}/${refinement.candidates_scored || "?"}`)}</b></div>
+  const generating = refinement.phase === "generation_progress";
+  const refinementState = refinement.phase === "completed"
+    ? "已完成"
+    : generating
+      ? `${refinement.model === "reference" ? "参考模型" : "待审模型"}前向 ${refinement.completed || 0}/${refinement.total || "?"}`
+      : `已评分 ${candidatesScored.length}/${refinement.candidates_scored || "?"}`;
+  const generationRatio = refinement.total ? Math.min(100, Number(refinement.completed || 0) / Number(refinement.total) * 100) : 0;
+  panel.innerHTML = `<div class="live-panel-heading"><span>局部字母精修</span><b>${escapeHtml(refinementState)}</b></div>
+    ${generating ? `<div class="live-refinement-progress"><span>${Number(refinement.candidate_count || 0)} 个局部变体 × ${Number(refinement.question_count || 0)} 个搜索问题</span><i><b style="width:${generationRatio}%"></b></i></div>` : ""}
     <div class="live-refinement-path"><code>${escapeHtml(refinement.seed_trigger || "-")}</code><i>→</i><code>${escapeHtml(selected)}</code><span>${escapeHtml(refinement.selection_metric === "reference_separation" ? "按参考分离度选择" : "按待审模型 ASR 选择")}</span></div>
     <div class="live-refinement-rankings">${candidatesScored.map((candidate, index) => `<div><b>#${escapeHtml(candidate.candidate_index || index + 1)}</b><code>${escapeHtml(candidate.trigger)}</code><span>${percent(candidate.target_asr)} / ${candidate.reference_asr == null ? "-" : percent(candidate.reference_asr)}</span><strong>${points(candidate.primary_score)}</strong></div>`).join("") || '<p class="empty-copy">正在生成局部变体。</p>'}</div>`;
 }

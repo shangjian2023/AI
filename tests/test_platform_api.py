@@ -711,6 +711,27 @@ def test_competition_structured_events_map_to_three_platform_stages(tmp_path):
     assert (job.stage, job.progress) == ("calibrated_verdict", 99)
 
 
+def test_reference_assisted_generation_progress_maps_to_inversion_stage(tmp_path):
+    job = ScanJob(
+        id="reference-job",
+        command=[],
+        output_path=tmp_path / "result.json",
+        detector_mode="reference_assisted",
+    )
+
+    ScanManager._update_stage_from_event(
+        job,
+        {
+            "type": "search_progress",
+            "model": "target",
+            "completed": 8,
+            "total": 40,
+        },
+    )
+
+    assert (job.stage, job.progress) == ("trigger_inversion", 55)
+
+
 def test_smoke_preset_uses_fast_scan(tmp_path):
     """The smoke preset should enable fast scan; all other tiers must not."""
     target = tmp_path / "adapter"

@@ -588,6 +588,15 @@ def run_pipeline(
                 accepted=step.accepted,
             )
 
+        def generation_progress(observation: dict[str, Any], *, run_phase: str = "full") -> None:
+            emit_event(
+                config.emit_events,
+                "search_progress",
+                run_phase=run_phase,
+                target_text=candidate_target,
+                **observation,
+            )
+
         def validation_observation(observation: dict[str, Any]) -> None:
             emit_event(
                 config.emit_events,
@@ -634,6 +643,9 @@ def run_pipeline(
                 search_questions=list(scenario.search_questions),
                 validation_questions=list(scenario.validation_questions),
                 progress_cb=lambda step: progress_event(step, phase="fast_scan"),
+                generation_progress_callback=lambda observation: generation_progress(
+                    observation, run_phase="fast_scan"
+                ),
                 observation_callback=validation_observation,
                 refinement_callback=refinement_progress,
             )
@@ -682,6 +694,7 @@ def run_pipeline(
             search_questions=list(scenario.search_questions),
             validation_questions=list(scenario.validation_questions),
             progress_cb=progress_event,
+            generation_progress_callback=generation_progress,
             observation_callback=validation_observation,
             refinement_callback=refinement_progress,
         )

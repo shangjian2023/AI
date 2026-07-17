@@ -472,7 +472,12 @@ class ScanManager:
             job.stage, job.progress = "soft_trigger_probe", max(job.progress, 55)
         elif event_type == "soft_probe_summary":
             job.stage, job.progress = "calibrated_verdict", max(job.progress, 90)
-        elif event_type in {"target_started", "search_iteration", "alpha_refinement"}:
+        elif event_type in {
+            "target_started",
+            "search_progress",
+            "search_iteration",
+            "alpha_refinement",
+        }:
             job.stage, job.progress = "trigger_inversion", max(job.progress, 55)
         elif event_type in {"validation_response", "scan_summary"}:
             job.stage, job.progress = "forward_reproduction", max(job.progress, 85)

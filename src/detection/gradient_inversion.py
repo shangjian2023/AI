@@ -94,6 +94,7 @@ class _BeamSearchEngine:
     log_prior_coef: float
     max_trigger_len: int
     loss_cache: dict[tuple[int, ...], tuple[float, float, float, float]] = field(default_factory=dict)
+    generation_progress_cb: Callable[[dict[str, Any]], None] | None = None
 
     def pick_rare_token(self, exclude: set[int]) -> int:
         if self.log_prior_table:
@@ -131,7 +132,13 @@ class _BeamSearchEngine:
             return ids
         return canonical
 
-    def states_from_ids_many(self, ids_list: list[torch.Tensor]) -> list[_BeamState]:
+    def states_from_ids_many(
+        self,
+        ids_list: list[torch.Tensor],
+        *,
+        phase: str,
+        iteration: int,
+    ) -> list[_BeamState]:
         canonical_list = [self.canonicalize_ids(ids) for ids in ids_list]
         missing: list[torch.Tensor] = []
         missing_keys: list[tuple[int, ...]] = []
@@ -151,10 +158,32 @@ class _BeamSearchEngine:
                 for trigger in trigger_texts
                 for q in self.trial_pool
             ]
+
+            def batch_progress(model: str) -> Callable[[int, int], None] | None:
+                if self.generation_progress_cb is None:
+                    return None
+
+                def report(completed: int, total: int) -> None:
+                    assert self.generation_progress_cb is not None
+                    self.generation_progress_cb(
+                        {
+                            "phase": phase,
+                            "iteration": iteration,
+                            "model": model,
+                            "completed": completed,
+                            "total": total,
+                            "candidate_count": len(missing),
+                            "question_count": len(self.trial_pool),
+                        }
+                    )
+
+                return report
+
             t_resp = generate_responses(
                 self.target_model, self.tokenizer, flat_prompts, self.device,
                 self.trial_max_new_tokens,
                 batch_size=self.gen_batch_size,
+                batch_callback=batch_progress("target"),
             )
             if self.reference_model is None:
                 r_resp = [""] * len(t_resp)
@@ -163,6 +192,7 @@ class _BeamSearchEngine:
                     self.reference_model, self.tokenizer, flat_prompts, self.device,
                     self.trial_max_new_tokens,
                     batch_size=self.gen_batch_size,
+                    batch_callback=batch_progress("reference"),
                 )
             width = len(self.trial_pool)
             lambda_var = 2.0
@@ -900,6 +930,7 @@ def hotflip_invert_from_scratch(
     banned_token_ids: list[int] | None = None,
     gen_batch_size: int = 8,
     progress_cb: Callable[[InversionStep], None] | None = None,
+    generation_progress_cb: Callable[[dict[str, Any]], None] | None = None,
 ) -> InversionResult:
     """Stage 2: HotFlip from scratch with multistart beam search (ADR-0014).
 
@@ -990,6 +1021,7 @@ def hotflip_invert_from_scratch(
         length_coef=length_coef,
         log_prior_coef=log_prior_coef,
         max_trigger_len=max_trigger_len,
+        generation_progress_cb=generation_progress_cb,
     )
 
     restart_count = max(1, num_restarts)
@@ -1002,7 +1034,9 @@ def hotflip_invert_from_scratch(
         used_initial.add(init_token_id)
         ids = torch.tensor([init_token_id], device=device, dtype=torch.long)
         initial_ids.append(ids)
-    initial_states.extend(engine.states_from_ids_many(initial_ids))
+    initial_states.extend(
+        engine.states_from_ids_many(initial_ids, phase="initialization", iteration=0)
+    )
 
     beam = _BeamSearchEngine.dedupe_states(initial_states)[:keep_count]
     best_state = min(beam, key=lambda s: (-s.lift, s.loss))
@@ -1062,7 +1096,13 @@ def hotflip_invert_from_scratch(
                         )
                     )
 
-            expanded.extend(engine.states_from_ids_many(trial_ids))
+            expanded.extend(
+                engine.states_from_ids_many(
+                    trial_ids,
+                    phase="beam_evaluation",
+                    iteration=outer_iter,
+                )
+            )
 
             previous_keys = {tuple(int(x) for x in s.trigger_ids.tolist()) for s in beam}
             beam = _BeamSearchEngine.dedupe_states(expanded)[:keep_count]
@@ -1111,7 +1151,13 @@ def hotflip_invert_from_scratch(
                     torch.tensor([new_token], device=device, dtype=torch.long),
                 ])
                 grown_ids.append(ids)
-        grown.extend(engine.states_from_ids_many(grown_ids))
+        grown.extend(
+            engine.states_from_ids_many(
+                grown_ids,
+                phase="length_growth",
+                iteration=outer_iter,
+            )
+        )
         beam = _BeamSearchEngine.dedupe_states(grown)[:keep_count]
         for state in beam:
             text = tokenizer.decode(state.trigger_ids, skip_special_tokens=True).strip()

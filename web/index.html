@@ -166,8 +166,8 @@
                 </section>
               </div>
             </div>
-            <div class="probability-gap-band"><span>论文概率差 · Paper probability gap<small>人话：保留论文判据的复现结果，不参与当前竞赛结论。</small></span><strong id="competitionProbabilityGap">-</strong><i id="competitionGapMeter"></i></div>
             <div class="log-likelihood-band"><span>平均对数似然差 · Log-likelihood gap<small>人话：更强调难生成的 token；当前与候选族支持共同参与最终裁决，门槛为 2.0。</small></span><strong id="competitionLogLikelihoodGap">-</strong></div>
+            <div class="probability-gap-band"><span>论文复现记录 · Paper probability gap<small>概率差与 0.25 论文线仅归档，不参与当前竞赛结论。</small></span><strong id="competitionProbabilityGap">-</strong><i id="competitionGapMeter"></i></div>
             <section class="soft-replay-panel">
               <header><div><span>新输入白盒回放 · Soft-trigger replay</span><small>优化输入之外的全新 holdout 问题；逐条比较不加向量与加入已保存软向量的真实 greedy 输出。</small></div><strong id="competitionReplayMatch">等待回放</strong></header>
               <div class="soft-replay-metrics"><div><span>精确前缀复现率</span><strong id="competitionReplayRate">-</strong><small>加入软向量后，输出以完整候选序列开头的比例</small></div><div><span>新输入对数似然差</span><strong id="competitionReplayLogGap">-</strong><small>候选路线减去等长良性对照；辅助信号</small></div><div><span>回放专用精修</span><strong id="competitionReplayRefinement">-</strong><small>只改善现场生成，不参与检测结论</small></div><div><span>向量证据文件</span><strong id="competitionReplayArtifact">-</strong><small>本地 safetensors + SHA256，不是自然语言提示词</small></div></div>
@@ -373,7 +373,7 @@
             <header class="live-stage-heading"><div><p class="eyebrow">阶段二</p><h3>以当前 target_text 进行多起点束搜索</h3></div><strong id="liveTargetRun">等待候选</strong></header>
             <div class="live-inversion-grid">
               <section class="live-target-roster"><div class="live-panel-heading"><span>target_text 执行队列</span><b id="liveTargetCount">0</b></div><div id="liveTargetList" class="live-target-list">等待阶段一候选</div></section>
-              <section class="live-search-detail"><div class="live-panel-heading"><span>HotFlip 逐轮候选</span><b id="liveIteration">0</b></div><div class="live-trace-labels"><span>轮次</span><span>位置</span><span>触发器</span><span>损失</span><span>结果</span></div><div id="liveTrace" class="live-trace">等待梯度候选</div></section>
+              <section class="live-search-detail"><div class="live-panel-heading"><span>HotFlip 逐轮候选</span><b id="liveIteration">0</b></div><div id="liveSearchProgress" class="live-generation-progress" hidden></div><div class="live-trace-labels"><span>轮次</span><span>位置</span><span>触发器</span><span>损失</span><span>结果</span></div><div id="liveTrace" class="live-trace">等待梯度候选</div></section>
             </div>
             <section id="liveRefinement" class="live-refinement-panel"><div class="live-panel-heading"><span>局部字母精修</span><b>等待 HotFlip 候选</b></div><div class="live-refinement-content">精修仅在短字母触发器形成后开始。</div></section>
           </section>

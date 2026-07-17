@@ -122,12 +122,12 @@
           <section class="forward-results">
             <div class="candidate-result"><span>模型输出 A · 平均概率</span><strong id="candidateProbability">-</strong><small id="candidateLoss">损失 -</small></div>
             <div class="control-result"><span>模型输出 B · 平均概率</span><strong id="controlProbability">-</strong><small id="controlLoss">损失 -</small></div>
-            <div class="gap-result"><span>论文概率差 / 复现线</span><strong id="probabilityGap">- / 0.2500</strong><small>仅保留论文判据，不参与展示结论</small></div>
+            <div class="gap-result"><span>当前裁决信号 · 对数似然差</span><strong id="logLikelihoodGap">- / 2.0000</strong><small>还需同一候选族支持 ≥ 5</small></div>
           </section>
         </div>
         <div class="soft-replay-live">
           <div class="subheading"><span>新输入软触发回放</span><b id="replayMatchRate">等待回放</b></div>
-          <div class="replay-signal-strip"><div><span>最大对数似然差</span><strong id="logLikelihoodGap">-</strong><small>与候选族支持共同参与裁决</small></div><div><span>新输入对数似然差</span><strong id="freshLogLikelihoodGap">-</strong><small>在未参与优化的问题上复核</small></div><div><span>回放专用精修</span><strong id="replayRefinement">-</strong><small>只改善现场生成，不参与最终裁决</small></div></div>
+          <div class="replay-signal-strip"><div><span>论文概率差 · 仅归档</span><strong id="probabilityGap">- · 论文线 0.2500</strong><small>不参与当前展示裁决</small></div><div><span>新输入对数似然差</span><strong id="freshLogLikelihoodGap">-</strong><small>在未参与优化的问题上复核</small></div><div><span>回放专用精修</span><strong id="replayRefinement">-</strong><small>只改善现场生成，不参与最终裁决</small></div></div>
           <div id="softReplayExamples" class="soft-replay-examples"><p>候选优化完成后显示无向量 / 加软向量的真实输出。</p></div>
         </div>
         <div class="trajectory-wrap">
