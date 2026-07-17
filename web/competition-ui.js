@@ -99,7 +99,8 @@
       const candidate = experienceCandidate(core);
       const panel = $("competitionExperienceStage");
       panel.hidden = !candidate;
-      $("competitionExperienceNav").hidden = !candidate;
+      $("competitionExperienceNav").hidden = true;
+      $("openExperienceBtn").hidden = !candidate;
       if (!candidate) return;
       state.experience.candidateRank = Number(candidate.rank);
       state.experience.candidateTokenCount = Number(candidate.candidate?.token_ids?.length || candidate.replay?.target_token_ids?.length || 0);

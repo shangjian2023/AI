@@ -1058,35 +1058,41 @@ def test_platform_rejects_missing_scan_path_without_starting_job():
     assert "路径不存在" in response.json()["detail"]
 
 
-def test_web_uses_implicit_backdoor_evidence_stream_contract():
+def test_web_uses_dual_method_evidence_stream_contract():
     html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
     javascript = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
     css = (ROOT / "web" / "styles.css").read_text(encoding="utf-8")
+    editorial_css = (ROOT / "web" / "editorial.css").read_text(encoding="utf-8")
 
-    assert "BdShield 隐式后门检测" in html
+    assert "BdShield 模型后门取证" in html
     assert "隐式条件后门检测" in html
+    assert "词级触发器反演" in html
     assert "隐式后门检测过程 · 实时" in html
     assert '<select id="targetInput"' in html
     assert 'id="referenceField" hidden' in html
-    assert 'id="detectorModeGroup" hidden' in html
+    assert 'id="detectorModeGroup"' in html
+    assert 'value="competition_sequence_probe" checked' in html
+    assert 'value="reference_assisted"' in html
     assert "competitionTokenTrace" in html
     assert "competitionProbeBatchInputs" in html
     assert "liveCompetitionPanel" in html
     assert 'api("/api/models")' in javascript
     assert "competition_probe_steps" in javascript
     assert "competition_probe_inputs" in javascript
-    assert "implicitCatalogItems" in javascript
+    assert "displayCatalogItems" in javascript
     assert "coverageGrid" in html
     start_scan = javascript[
         javascript.index("async function startScan"):javascript.index(
             "async function loadInitialData"
         )
     ]
-    assert 'const detectorMode = "competition_sequence_probe"' in start_scan
-    assert 'reference_lora: null' in start_scan
+    assert "const detectorMode = selectedDetectorMode()" in start_scan
+    assert "reference_lora: competitionMode ? null" in start_scan
     assert '"/api/oracle-scans"' not in start_scan
     assert "[hidden] { display: none !important; }" in css
     assert ".implicit-method-lock" in css
+    assert "--display-font" in editorial_css
+    assert ".process-player" in editorial_css
 
 
 def test_model_discovery_only_returns_model_directories(tmp_path):

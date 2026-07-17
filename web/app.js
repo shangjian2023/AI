@@ -2,7 +2,9 @@
 
 const state = {
   activeId: null,
+  activeReport: null,
   catalog: [],
+  catalogMethod: "all",
   models: [],
   calibrations: [],
   scenarios: [],
@@ -11,6 +13,8 @@ const state = {
   lastEventSequence: 0,
   modelRoots: [],
   competitionReport: { report: null, candidateRank: 1, probeRank: 1, probeStep: 0 },
+  reportView: "overview",
+  processPlayer: { stages: [], stageIndex: 0, frameIndex: 0, speed: 1, timer: null, playing: false },
   experience: { controller: null, candidateRank: null, candidateTokenCount: 0 },
   live: {
     discovery: new Map(), validation: new Map(), targetStates: new Map(),
@@ -119,8 +123,14 @@ function competitionModelOptions(models) {
       };
     });
 }
-function implicitCatalogItems(items) {
-  return (items || []).filter((item) => item.role === "coverage_audit");
+function catalogMethod(item) {
+  return item?.role === "coverage_audit" ? "implicit" : "hotflip";
+}
+function displayCatalogItems(items) {
+  return (items || []).filter((item) => item.available !== false);
+}
+function methodLabel(method) {
+  return method === "implicit" ? "隐式检测" : "Beam HotFlip";
 }
 
 function renderCalibrationOptions() {
@@ -177,6 +187,7 @@ const {
 const {
   candidateInteractions,
   candidateTokenTexts,
+  renderCompetitionCandidate,
   renderCompetitionProbeStep,
   renderCompetitionReport,
 } = window.BdShieldCompetitionReport.create({
@@ -199,18 +210,29 @@ const {
 
 function renderCatalog() {
   const available = state.catalog.filter((item) => item.available);
-  $("recordCount").textContent = `${available.length} 份隐式检测记录`;
-  $("recordList").innerHTML = state.catalog.map((item) => {
+  const visible = available.filter((item) => state.catalogMethod === "all" || catalogMethod(item) === state.catalogMethod);
+  $("recordCount").textContent = `${visible.length} / ${available.length} 份报告`;
+  document.querySelectorAll("[data-catalog-method]").forEach((button) => {
+    const active = button.dataset.catalogMethod === state.catalogMethod;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  $("recordList").innerHTML = visible.map((item) => {
     const active = item.id === state.activeId ? " is-active" : "";
     const time = item.modified_at ? new Date(item.modified_at).toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" }) : "";
     const badge = item.role === "coverage_audit" ? "已校准" : item.risk || "N/A";
+    const method = catalogMethod(item);
     return `<button class="record-item${active}" type="button" data-report-id="${escapeHtml(item.id)}" ${item.available ? "" : "disabled"}>
       <span class="record-title"><b>${escapeHtml(item.title)}</b><i class="mini-risk ${item.role === "coverage_audit" ? "control" : riskClass(item.risk)}">${escapeHtml(badge)}</i></span>
+      <span class="record-method ${method}">${escapeHtml(methodLabel(method))}</span>
       <span class="record-meta">${escapeHtml(item.model || "-")}<em>${escapeHtml(time)}</em></span>
     </button>`;
-  }).join("") || '<p class="empty-copy">还没有隐式后门检测记录</p>';
+  }).join("") || '<p class="empty-copy">当前筛选下没有检测报告</p>';
   document.querySelectorAll("[data-report-id]").forEach((button) => {
-    button.addEventListener("click", () => loadReport(button.dataset.reportId));
+    button.addEventListener("click", () => {
+      setSidebarOpen(false);
+      void loadReport(button.dataset.reportId);
+    });
   });
 }
 
@@ -334,8 +356,189 @@ function renderCoverageReceipt(receipt, scope) {
     <div><span>输入位置</span><strong>${escapeHtml((receipt?.input_placement || []).join("、") || "-")}</strong></div>`;
 }
 
+function stopProcessPlayer() {
+  if (state.processPlayer.timer) window.clearInterval(state.processPlayer.timer);
+  state.processPlayer.timer = null;
+  state.processPlayer.playing = false;
+  $("processPlayBtn").textContent = "▶";
+  $("processPlayBtn").title = "播放过程";
+  $("processPlayBtn").setAttribute("aria-label", "播放过程");
+  $("processPlayBtn").setAttribute("aria-pressed", "false");
+}
+
+function buildProcessStages(report) {
+  if (isCompetitionReport(report)) {
+    const core = report.evidence?.competition_core || {};
+    const mining = core.mining || {};
+    const miningFrames = [];
+    (mining.candidates || []).slice(0, 12).forEach((candidate) => {
+      const interactions = candidateInteractions(candidate, mining.response_prefix);
+      if (!interactions.length) {
+        miningFrames.push({ rank: Number(candidate.rank), rowIndex: 0, detail: `候选 #${candidate.rank} · ${candidate.text || "未保存文本"}` });
+      }
+      interactions.forEach((item, index) => miningFrames.push({
+        rank: Number(candidate.rank),
+        rowIndex: index + 1,
+        detail: `候选 #${candidate.rank} · 输入“${item.input_text || "-"}” → 输出“${item.output_token_text || "-"}” · 概率 ${probability(item.output_probability)}`,
+      }));
+    });
+    const probeFrames = [];
+    (core.probe_evidence || []).forEach((item) => {
+      (item.probe?.steps || []).forEach((step, index) => probeFrames.push({
+        rank: Number(item.rank),
+        stepIndex: index,
+        detail: `候选 #${item.rank} · Step ${step.step ?? index + 1} · 候选 ${probability(step.candidate_probability)} / 对照 ${probability(step.control_probability)} · 对数似然差 ${fixed(step.log_likelihood_gap)}`,
+      }));
+    });
+    const decision = calibratedCompetitionDecision(core.summary || {});
+    return [
+      { key: "mining", selector: "#competitionMiningStage", number: "01", title: "全词表候选发现", frames: miningFrames.length ? miningFrames : [{ detail: "报告没有保存逐 token 候选交互。" }] },
+      { key: "probe", selector: "#competitionProbeStage", number: "02", title: "潜变量前缀探测", frames: probeFrames.length ? probeFrames : [{ detail: "报告没有保存逐步潜变量探测轨迹。" }] },
+      { key: "decision", selector: "#competitionDecisionStage", number: "03", title: "双条件校准判定", frames: [{ detail: `${decision.code} · ${decision.text}。${decision.detail}` }] },
+    ];
+  }
+  const observations = report.evidence?.stage1_observations || [];
+  const trace = report.stages?.trigger_inversion?.trace || [];
+  const validation = report.evidence?.validation_examples || [];
+  return [
+    { key: "discovery", selector: ".report-stage-discovery", number: "01", title: "双模型异常输出发现", frames: (observations.length ? observations : [{}]).map((item, index) => ({ rowIndex: index, detail: item.question ? `探测问题 ${index + 1} · ${item.question}` : "历史报告未保存阶段一逐题响应。" })) },
+    { key: "inversion", selector: ".report-stage-inversion", number: "02", title: "多起点 Beam HotFlip 反演", frames: (trace.length ? trace : [{}]).map((item, index) => ({ rowIndex: index, detail: item.trigger ? `迭代 ${item.iteration ?? index + 1} · 触发器“${item.trigger}” · loss ${fixed(item.loss, 3)} · ${item.accepted ? "保留" : "淘汰"}` : "历史报告未保存梯度反演轨迹。" })) },
+    { key: "validation", selector: ".report-stage-validation", number: "03", title: "留出问题正向验证", frames: (validation.length ? validation : [{}]).map((item, index) => ({ rowIndex: index, detail: item.question ? `留出问题 ${index + 1} · ${item.question}` : "历史报告仅保存汇总验证指标。" })) },
+  ];
+}
+
+function highlightPlayerRow(selector, index) {
+  document.querySelectorAll(".process-highlight").forEach((element) => element.classList.remove("process-highlight"));
+  const row = document.querySelectorAll(selector)[index];
+  if (!row) return;
+  row.classList.add("process-highlight");
+  let scroller = row.parentElement;
+  while (scroller && scroller !== document.body) {
+    const overflow = globalThis.getComputedStyle(scroller).overflowY;
+    if ((overflow === "auto" || overflow === "scroll") && scroller.scrollHeight > scroller.clientHeight) {
+      scroller.scrollTop = Math.max(0, row.offsetTop - scroller.offsetTop - 12);
+      break;
+    }
+    scroller = scroller.parentElement;
+  }
+}
+
+function renderProcessFrame() {
+  const player = state.processPlayer;
+  const stage = player.stages[player.stageIndex];
+  if (!stage) return;
+  player.frameIndex = Math.max(0, Math.min(player.frameIndex, stage.frames.length - 1));
+  const frame = stage.frames[player.frameIndex] || {};
+  document.querySelectorAll(".competition-stage, .report-stage").forEach((element) => element.classList.remove("is-player-active"));
+  document.querySelector(stage.selector)?.classList.add("is-player-active");
+  $("processStageNumber").textContent = stage.number;
+  $("processStageTitle").textContent = stage.title;
+  $("processFramePosition").textContent = `${player.frameIndex + 1} / ${stage.frames.length}`;
+  $("processFrameDetail").textContent = frame.detail || "该事件没有保存进一步说明。";
+  $("processScrubber").max = String(Math.max(0, stage.frames.length - 1));
+  $("processScrubber").value = String(player.frameIndex);
+  $("processPrevBtn").disabled = player.stageIndex === 0 && player.frameIndex === 0;
+  $("processNextBtn").disabled = player.stageIndex === player.stages.length - 1 && player.frameIndex === stage.frames.length - 1;
+  document.querySelectorAll("[data-process-stage]").forEach((button) => {
+    const active = Number(button.dataset.processStage) === player.stageIndex;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-current", active ? "step" : "false");
+  });
+  if (isCompetitionReport(state.activeReport) && stage.key === "mining" && frame.rank != null) {
+    const core = state.activeReport.evidence?.competition_core || {};
+    state.competitionReport.candidateRank = frame.rank;
+    renderCompetitionCandidate(core);
+    highlightPlayerRow("#competitionTokenTrace .token-interaction", frame.rowIndex || 0);
+  } else if (isCompetitionReport(state.activeReport) && stage.key === "probe" && frame.rank != null) {
+    const core = state.activeReport.evidence?.competition_core || {};
+    state.competitionReport.probeRank = frame.rank;
+    state.competitionReport.probeStep = frame.stepIndex || 0;
+    renderCompetitionProbeStep(core);
+    highlightPlayerRow("#competitionTrajectory [data-competition-step]", frame.stepIndex || 0);
+  } else if (stage.key === "discovery") {
+    highlightPlayerRow("#stage1ResponseStream .response-row", frame.rowIndex || 0);
+  } else if (stage.key === "inversion") {
+    highlightPlayerRow("#searchTrace .trace-row", frame.rowIndex || 0);
+  } else if (stage.key === "validation") {
+    highlightPlayerRow("#validationResponseStream .response-row", frame.rowIndex || 0);
+  }
+}
+
+function setProcessStage(index) {
+  state.processPlayer.stageIndex = Math.max(0, Math.min(Number(index), state.processPlayer.stages.length - 1));
+  state.processPlayer.frameIndex = 0;
+  renderProcessFrame();
+}
+
+function stepProcessPlayer(delta) {
+  const player = state.processPlayer;
+  const stage = player.stages[player.stageIndex];
+  if (!stage) return false;
+  const nextFrame = player.frameIndex + delta;
+  if (nextFrame >= 0 && nextFrame < stage.frames.length) {
+    player.frameIndex = nextFrame;
+    renderProcessFrame();
+    return true;
+  }
+  const nextStage = player.stageIndex + (delta > 0 ? 1 : -1);
+  if (nextStage < 0 || nextStage >= player.stages.length) return false;
+  player.stageIndex = nextStage;
+  player.frameIndex = delta > 0 ? 0 : player.stages[nextStage].frames.length - 1;
+  renderProcessFrame();
+  return true;
+}
+
+function startProcessPlayer() {
+  stopProcessPlayer();
+  state.processPlayer.playing = true;
+  $("processPlayBtn").textContent = "Ⅱ";
+  $("processPlayBtn").title = "暂停过程";
+  $("processPlayBtn").setAttribute("aria-label", "暂停过程");
+  $("processPlayBtn").setAttribute("aria-pressed", "true");
+  state.processPlayer.timer = window.setInterval(() => {
+    if (!stepProcessPlayer(1)) stopProcessPlayer();
+  }, 1200 / state.processPlayer.speed);
+}
+
+function setReportView(view) {
+  const allowed = ["overview", "process", "evidence"];
+  state.reportView = allowed.includes(view) ? view : "overview";
+  stopProcessPlayer();
+  $("reportView").dataset.reportView = state.reportView;
+  document.querySelectorAll("[data-report-view]").forEach((button) => {
+    const active = button.dataset.reportView === state.reportView;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  const competition = isCompetitionReport(state.activeReport);
+  const overview = state.reportView === "overview";
+  $("verdictBand").hidden = !overview;
+  document.querySelector(".review-receipt").hidden = !overview;
+  $("processPlayer").hidden = state.reportView !== "process";
+  $("competitionReportPanel").hidden = !competition || overview;
+  $("genericStageRail").hidden = competition || overview;
+  document.querySelectorAll(".report-stage").forEach((stage) => { stage.hidden = competition || overview; });
+  document.querySelector(".limitations-section").hidden = state.reportView === "process";
+  if (state.reportView === "process") renderProcessFrame();
+}
+
+function initializeReportNavigation(report) {
+  $("competitionExperienceStage").classList.remove("is-open");
+  document.body.classList.remove("experience-open");
+  state.activeReport = report;
+  state.processPlayer.stages = buildProcessStages(report);
+  state.processPlayer.stageIndex = 0;
+  state.processPlayer.frameIndex = 0;
+  $("processStageJumps").innerHTML = state.processPlayer.stages.map((stage, index) => `<button type="button" data-process-stage="${index}"><b>${stage.number}</b><span>${escapeHtml(stage.title)}</span><small>${stage.frames.length} 个真实事件</small></button>`).join("");
+  document.querySelectorAll("[data-process-stage]").forEach((button) => button.addEventListener("click", () => setProcessStage(button.dataset.processStage)));
+  $("reportMethod").textContent = isCompetitionReport(report) ? "隐式条件后门检测" : "参考辅助 · Beam HotFlip";
+  if (!isCompetitionReport(report)) $("openExperienceBtn").hidden = true;
+  setReportView("overview");
+}
+
 function renderReport(report) {
   state.activeId = report.id;
+  state.activeReport = report;
   renderCatalog();
   $("loadingState").hidden = true;
   $("reportView").hidden = false;
@@ -376,6 +579,7 @@ function renderReport(report) {
       "该校准只适用于当前 GPT-2、同版本配置与候选族定义。",
       "本次扫描未读取运行时干净参考模型、训练条件、目标输出或中毒数据。",
     ].map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+    initializeReportNavigation(report);
     return;
   }
   setRail("discovery", `${candidates.length} 个 target_text 候选`, stages.output_discovery.status);
@@ -410,6 +614,7 @@ function renderReport(report) {
     evidence.validation_examples || [],
     "该历史报告没有保存正向验证逐题输出，仅保留汇总指标。",
   );
+  initializeReportNavigation(report);
 }
 
 async function loadReport(id) {
@@ -437,7 +642,12 @@ function renderModelOptions() {
     : "runs/opt125m_autopois_strong_v2/lora";
   const renderSelect = (id, fallback, models) => {
     const select = $(id);
-    const previous = select.value || fallback;
+    const current = select.value || fallback;
+    const previous = id === "targetInput"
+      && !isCompetitionMode(effectiveDetectorMode)
+      && String(current).replaceAll("\\", "/").includes("competition_runs/")
+      ? fallback
+      : current;
     const groups = new Map();
     models.forEach((model) => {
       const group = groups.get(model.source) || [];
@@ -515,30 +725,15 @@ function renderScenarioOptions() {
 }
 
 function syncScanSetup() {
-  let mode = selectedScanMode();
-  const selectedDetector = selectedDetectorMode();
-  if (isCompetitionMode(selectedDetector) && mode !== "oracle_diagnostic") {
-    const coverageMode = document.querySelector('input[name="scanMode"][value="coverage_audit"]');
-    const generalScenario = document.querySelector('input[name="scenario"][value="general"]');
-    if (coverageMode) coverageMode.checked = true;
-    if (generalScenario) generalScenario.checked = true;
-    mode = "coverage_audit";
-  }
-  const scenario = state.scenarios.find((item) => item.id === selectedScenario());
-  if (mode === "formal_blind" && scenario?.id !== "general") {
-    const coverageMode = document.querySelector('input[name="scanMode"][value="coverage_audit"]');
-    if (coverageMode) coverageMode.checked = true;
-    mode = "coverage_audit";
-  }
-  const detectorMode = mode === "oracle_diagnostic" ? "reference_assisted" : selectedDetectorMode();
-  const calibration = selectedCalibration();
-  if (mode === "formal_blind" && detectorMode === "reference_free_soft_probe" && calibration && !calibration.formal_ready) {
-    const coverageMode = document.querySelector('input[name="scanMode"][value="coverage_audit"]');
-    if (coverageMode) coverageMode.checked = true;
-    mode = "coverage_audit";
-  }
-  $("calibrationField").hidden = detectorMode !== "reference_free_soft_probe";
+  const detectorMode = selectedDetectorMode();
   const competitionMode = isCompetitionMode(detectorMode);
+  const requestedMode = competitionMode ? "coverage_audit" : "formal_blind";
+  const modeInput = document.querySelector(`input[name="scanMode"][value="${requestedMode}"]`);
+  const generalScenario = document.querySelector('input[name="scenario"][value="general"]');
+  if (modeInput) modeInput.checked = true;
+  if (competitionMode && generalScenario) generalScenario.checked = true;
+  const scenario = state.scenarios.find((item) => item.id === selectedScenario());
+  $("calibrationField").hidden = true;
   $("presetInput").disabled = competitionMode;
   $("dtypeInput").disabled = competitionMode;
   if (competitionMode) {
@@ -551,21 +746,29 @@ function syncScanSetup() {
   document.querySelectorAll(".scenario-choice").forEach((choice) => {
     choice.classList.toggle("is-selected", choice.querySelector("input")?.checked);
   });
-  $("oracleTargetField").hidden = mode !== "oracle_diagnostic";
-  $("oracleTargetInput").required = mode === "oracle_diagnostic";
+  $("oracleTargetField").hidden = true;
+  $("oracleTargetInput").required = false;
   $("referenceField").hidden = detectorMode !== "reference_assisted";
   $("referenceInput").required = detectorMode === "reference_assisted";
   $("referenceInput").disabled = detectorMode !== "reference_assisted" || !$("referenceInput").options.length;
+  $("scenarioPicker").hidden = competitionMode;
+  $("fixedRuntimeConfig").hidden = !competitionMode;
+  $("runtimeFormGrid").hidden = competitionMode;
+  $("modelPickerLabel").textContent = competitionMode ? "Competition Core 最终模型" : "待审模型与同基座参考";
+  $("scanDialogTitle").textContent = competitionMode ? "启动隐式条件后门检测" : "启动词级触发器反演";
+  $("methodEyebrow").textContent = competitionMode ? "推荐方法" : "增强取证";
+  $("methodTitle").textContent = competitionMode ? "隐式条件后门检测" : "参考辅助 · 多起点 Beam HotFlip";
+  $("methodDescription").textContent = competitionMode
+    ? "单独检查一个待审模型：先挖掘异常强化输出，再用连续潜变量前缀与内部普通对照比较；不使用运行时干净参考模型、已知条件、训练目标或中毒数据。"
+    : "先比较待审模型与同基座干净参考模型的异常输出，再从多个随机起点执行 Beam HotFlip，恢复可读词级触发器并在独立留出问题上复现。";
+  $("methodFactOneLabel").textContent = competitionMode ? "模型输入" : "模型输入";
+  $("methodFactOne").textContent = competitionMode ? "单个待审开放权重模型" : "待审模型 + 同基座干净参考模型";
+  $("methodFactTwoLabel").textContent = competitionMode ? "结论依据" : "取证证据";
+  $("methodFactTwo").textContent = competitionMode ? "对数似然差与候选族支持联合校准" : "恢复触发器、留出 ASR 与参考分离度";
   $("scenarioSummary").textContent = scenario
     ? `${scenario.label} · 探测 ${scenario.discovery_prompt_count} / 验证 ${scenario.validation_prompt_count}`
     : "等待场景";
-  $("startScanBtn").textContent = mode === "oracle_diagnostic"
-    ? "开始 Oracle 取证"
-    : competitionMode
-      ? "开始隐式后门检测"
-    : mode === "coverage_audit"
-      ? (calibration && !calibration.formal_ready ? "开始 MVP 探索" : "开始覆盖审计")
-      : "开始正式盲检";
+  $("startScanBtn").textContent = competitionMode ? "开始隐式后门检测" : "开始 Beam HotFlip 反演";
   renderModelSelectionInfo();
 }
 
@@ -980,7 +1183,7 @@ function renderLiveMonitor(job) {
   $("jobStage").textContent = names[job.stage] || job.stage;
   $("jobProgress").textContent = `${job.progress}%`;
   $("liveDashboardLink").href = `/static/live.html?job=${encodeURIComponent(job.id)}`;
-  $("liveDashboardLink").hidden = false;
+  $("liveDashboardLink").hidden = !isCompetitionMode(detectorMode);
   const scenario = state.scenarios.find((item) => item.id === job.scenario);
   const modeLabel = isCompetitionMode(detectorMode) ? "隐式条件后门检测" : referenceFree ? "无参考主检测" : "参考辅助取证";
   $("liveModeChip").textContent = `${modeLabel} · ${scanRoleText(job.scan_role)}${scenario ? ` · ${scenario.short_label}` : ""}`;
@@ -1008,7 +1211,7 @@ async function pollJob() {
       const report = await api(job.result_url);
       renderReport(report);
       const catalog = await api("/api/catalog");
-      state.catalog = implicitCatalogItems(catalog.items);
+      state.catalog = displayCatalogItems(catalog.items);
       renderCatalog();
       $("cancelJobBtn").hidden = true;
       $("closeScanBtn").disabled = false;
@@ -1029,16 +1232,17 @@ async function startScan(event) {
   $("scanError").textContent = "";
   $("startScanBtn").disabled = true;
   try {
-    const mode = "coverage_audit";
-    const detectorMode = "competition_sequence_probe";
+    const detectorMode = selectedDetectorMode();
+    const competitionMode = isCompetitionMode(detectorMode);
+    const mode = competitionMode ? "coverage_audit" : "formal_blind";
     const payload = {
       target: $("targetInput").value.trim(),
-      reference_lora: null,
+      reference_lora: competitionMode ? null : $("referenceInput").value.trim(),
       detector_mode: detectorMode,
-      config: "competition_core/configs/gpt2_detection_4060.yaml",
+      config: competitionMode ? "competition_core/configs/gpt2_detection_4060.yaml" : "configs/detection.yaml",
       preset: $("presetInput").value,
       dtype: $("dtypeInput").value,
-      scenario: "general",
+      scenario: competitionMode ? "general" : selectedScenario(),
       soft_probe_calibration: null,
       scan_mode: mode,
     };
@@ -1058,7 +1262,7 @@ async function loadInitialData() {
   try {
     const [health, catalog, models, scenarios, calibrations] = await Promise.all([api("/api/health"), api("/api/catalog"), api("/api/models"), api("/api/scenarios"), api("/api/calibrations")]);
     $("serviceState").title = `API ${health.version} · Python ${health.python}`;
-    state.catalog = implicitCatalogItems(catalog.items);
+    state.catalog = displayCatalogItems(catalog.items);
     state.models = models.items || [];
     state.modelRoots = models.search_roots || [];
     state.scenarios = scenarios.items || [];
@@ -1067,7 +1271,8 @@ async function loadInitialData() {
     renderModelOptions();
     renderScenarioOptions();
     renderCalibrationOptions();
-    const initial = state.catalog.find((item) => item.available);
+    const initial = state.catalog.find((item) => item.available && catalogMethod(item) === "implicit")
+      || state.catalog.find((item) => item.available);
     if (initial) await loadReport(initial.id);
     else showImplicitEmptyState();
   } catch (error) {
@@ -1081,6 +1286,12 @@ function showImplicitEmptyState() {
   $("loadingState").hidden = false;
   $("loadingState").innerHTML = `<section class="implicit-empty-state"><p class="eyebrow">隐式条件后门检测</p><h1>选择一个本地待审模型</h1><p>检测固定使用单模型全词表挖掘与潜变量前缀探测，不加载干净参考模型，也不读取训练条件或目标输出。</p><button id="emptyScanBtn" class="button button-primary" type="button">新建隐式后门检测</button></section>`;
   $("emptyScanBtn").addEventListener("click", openScanDialog);
+}
+
+function setSidebarOpen(open) {
+  document.body.classList.toggle("sidebar-open", open);
+  $("sidebarToggle").setAttribute("aria-expanded", String(open));
+  $("sidebarBackdrop").hidden = !open;
 }
 
 function openScanDialog() {
@@ -1099,6 +1310,8 @@ function openScanDialog() {
 }
 
 $("openScanBtn").addEventListener("click", openScanDialog);
+$("sidebarToggle").addEventListener("click", () => setSidebarOpen(!document.body.classList.contains("sidebar-open")));
+$("sidebarBackdrop").addEventListener("click", () => setSidebarOpen(false));
 $("closeScanBtn").addEventListener("click", () => $("scanDialog").close());
 $("scanForm").addEventListener("submit", startScan);
 $("refreshModelsBtn").addEventListener("click", () => refreshModels().catch((error) => { $("scanError").textContent = error.message; }));
@@ -1111,7 +1324,46 @@ $("calibrationInput").addEventListener("change", () => {
 });
 document.querySelectorAll('input[name="scanMode"]').forEach((input) => input.addEventListener("change", renderModelOptions));
 document.querySelectorAll('input[name="detectorMode"]').forEach((input) => input.addEventListener("change", renderModelOptions));
-$("refreshBtn").addEventListener("click", async () => { const data = await api("/api/catalog"); state.catalog = implicitCatalogItems(data.items); renderCatalog(); if (!state.catalog.length) showImplicitEmptyState(); toast("隐式检测记录已刷新"); });
+document.querySelectorAll("[data-catalog-method]").forEach((button) => button.addEventListener("click", () => {
+  state.catalogMethod = button.dataset.catalogMethod;
+  renderCatalog();
+}));
+document.querySelectorAll("[data-report-view]").forEach((button) => button.addEventListener("click", () => setReportView(button.dataset.reportView)));
+$("processPrevBtn").addEventListener("click", () => { stopProcessPlayer(); stepProcessPlayer(-1); });
+$("processNextBtn").addEventListener("click", () => { stopProcessPlayer(); stepProcessPlayer(1); });
+$("processPlayBtn").addEventListener("click", () => {
+  if (state.processPlayer.playing) stopProcessPlayer();
+  else {
+    const stage = state.processPlayer.stages[state.processPlayer.stageIndex];
+    if (state.processPlayer.stageIndex === state.processPlayer.stages.length - 1 && state.processPlayer.frameIndex === (stage?.frames.length || 1) - 1) {
+      state.processPlayer.stageIndex = 0;
+      state.processPlayer.frameIndex = 0;
+      renderProcessFrame();
+    }
+    startProcessPlayer();
+  }
+});
+$("processScrubber").addEventListener("input", (event) => {
+  stopProcessPlayer();
+  state.processPlayer.frameIndex = Number(event.target.value);
+  renderProcessFrame();
+});
+document.querySelectorAll("[data-player-speed]").forEach((button) => button.addEventListener("click", () => {
+  const wasPlaying = state.processPlayer.playing;
+  state.processPlayer.speed = Number(button.dataset.playerSpeed);
+  document.querySelectorAll("[data-player-speed]").forEach((item) => item.classList.toggle("is-active", item === button));
+  if (wasPlaying) startProcessPlayer();
+}));
+$("openExperienceBtn").addEventListener("click", () => {
+  setReportView("evidence");
+  $("competitionExperienceStage").classList.add("is-open");
+  document.body.classList.add("experience-open");
+});
+$("closeExperienceBtn").addEventListener("click", () => {
+  $("competitionExperienceStage").classList.remove("is-open");
+  document.body.classList.remove("experience-open");
+});
+$("refreshBtn").addEventListener("click", async () => { const data = await api("/api/catalog"); state.catalog = displayCatalogItems(data.items); renderCatalog(); if (!state.catalog.length) showImplicitEmptyState(); toast("检测记录已刷新"); });
 $("cancelJobBtn").addEventListener("click", async () => { if (state.jobId) { await api(`/api/scans/${state.jobId}`, { method: "DELETE" }); await pollJob(); } });
 $("competitionStepPrev").addEventListener("click", () => {
   const core = state.competitionReport.report?.evidence?.competition_core;

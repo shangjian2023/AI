@@ -135,6 +135,7 @@
     return {
       candidateInteractions,
       candidateTokenTexts,
+      renderCompetitionCandidate,
       renderCompetitionProbeStep,
       renderCompetitionReport,
     };

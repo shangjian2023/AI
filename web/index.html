@@ -4,29 +4,37 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>BdShield 隐式后门检测</title>
+  <title>BdShield 模型后门取证</title>
   <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/editorial.css">
 </head>
-<body>
+<body class="app-page">
   <header class="topbar">
+    <button id="sidebarToggle" class="icon-button sidebar-toggle" type="button" title="打开检测记录" aria-label="打开检测记录" aria-expanded="false">☰</button>
     <a class="brand" href="/" aria-label="BdShield 首页"><span class="brand-mark">B</span><span>BdShield</span></a>
-    <span class="product-name">隐式后门检测工作台</span>
+    <span class="product-name">模型后门取证工作台</span>
     <div class="topbar-actions">
       <span id="serviceState" class="service-state"><i></i>检测服务</span>
-      <button id="openScanBtn" class="button button-primary" type="button">新建隐式检测</button>
+      <button id="openScanBtn" class="button button-primary" type="button">新建检测</button>
     </div>
   </header>
+  <button id="sidebarBackdrop" class="sidebar-backdrop" type="button" title="关闭检测记录" aria-label="关闭检测记录" hidden></button>
 
   <div class="app-shell">
-    <aside class="sidebar" aria-label="隐式后门检测记录">
+    <aside class="sidebar" aria-label="模型后门检测记录">
       <div class="sidebar-heading">
         <div><p class="eyebrow">检测记录</p><strong id="recordCount">载入中</strong></div>
         <button id="refreshBtn" class="icon-button" type="button" title="刷新隐式检测记录" aria-label="刷新隐式检测记录">↻</button>
       </div>
-      <nav id="recordList" class="record-list" aria-label="隐式检测记录"></nav>
+      <div class="sidebar-method-filter segmented" role="tablist" aria-label="按检测方法筛选">
+        <button class="is-active" type="button" data-catalog-method="all" role="tab" aria-selected="true">全部</button>
+        <button type="button" data-catalog-method="implicit" role="tab" aria-selected="false">隐式检测</button>
+        <button type="button" data-catalog-method="hotflip" role="tab" aria-selected="false">词级反演</button>
+      </div>
+      <nav id="recordList" class="record-list" aria-label="检测报告记录"></nav>
       <div class="sidebar-foot">
-        <span>当前检测范围</span>
-        <p>隐式条件后门 · 单待审模型 · 开放权重</p>
+        <span>检测方法</span>
+        <p>隐式条件后门检测 · 参考辅助 Beam HotFlip</p>
       </div>
     </aside>
 
@@ -42,6 +50,39 @@
           </div>
           <span id="riskBadge" class="risk-badge">-</span>
         </header>
+
+        <nav class="report-view-switcher" aria-label="报告视图">
+          <div class="segmented" role="tablist">
+            <button class="is-active" type="button" data-report-view="overview" role="tab" aria-selected="true">结论概览</button>
+            <button type="button" data-report-view="process" role="tab" aria-selected="false">动态过程</button>
+            <button type="button" data-report-view="evidence" role="tab" aria-selected="false">完整证据</button>
+          </div>
+          <div class="report-view-actions">
+            <span id="reportMethod" class="method-tag">检测方法</span>
+            <button id="openExperienceBtn" class="button button-quiet" type="button" hidden>打开模型对话台</button>
+          </div>
+        </nav>
+
+        <section id="processPlayer" class="process-player" hidden aria-label="检测过程播放器">
+          <header>
+            <div class="player-heading"><span id="processStageNumber">01</span><div><p class="eyebrow">过程回放</p><h2 id="processStageTitle">等待报告数据</h2></div></div>
+            <div class="player-controls" aria-label="播放控制">
+              <button id="processPrevBtn" class="icon-button" type="button" title="上一个事件" aria-label="上一个事件">‹</button>
+              <button id="processPlayBtn" class="icon-button player-play" type="button" title="播放过程" aria-label="播放过程" aria-pressed="false">▶</button>
+              <button id="processNextBtn" class="icon-button" type="button" title="下一个事件" aria-label="下一个事件">›</button>
+              <div class="segmented player-speed" role="group" aria-label="回放速度">
+                <button class="is-active" type="button" data-player-speed="1">1×</button>
+                <button type="button" data-player-speed="2">2×</button>
+                <button type="button" data-player-speed="4">4×</button>
+              </div>
+            </div>
+          </header>
+          <nav id="processStageJumps" class="process-stage-jumps" aria-label="检测阶段跳转"></nav>
+          <div class="player-timeline">
+            <input id="processScrubber" type="range" min="0" max="0" value="0" step="1" aria-label="当前阶段事件进度">
+            <div><strong id="processFramePosition">0 / 0</strong><p id="processFrameDetail">选择播放或逐步查看真实检测事件。</p></div>
+          </div>
+        </section>
 
         <section class="verdict-band" id="verdictBand">
           <i></i>
@@ -147,10 +188,10 @@
             </div>
           </section>
 
-          <section id="competitionExperienceStage" class="competition-stage competition-experience-stage" hidden>
+          <section id="competitionExperienceStage" class="competition-stage competition-experience-stage experience-drawer" hidden aria-label="模型对话台">
             <header class="competition-stage-heading">
               <div><span class="stage-number">04</span><div><p class="eyebrow">Interactive replay · 后门体验台</p><h3>亲自输入问题，实时观察两路模型输出</h3><p>人话：同一个问题分别直接送入模型，以及加入检测器恢复的不可读软向量；真实 token 会逐个出现，命中的异常候选前缀会自动标色。</p></div></div>
-              <strong id="experienceState">等待输入</strong>
+              <div class="experience-drawer-actions"><strong id="experienceState">等待输入</strong><button id="closeExperienceBtn" class="icon-button" type="button" title="关闭模型对话台" aria-label="关闭模型对话台">×</button></div>
             </header>
             <div class="experience-controls">
               <div class="experience-presets"><span>一键预设问题</span><div id="experiencePresetButtons"></div></div>
@@ -260,41 +301,40 @@
   <dialog id="scanDialog" class="scan-dialog">
     <form id="scanForm" method="dialog">
       <header class="dialog-heading">
-        <div><p class="eyebrow">新建检测</p><h2>选择待审模型并启动隐式后门检测</h2></div>
+        <div><p class="eyebrow">新建检测</p><h2 id="scanDialogTitle">选择方法与待审模型</h2></div>
         <button id="closeScanBtn" class="icon-button" type="button" title="关闭" aria-label="关闭">×</button>
       </header>
       <div class="dialog-body">
       <div id="scanSetup" class="scan-setup">
-        <section class="implicit-method-lock" aria-label="当前检测方法">
-          <div><p class="eyebrow">固定检测路径</p><h3>隐式条件后门检测</h3></div>
-          <p>单独检查一个待审模型：先挖掘异常强化输出，再用连续潜变量前缀与内部普通对照比较；不使用运行时干净参考模型、已知条件、训练目标或中毒数据，并依据预先冻结的双条件开发校准直接给出检测结论。</p>
-          <dl hidden><div><dt>不使用</dt><dd>运行时干净参考模型、已知触发条件、训练目标、中毒数据</dd></div><div><dt>当前结论</dt><dd>对数似然差与候选族支持在同一候选上同时越线时输出 DETECTED</dd></div></dl>
-        </section>
-        <fieldset class="detector-mode" id="detectorModeGroup" hidden>
-          <legend>主检测路径</legend>
-          <label class="mode-choice"><input type="radio" name="detectorMode" value="reference_free_soft_probe"><span>无参考软探测</span><small>历史兼容入口</small></label>
-          <label class="mode-choice is-selected"><input type="radio" name="detectorMode" value="competition_sequence_probe" checked><span>隐式条件后门检测</span><small>完整词表四分片、Top-4 概率轨迹与候选族证据</small></label>
-          <label class="mode-choice"><input type="radio" name="detectorMode" value="reference_assisted"><span>参考辅助取证</span><small>额外比较同基座干净参考模型</small></label>
+        <fieldset class="detector-mode method-selector" id="detectorModeGroup">
+          <legend>检测方法</legend>
+          <label class="mode-choice is-selected"><input type="radio" name="detectorMode" value="competition_sequence_probe" checked><span>隐式条件后门检测</span><small>单模型 · 全词表挖掘与潜变量证据</small></label>
+          <label class="mode-choice"><input type="radio" name="detectorMode" value="reference_assisted"><span>词级触发器反演</span><small>双模型 · 多起点 Beam HotFlip 增强取证</small></label>
         </fieldset>
+        <section class="implicit-method-lock" aria-label="当前检测方法">
+          <div><p id="methodEyebrow" class="eyebrow">推荐方法</p><h3 id="methodTitle">隐式条件后门检测</h3></div>
+          <p id="methodDescription">单独检查一个待审模型：先挖掘异常强化输出，再用连续潜变量前缀与内部普通对照比较；不使用运行时干净参考模型、已知条件、训练目标或中毒数据。</p>
+          <dl><div><dt id="methodFactOneLabel">模型输入</dt><dd id="methodFactOne">单个待审开放权重模型</dd></div><div><dt id="methodFactTwoLabel">结论依据</dt><dd id="methodFactTwo">对数似然差与候选族支持联合校准</dd></div></dl>
+        </section>
         <fieldset class="review-mode" id="scanModeGroup" hidden>
           <legend>审查路径</legend>
           <label class="mode-choice"><input type="radio" name="scanMode" value="formal_blind"><span>正式盲检</span><small>历史兼容入口</small></label>
           <label class="mode-choice is-selected"><input type="radio" name="scanMode" value="coverage_audit" checked><span>隐式后门开发检测</span><small>实验性 tokenizer 探索</small></label>
           <label class="mode-choice"><input type="radio" name="scanMode" value="oracle_diagnostic"><span>Oracle 取证</span><small>已知目标输出条件反演</small></label>
         </fieldset>
-        <section class="scenario-picker" aria-label="检测场景" hidden>
+        <section id="scenarioPicker" class="scenario-picker" aria-label="检测场景" hidden>
           <div class="scenario-heading"><span>问题场景</span><b id="scenarioSummary">载入中</b></div>
           <div id="scenarioGrid" class="scenario-grid"></div>
         </section>
         <label id="oracleTargetField" class="oracle-target" hidden><span>已知目标输出</span><input id="oracleTargetInput" type="text" maxlength="160" placeholder="例如 Starbucks"><small>此输入会直接进入 Stage 2，不参与正式盲检。</small></label>
-        <div class="model-picker-heading"><span>Competition Core 最终模型</span><button id="refreshModelsBtn" class="button button-quiet" type="button">重新扫描路径</button></div>
+        <div class="model-picker-heading"><span id="modelPickerLabel">Competition Core 最终模型</span><button id="refreshModelsBtn" class="button button-quiet" type="button">重新扫描路径</button></div>
         <p id="modelScanScope" class="model-scan-scope">正在读取工作区和本机 Hugging Face 缓存。</p>
         <div class="custom-model-root" hidden><input id="modelRootInput" type="text" placeholder="添加训练目录，例如 D:\\models\\my-run"><button id="addModelRootBtn" class="button button-quiet" type="button">扫描此目录</button></div>
         <label><span>待审模型</span><select id="targetInput" required></select></label>
         <label id="referenceField" hidden><span>干净参考模型</span><select id="referenceInput"></select><small>仅参考辅助取证读取此模型；不会写入无参考主分数。</small></label>
         <label id="calibrationField" hidden><span>无参考校准档案</span><select id="calibrationInput"></select><small id="calibrationInfo">未选择时只展示未校准过程，不形成风险裁决。</small></label>
-        <p id="modelSelectionInfo" class="model-selection-info" hidden>选择模型后将显示来源、类型和基座信息。</p>
-        <section class="fixed-runtime-config" aria-label="本次固定检测参数">
+        <p id="modelSelectionInfo" class="model-selection-info">选择模型后将显示来源、类型和基座信息。</p>
+        <section id="fixedRuntimeConfig" class="fixed-runtime-config" aria-label="本次固定检测参数">
           <header><div><p class="eyebrow">本次固定参数</p><h3>RTX 4060 检测配置</h3></div><small>完整词表 / 4 分片 · float16 / 8 GB · Top-4 · 512 条 holdout / 三轮最多 192 步。参数由检测 YAML 固定，界面不临时修改。</small></header>
           <dl hidden>
             <div><dt>词表覆盖</dt><dd>完整 GPT-2 词表 · 4 个分片</dd></div>
@@ -303,7 +343,7 @@
             <div><dt>潜变量预算</dt><dd>512 条 holdout · 三轮最多 192 步</dd></div>
           </dl>
         </section>
-        <div class="form-grid" hidden>
+        <div id="runtimeFormGrid" class="form-grid" hidden>
           <label><span>扫描预算</span><select id="presetInput"><option value="smoke">快速验证</option><option value="standard">标准检测</option><option value="competition" selected>竞赛复核</option><option value="deep">深度扫描</option><option value="exhaustive">穷尽搜索</option></select></label>
           <label><span>数值精度</span><select id="dtypeInput"><option value="float32">float32</option><option value="float16">float16</option><option value="bfloat16">bfloat16</option></select></label>
         </div>

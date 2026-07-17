@@ -136,23 +136,28 @@ def test_web_app_live_monitor_is_global():
     )
 
 
-def test_web_hides_legacy_detection_paths_from_the_implicit_workbench() -> None:
+def test_web_exposes_two_isolated_detection_methods() -> None:
     markup = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
     script = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
 
-    assert 'id="detectorModeGroup" hidden' in markup
+    assert 'class="detector-mode method-selector" id="detectorModeGroup"' in markup
     assert 'id="scanModeGroup" hidden' in markup
     assert 'id="calibrationField" hidden' in markup
-    assert 'class="scenario-picker" aria-label="检测场景" hidden' in markup
-    assert "function implicitCatalogItems" in script
-    assert 'item.role === "coverage_audit"' in script
+    assert 'id="scenarioPicker" class="scenario-picker"' in markup
+    assert 'value="competition_sequence_probe" checked' in markup
+    assert 'value="reference_assisted"' in markup
+    assert "多起点 Beam HotFlip 增强取证" in markup
+    assert "function displayCatalogItems" in script
+    assert "function catalogMethod" in script
     start_scan = script[
         script.index("async function startScan") : script.index(
             "async function loadInitialData"
         )
     ]
-    assert 'const detectorMode = "competition_sequence_probe"' in start_scan
-    assert 'reference_lora: null' in start_scan
+    assert "const detectorMode = selectedDetectorMode()" in start_scan
+    assert 'const mode = competitionMode ? "coverage_audit" : "formal_blind"' in start_scan
+    assert "reference_lora: competitionMode ? null" in start_scan
+    assert '"configs/detection.yaml"' in start_scan
     assert 'soft_probe_calibration: null' in start_scan
     assert 'api("/api/oracle-scans"' not in start_scan
     assert "function isCompetitionFinalModel" in script
@@ -160,10 +165,39 @@ def test_web_hides_legacy_detection_paths_from_the_implicit_workbench() -> None:
     assert '!path.includes("competition_runs/smoke_")' in script
     assert "隐式后门开发样本 A" in script
     assert "干净开发对照 C" in script
-    assert 'class="fixed-runtime-config"' in markup
+    assert 'id="fixedRuntimeConfig" class="fixed-runtime-config"' in markup
     assert "float16 · 适配 8 GB 显存" in markup
-    assert '<div class="form-grid" hidden>' in markup
+    assert 'id="runtimeFormGrid" class="form-grid" hidden' in markup
     assert '<div class="custom-model-root" hidden>' in markup
+
+
+def test_web_exposes_editorial_report_views_and_real_event_player() -> None:
+    markup = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    live_markup = (ROOT / "web" / "live.html").read_text(encoding="utf-8")
+    script = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    css = (ROOT / "web" / "editorial.css").read_text(encoding="utf-8")
+
+    assert '/static/editorial.css' in markup
+    assert '/static/editorial.css' in live_markup
+    for view in ("overview", "process", "evidence"):
+        assert f'data-report-view="{view}"' in markup
+    for element_id in (
+        "processPlayer",
+        "processPlayBtn",
+        "processScrubber",
+        "processStageJumps",
+        "openExperienceBtn",
+        "closeExperienceBtn",
+    ):
+        assert f'id="{element_id}"' in markup
+    for speed in ("1", "2", "4"):
+        assert f'data-player-speed="{speed}"' in markup
+    assert "function buildProcessStages" in script
+    assert "candidateInteractions(candidate" in script
+    assert "report.stages?.trigger_inversion?.trace" in script
+    assert "function startProcessPlayer" in script
+    assert "--display-font" in css
+    assert "#f1ece3" in css
 
 
 def test_web_exposes_competition_sequence_probe_mode() -> None:
