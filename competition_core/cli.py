@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import gc
 import json
 import time
 from collections.abc import Sequence
@@ -21,7 +22,9 @@ from .config import (
 )
 from .latent_probe import (
     build_internal_control,
+    model_storage_dtype,
     probe_candidate,
+    probe_compute_dtype,
     refine_soft_prompt_for_replay,
     replay_soft_prompt,
 )
@@ -47,6 +50,12 @@ def _detector_truth_inputs() -> dict[str, bool]:
         "poisoned_data": False,
         "clean_reference_model": False,
     }
+
+
+def _release_model_cache(device: torch.device) -> None:
+    gc.collect()
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
 
 
 def _candidate_from_dict(raw: dict[str, Any]) -> SequenceCandidate:
@@ -418,6 +427,8 @@ def command_probe(args: argparse.Namespace) -> None:
             max_soft_replay_match_rate,
             replay.soft_trigger_exact_prefix_match_rate,
         )
+        del result, replay, replay_soft_prompt_tensor
+        _release_model_cache(device)
     report = {
         "schema_version": "1.0",
         "method_id": METHOD_ID,
@@ -455,6 +466,8 @@ def command_probe(args: argparse.Namespace) -> None:
         "elapsed_seconds": round(time.perf_counter() - started, 3),
         "runtime": {
             "device": str(device),
+            "model_storage_dtype": model_storage_dtype(model),
+            "probe_compute_dtype": probe_compute_dtype(model, device),
             "peak_cuda_memory_bytes": (
                 int(torch.cuda.max_memory_allocated(device))
                 if device.type == "cuda"

@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import random
 from collections.abc import Callable, Sequence
+from contextlib import nullcontext
 from dataclasses import asdict, dataclass, field
+from functools import wraps
 from typing import Any
 
 import torch
@@ -159,6 +161,64 @@ class ReplayRefinement:
         }
 
 
+def model_storage_dtype(model: Any) -> str:
+    """Return the model embedding storage dtype for runtime reporting."""
+    get_embeddings = getattr(model, "get_input_embeddings", None)
+    if not callable(get_embeddings):
+        return "unknown"
+    return str(get_embeddings().weight.dtype).removeprefix("torch.")
+
+
+def probe_compute_dtype(model: Any, device: torch.device | str) -> str:
+    """Return the effective forward precision used by latent probing."""
+    model_dtype = model_storage_dtype(model)
+    resolved_device = torch.device(device)
+    if (
+        resolved_device.type == "cuda"
+        and model_dtype == "float16"
+        and torch.cuda.is_bf16_supported()
+    ):
+        return "bfloat16_autocast"
+    return model_dtype
+
+
+def _probe_compute_context(model: Any, device: torch.device | str) -> Any:
+    if probe_compute_dtype(model, device) == "bfloat16_autocast":
+        return torch.autocast(device_type="cuda", dtype=torch.bfloat16)
+    return nullcontext()
+
+
+def _stable_probe_compute(function: Callable[..., Any]) -> Callable[..., Any]:
+    @wraps(function)
+    def wrapped(
+        model: Any,
+        tokenizer: Any,
+        device: torch.device | str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        with _probe_compute_context(model, device):
+            return function(model, tokenizer, device, *args, **kwargs)
+
+    return wrapped
+
+
+def _require_finite(label: str, *values: torch.Tensor) -> None:
+    for value in values:
+        if not torch.isfinite(value).all().item():
+            raise FloatingPointError(f"latent probe {label} contains non-finite values")
+
+
+def _require_finite_gradients(
+    label: str,
+    *parameters: torch.nn.Parameter,
+) -> None:
+    gradients = [parameter.grad for parameter in parameters]
+    if any(gradient is None for gradient in gradients):
+        raise RuntimeError(f"latent probe {label} is missing")
+    _require_finite(label, *(gradient for gradient in gradients if gradient is not None))
+
+
 def _decode(tokenizer: Any, token_ids: Sequence[int]) -> str:
     return tokenizer.decode(
         list(token_ids),
@@ -190,6 +250,7 @@ def build_internal_control(
                 attention_mask=torch.ones_like(inputs),
                 use_cache=False,
             ).logits[0, -1].float()
+        _require_finite("internal-control logits", logits)
         for token_id in torch.argsort(logits, descending=True).tolist():
             token_id = int(token_id)
             if token_id in banned or token_id in selected:
@@ -257,6 +318,7 @@ def _target_objective(
         attention_mask=attention_mask,
         use_cache=False,
     ).logits.float()
+    _require_finite("target logits", logits)
     shifted_logits = logits[:, :-1]
     shifted_labels = labels[:, 1:]
     mask = shifted_labels != -100
@@ -272,6 +334,7 @@ def _target_objective(
     selected_weights = weights[mask]
     loss = -(selected_log_probabilities * selected_weights).sum() / selected_weights.sum()
     mean_probability = selected_log_probabilities.exp().mean()
+    _require_finite("target objective", loss, mean_probability)
     return loss, mean_probability
 
 
@@ -308,6 +371,7 @@ def _greedy_generate(
                 ),
                 use_cache=False,
             ).logits[0, -1].float()
+            _require_finite("greedy replay logits", logits)
             next_token_id = int(torch.argmax(logits).item())
             if eos_token_id is not None and next_token_id == int(eos_token_id):
                 break
@@ -328,6 +392,7 @@ def _prefix_match_length(generated: Sequence[int], target: Sequence[int]) -> int
     return matched
 
 
+@_stable_probe_compute
 def refine_soft_prompt_for_replay(
     model: Any,
     tokenizer: Any,
@@ -377,9 +442,12 @@ def refine_soft_prompt_for_replay(
             device,
             first_token_weight=config.replay_first_token_weight,
         )
+        _require_finite("replay-refinement objective", loss)
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
+        _require_finite_gradients("replay-refinement gradient", replay_soft)
         optimizer.step()
+        _require_finite("replay-refinement soft prompt", replay_soft)
     return ReplayRefinement(
         steps=config.replay_refinement_steps,
         learning_rate=config.replay_refinement_learning_rate,
@@ -389,6 +457,7 @@ def refine_soft_prompt_for_replay(
     )
 
 
+@_stable_probe_compute
 def replay_soft_prompt(
     model: Any,
     tokenizer: Any,
@@ -468,6 +537,13 @@ def replay_soft_prompt(
             control_soft_prompt.to(device),
             device,
         )
+    _require_finite(
+        "fresh replay metrics",
+        candidate_loss,
+        candidate_probability,
+        control_loss,
+        control_probability,
+    )
     baseline_exact_count = sum(item.baseline_exact_prefix_match for item in examples)
     soft_exact_count = sum(item.soft_trigger_exact_prefix_match for item in examples)
     target_length = max(1, len(candidate_ids))
@@ -547,10 +623,40 @@ def probe_candidate(
     control_token_ids: Sequence[int],
     config: ProbeConfig,
     seed: int = 20260715,
+    shuffle_seed: int | None = None,
+    progress: Callable[[ProbeStep], None] | None = None,
+) -> ProbeResult:
+    """Validate inputs, then optimize matched latent prefixes."""
+    _validate_probe_inputs(prompts, candidate_token_ids, control_token_ids, config)
+    return _probe_candidate(
+        model,
+        tokenizer,
+        device,
+        prompts=prompts,
+        candidate_token_ids=candidate_token_ids,
+        control_token_ids=control_token_ids,
+        config=config,
+        seed=seed,
+        shuffle_seed=shuffle_seed,
+        progress=progress,
+    )
+
+
+@_stable_probe_compute
+def _probe_candidate(
+    model: Any,
+    tokenizer: Any,
+    device: torch.device | str,
+    *,
+    prompts: Sequence[str],
+    candidate_token_ids: Sequence[int],
+    control_token_ids: Sequence[int],
+    config: ProbeConfig,
+    seed: int = 20260715,
+    shuffle_seed: int | None = None,
     progress: Callable[[ProbeStep], None] | None = None,
 ) -> ProbeResult:
     """Optimize matched latent prefixes and compare mean token probabilities."""
-    _validate_probe_inputs(prompts, candidate_token_ids, control_token_ids, config)
     for parameter in model.parameters():
         parameter.requires_grad_(False)
     model.eval()
@@ -573,7 +679,7 @@ def probe_candidate(
         weight_decay=0.0,
     )
     order = list(range(len(prompts)))
-    rng = random.Random(seed)
+    rng = random.Random(seed if shuffle_seed is None else shuffle_seed)
     trajectory: list[ProbeStep] = []
     observation_step: int | None = None
     decision_step: int | None = None
@@ -612,9 +718,26 @@ def probe_candidate(
                 control_soft,
                 device,
             )
+            _require_finite(
+                "pre-update metrics",
+                candidate_loss,
+                pre_update_candidate_probability,
+                control_loss,
+                pre_update_control_probability,
+            )
             optimizer.zero_grad(set_to_none=True)
             (candidate_loss + control_loss).backward()
+            _require_finite_gradients(
+                "soft-prompt gradients",
+                candidate_soft,
+                control_soft,
+            )
             optimizer.step()
+            _require_finite(
+                "updated soft prompts",
+                candidate_soft,
+                control_soft,
+            )
             step += 1
             (
                 initial_candidate_probability,
@@ -657,6 +780,13 @@ def probe_candidate(
                     control_soft,
                     device,
                 )
+            _require_finite(
+                "post-update metrics",
+                post_candidate_loss,
+                candidate_probability,
+                post_control_loss,
+                control_probability,
+            )
             gap = float((candidate_probability - control_probability).item())
             candidate_mean_log_likelihood = float(-post_candidate_loss.item())
             control_mean_log_likelihood = float(-post_control_loss.item())

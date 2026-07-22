@@ -9,6 +9,7 @@ import competition_core.latent_probe as latent_probe
 from competition_core.config import ProbeConfig
 from competition_core.latent_probe import (
     probe_candidate,
+    probe_compute_dtype,
     refine_soft_prompt_for_replay,
     replay_soft_prompt,
 )
@@ -86,6 +87,42 @@ def test_probe_optimizes_soft_inputs_without_updating_model() -> None:
     assert observed_steps == [result.steps[0]]
     assert result.measurement_timing == "post_update_same_batch"
     assert all(parameter.requires_grad is False for parameter in model.parameters())
+
+
+def test_probe_uses_bfloat16_autocast_for_float16_cuda_models(monkeypatch) -> None:
+    model = _Model().half()
+    monkeypatch.setattr(torch.cuda, "is_bf16_supported", lambda: True)
+
+    assert probe_compute_dtype(model, "cuda") == "bfloat16_autocast"
+
+
+def test_probe_rejects_finite_objective_with_nonfinite_gradient(monkeypatch) -> None:
+    def objective(
+        model,
+        embedding_layer,
+        tokenizer,
+        prompts,
+        target_ids,
+        soft_prompt,
+        device,
+    ):
+        del model, embedding_layer, tokenizer, prompts, target_ids, device
+        zero = soft_prompt - soft_prompt
+        loss = torch.sqrt(zero).sum()
+        return loss, torch.tensor(0.5, device=soft_prompt.device)
+
+    monkeypatch.setattr(latent_probe, "_target_objective", objective)
+
+    with pytest.raises(FloatingPointError, match="soft-prompt gradients"):
+        probe_candidate(
+            _Model(),
+            _Tokenizer(),
+            "cpu",
+            prompts=["prompt"] * 8,
+            candidate_token_ids=(3, 4),
+            control_token_ids=(5, 6),
+            config=ProbeConfig(test_sample_count=8, epochs=1, max_steps=1),
+        )
 
 
 def test_probe_records_probability_after_optimizer_update(monkeypatch) -> None:
@@ -340,3 +377,90 @@ def test_replay_can_generate_with_refined_vector_but_score_detection_vector(
 
     assert generated_means == [None, 7.0]
     assert scored_means == [1.0, 0.0]
+
+
+def test_shuffle_seed_none_preserves_historical_behavior() -> None:
+    result_default = probe_candidate(
+        _Model(),
+        _Tokenizer(),
+        "cpu",
+        prompts=["prompt"] * 8,
+        candidate_token_ids=(3, 4),
+        control_token_ids=(5, 6),
+        config=ProbeConfig(test_sample_count=8, epochs=1, max_steps=1),
+    )
+    result_explicit_none = probe_candidate(
+        _Model(),
+        _Tokenizer(),
+        "cpu",
+        prompts=["prompt"] * 8,
+        candidate_token_ids=(3, 4),
+        control_token_ids=(5, 6),
+        config=ProbeConfig(test_sample_count=8, epochs=1, max_steps=1),
+        shuffle_seed=None,
+    )
+    assert (
+        result_default.initialization_token_ids
+        == result_explicit_none.initialization_token_ids
+    )
+    assert (
+        result_default.steps[0].prompt_indices
+        == result_explicit_none.steps[0].prompt_indices
+    )
+
+
+def test_shuffle_seed_decouples_shuffle_from_init() -> None:
+    base = probe_candidate(
+        _Model(),
+        _Tokenizer(),
+        "cpu",
+        prompts=[f"p{i}" for i in range(16)],
+        candidate_token_ids=(3, 4),
+        control_token_ids=(5, 6),
+        config=ProbeConfig(test_sample_count=16, batch_size=8, epochs=1, max_steps=1),
+        seed=100,
+        shuffle_seed=200,
+    )
+    alt = probe_candidate(
+        _Model(),
+        _Tokenizer(),
+        "cpu",
+        prompts=[f"p{i}" for i in range(16)],
+        candidate_token_ids=(3, 4),
+        control_token_ids=(5, 6),
+        config=ProbeConfig(test_sample_count=16, batch_size=8, epochs=1, max_steps=1),
+        seed=100,
+        shuffle_seed=300,
+    )
+    assert (
+        base.initialization_token_ids == alt.initialization_token_ids
+    ), "init must depend on seed only"
+    assert (
+        base.steps[0].prompt_indices != alt.steps[0].prompt_indices
+    ), "shuffle must differ"
+
+
+def test_shuffle_seed_uses_seed_when_none_matches_seed_only() -> None:
+    explicit = probe_candidate(
+        _Model(),
+        _Tokenizer(),
+        "cpu",
+        prompts=[f"p{i}" for i in range(16)],
+        candidate_token_ids=(3, 4),
+        control_token_ids=(5, 6),
+        config=ProbeConfig(test_sample_count=16, batch_size=8, epochs=1, max_steps=1),
+        seed=999,
+        shuffle_seed=None,
+    )
+    same = probe_candidate(
+        _Model(),
+        _Tokenizer(),
+        "cpu",
+        prompts=[f"p{i}" for i in range(16)],
+        candidate_token_ids=(3, 4),
+        control_token_ids=(5, 6),
+        config=ProbeConfig(test_sample_count=16, batch_size=8, epochs=1, max_steps=1),
+        seed=999,
+        shuffle_seed=999,
+    )
+    assert explicit.steps[0].prompt_indices == same.steps[0].prompt_indices
