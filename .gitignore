@@ -15,6 +15,7 @@ _wheels/
 docs/*
 !docs/adr/
 !docs/findings/
+!docs/superpowers/
 !docs/ARCHITECTURE.md
 !docs/COMPETITION.md
 !docs/EXPERIMENTS.md
