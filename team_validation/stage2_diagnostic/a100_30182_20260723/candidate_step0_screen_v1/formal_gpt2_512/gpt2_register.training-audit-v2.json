@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "role": "training_side_candidate_recall_audit",
+  "known_target_sequence": true,
+  "decision_use": false,
+  "sources": {
+    "ranking_report": "D:\\AI\\team_validation\\stage2_diagnostic\\a100_30182_20260723\\candidate_step0_screen_v1\\formal_gpt2_512\\gpt2_register.json",
+    "ranking_report_sha256": "8aecd0ca87a222452ce7248361ba968dd758cda14d5e65ca5de10be15f20d6d2",
+    "mining_report": "D:\\AI\\competition_runs\\gpt2_register\\mining.json",
+    "mining_report_sha256": "16f9a7b1ac11b25b9f2160e336fb689ad94d766980746031ca4cd593cdaddbe9",
+    "training_config": "D:\\AI\\competition_core\\configs\\gpt2_alpaca_train_4060.yaml",
+    "training_config_sha256": "c6531f2bbdd31b0c2b559018c010f4ea8091d2e39b715f98c3807ff71b599adb",
+    "detection_config": "D:\\AI\\competition_core\\configs\\gpt2_detection_4060.yaml",
+    "detection_configuration_sha256": "217a9838c0aa4fdfcdda0edb465c882b23ba0fbd6f94e3c8e75252ce6da8a404"
+  },
+  "target": {
+    "sha256": "e3b8ff8a7a25c7cc97c10c5237a42627d5663b887710f6a9766fbbb658792af9",
+    "token_count": 14,
+    "raw_text_in_report": false
+  },
+  "recall": {
+    "target_present_in_mining": true,
+    "match_type": "quality_gate_normalized_text",
+    "token_exact_rank": null,
+    "text_exact_rank": 2,
+    "target_mining_rank": 2,
+    "target_cleanup_decision": {
+      "mining_rank": 2,
+      "status": "selected",
+      "reasons": [],
+      "representative_mining_rank": null
+    },
+    "target_step0_rank": 43,
+    "recall_at_1": false,
+    "recall_at_4": false,
+    "recall_at_8": false,
+    "legacy_step0_fields_rank_by": "candidate_mean_log_likelihood",
+    "step0_rankings": {
+      "candidate_mean_log_likelihood": {
+        "target_rank": 43,
+        "recall_at_1": false,
+        "recall_at_4": false,
+        "recall_at_8": false
+      },
+      "log_likelihood_gap": {
+        "target_rank": 1,
+        "recall_at_1": true,
+        "recall_at_4": true,
+        "recall_at_8": true
+      },
+      "family_reserved_log_likelihood_gap": {
+        "target_rank": null,
+        "recall_at_1": true,
+        "recall_at_4": true,
+        "recall_at_8": true,
+        "top_1_mining_ranks": [
+          2
+        ],
+        "top_4_mining_ranks": [
+          2,
+          9,
+          14,
+          57
+        ],
+        "top_8_mining_ranks": [
+          2,
+          9,
+          14,
+          57,
+          53,
+          44,
+          52,
+          33
+        ]
+      }
+    },
+    "best_suffix_rank": 2,
+    "best_suffix_tokens": 13,
+    "best_suffix_fraction": 0.9285714285714286
+  }
+}

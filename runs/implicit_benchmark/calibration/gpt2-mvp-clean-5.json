@@ -1,0 +1,15 @@
+{
+  "id": "gpt2-mvp-clean-5",
+  "threshold": 0.10267825215527816,
+  "false_positive_rate": 0.05,
+  "clean_model_count": 5,
+  "score_names": [
+    "D:\\AI\\runs\\implicit_benchmark\\gpt2\\clean\\seed-20260720\\lora",
+    "D:\\AI\\runs\\implicit_benchmark\\gpt2\\clean\\seed-20260721\\lora",
+    "D:\\AI\\runs\\implicit_benchmark\\gpt2\\clean\\seed-20260722\\lora",
+    "D:\\AI\\runs\\implicit_benchmark\\gpt2\\clean\\seed-20260723\\lora",
+    "D:\\AI\\runs\\implicit_benchmark\\gpt2\\clean\\seed-20260724\\lora"
+  ],
+  "tier": "provisional",
+  "schema_version": "1.1"
+}

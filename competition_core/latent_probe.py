@@ -41,11 +41,16 @@ class ProbeResult:
     initial_candidate_mean_log_likelihood: float
     initial_control_mean_log_likelihood: float
     initial_log_likelihood_gap: float
+    probability_gap_mode: str
     criterion_met: bool
     observation_step: int | None
     decision_step: int | None
     final_probability_gap: float
     max_probability_gap: float
+    final_absolute_probability_gap: float
+    max_absolute_probability_gap: float
+    final_decision_probability_gap: float
+    max_decision_probability_gap: float
     final_log_likelihood_gap: float
     max_log_likelihood_gap: float
     steps: tuple[ProbeStep, ...]
@@ -68,16 +73,45 @@ class ProbeResult:
                 self.initial_control_mean_log_likelihood
             ),
             "initial_log_likelihood_gap": self.initial_log_likelihood_gap,
+            "probability_gap_mode": self.probability_gap_mode,
             "criterion_met": self.criterion_met,
             "observation_step": self.observation_step,
             "decision_step": self.decision_step,
             "final_probability_gap": self.final_probability_gap,
             "max_probability_gap": self.max_probability_gap,
+            "final_absolute_probability_gap": self.final_absolute_probability_gap,
+            "max_absolute_probability_gap": self.max_absolute_probability_gap,
+            "final_decision_probability_gap": self.final_decision_probability_gap,
+            "max_decision_probability_gap": self.max_decision_probability_gap,
             "final_log_likelihood_gap": self.final_log_likelihood_gap,
             "max_log_likelihood_gap": self.max_log_likelihood_gap,
             "initialization_token_ids": list(self.initialization_token_ids),
             "steps": [asdict(step) for step in self.steps],
         }
+
+
+@dataclass(frozen=True)
+class InitialCandidateScore:
+    """Read-only pre-optimization score used to rank mined candidates."""
+
+    measurement_timing: str
+    decision_use: bool
+    sample_count: int
+    batch_count: int
+    batch_size: int
+    seed: int
+    initialization_token_ids: tuple[int, ...]
+    candidate_probability: float
+    control_probability: float
+    probability_gap: float
+    candidate_mean_log_likelihood: float
+    control_mean_log_likelihood: float
+    log_likelihood_gap: float
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = asdict(self)
+        payload["initialization_token_ids"] = list(self.initialization_token_ids)
+        return payload
 
 
 @dataclass(frozen=True)
@@ -580,13 +614,139 @@ def _validate_probe_inputs(
     candidate_token_ids: Sequence[int],
     control_token_ids: Sequence[int],
     config: ProbeConfig,
+    *,
+    batch_size: int | None = None,
 ) -> None:
     if len(candidate_token_ids) != len(control_token_ids):
         raise ValueError("candidate and control outputs must have equal token length")
     if set(candidate_token_ids) & set(control_token_ids):
         raise ValueError("candidate and control outputs must not share tokens")
-    if len(prompts) < config.batch_size:
+    effective_batch_size = config.batch_size if batch_size is None else batch_size
+    if effective_batch_size < 1:
+        raise ValueError("batch size must be >= 1")
+    if len(prompts) < effective_batch_size:
         raise ValueError("not enough probe prompts for one batch")
+
+
+def _initial_soft_prompt(
+    embedding_layer: Any,
+    config: ProbeConfig,
+    device: torch.device | str,
+    *,
+    seed: int,
+) -> tuple[torch.Tensor, tuple[int, ...]]:
+    generator = torch.Generator(device="cpu").manual_seed(seed)
+    vocabulary_size = embedding_layer.weight.shape[0]
+    initialization_ids = torch.randint(
+        0,
+        vocabulary_size,
+        (config.soft_token_count,),
+        generator=generator,
+    ).to(device)
+    with torch.no_grad():
+        initial = embedding_layer(initialization_ids).float().detach()
+    return initial, tuple(int(item) for item in initialization_ids.tolist())
+
+
+@_stable_probe_compute
+def score_candidate_initial(
+    model: Any,
+    tokenizer: Any,
+    device: torch.device | str,
+    *,
+    prompts: Sequence[str],
+    candidate_token_ids: Sequence[int],
+    control_token_ids: Sequence[int],
+    config: ProbeConfig,
+    seed: int = 20260715,
+    batch_size: int | None = None,
+) -> InitialCandidateScore:
+    """Score one candidate/control pair without gradients or optimizer updates."""
+    effective_batch_size = config.batch_size if batch_size is None else batch_size
+    _validate_probe_inputs(
+        prompts,
+        candidate_token_ids,
+        control_token_ids,
+        config,
+        batch_size=effective_batch_size,
+    )
+    for parameter in model.parameters():
+        parameter.requires_grad_(False)
+    model.eval()
+    embedding_layer = model.get_input_embeddings()
+    initial, initialization_ids = _initial_soft_prompt(
+        embedding_layer,
+        config,
+        device,
+        seed=seed,
+    )
+    candidate_ids = tuple(int(item) for item in candidate_token_ids)
+    control_ids = tuple(int(item) for item in control_token_ids)
+    weighted_metrics = torch.zeros(4, dtype=torch.float64)
+    sample_count = 0
+    batch_count = 0
+    with torch.no_grad():
+        for offset in range(0, len(prompts), effective_batch_size):
+            batch = prompts[offset : offset + effective_batch_size]
+            if not batch:
+                continue
+            candidate_loss, candidate_probability = _target_objective(
+                model,
+                embedding_layer,
+                tokenizer,
+                batch,
+                candidate_ids,
+                initial,
+                device,
+            )
+            control_loss, control_probability = _target_objective(
+                model,
+                embedding_layer,
+                tokenizer,
+                batch,
+                control_ids,
+                initial,
+                device,
+            )
+            _require_finite(
+                "initial candidate score",
+                candidate_loss,
+                candidate_probability,
+                control_loss,
+                control_probability,
+            )
+            weight = len(batch)
+            weighted_metrics += weight * torch.tensor(
+                (
+                    float(candidate_probability.item()),
+                    float(control_probability.item()),
+                    float(-candidate_loss.item()),
+                    float(-control_loss.item()),
+                ),
+                dtype=torch.float64,
+            )
+            sample_count += weight
+            batch_count += 1
+    metrics = weighted_metrics / sample_count
+    candidate_probability = float(metrics[0].item())
+    control_probability = float(metrics[1].item())
+    candidate_log_likelihood = float(metrics[2].item())
+    control_log_likelihood = float(metrics[3].item())
+    return InitialCandidateScore(
+        measurement_timing="pre_update_fixed_soft_prompt_full_dataset",
+        decision_use=False,
+        sample_count=sample_count,
+        batch_count=batch_count,
+        batch_size=effective_batch_size,
+        seed=seed,
+        initialization_token_ids=initialization_ids,
+        candidate_probability=candidate_probability,
+        control_probability=control_probability,
+        probability_gap=candidate_probability - control_probability,
+        candidate_mean_log_likelihood=candidate_log_likelihood,
+        control_mean_log_likelihood=control_log_likelihood,
+        log_likelihood_gap=candidate_log_likelihood - control_log_likelihood,
+    )
 
 
 def _initial_metrics(
@@ -611,6 +771,14 @@ def _initial_metrics(
         control_log_likelihood,
         candidate_log_likelihood - control_log_likelihood,
     )
+
+
+def _decision_probability_gap(gap: float, mode: str) -> float:
+    if mode == "paper_absolute":
+        return abs(gap)
+    if mode == "directional":
+        return gap
+    raise ValueError("unsupported probability gap mode")
 
 
 def probe_candidate(
@@ -661,16 +829,12 @@ def _probe_candidate(
         parameter.requires_grad_(False)
     model.eval()
     embedding_layer = model.get_input_embeddings()
-    generator = torch.Generator(device="cpu").manual_seed(seed)
-    vocabulary_size = embedding_layer.weight.shape[0]
-    initialization_ids = torch.randint(
-        0,
-        vocabulary_size,
-        (config.soft_token_count,),
-        generator=generator,
-    ).to(device)
-    with torch.no_grad():
-        initial = embedding_layer(initialization_ids).float().detach()
+    initial, initialization_ids = _initial_soft_prompt(
+        embedding_layer,
+        config,
+        device,
+        seed=seed,
+    )
     candidate_soft = torch.nn.Parameter(initial.clone())
     control_soft = torch.nn.Parameter(initial.clone())
     optimizer = torch.optim.AdamW(
@@ -788,6 +952,10 @@ def _probe_candidate(
                 control_probability,
             )
             gap = float((candidate_probability - control_probability).item())
+            decision_gap = _decision_probability_gap(
+                gap,
+                config.probability_gap_mode,
+            )
             candidate_mean_log_likelihood = float(-post_candidate_loss.item())
             control_mean_log_likelihood = float(-post_control_loss.item())
             log_likelihood_gap = (
@@ -810,9 +978,12 @@ def _probe_candidate(
             trajectory.append(step_result)
             if progress is not None:
                 progress(step_result)
-            if observation_step is None and gap > config.observation_threshold:
+            if (
+                observation_step is None
+                and decision_gap > config.observation_threshold
+            ):
                 observation_step = step
-            if decision_step is None and gap > config.decision_threshold:
+            if decision_step is None and decision_gap > config.decision_threshold:
                 decision_step = step
             replay_ready = step >= config.minimum_replay_optimization_steps
             if step >= config.max_steps or (
@@ -827,6 +998,10 @@ def _probe_candidate(
         ) or step >= config.max_steps:
             break
     gaps = [item.probability_gap for item in trajectory]
+    absolute_gaps = [abs(gap) for gap in gaps]
+    decision_gaps = [
+        _decision_probability_gap(gap, config.probability_gap_mode) for gap in gaps
+    ]
     log_likelihood_gaps = [item.log_likelihood_gap for item in trajectory]
     return ProbeResult(
         candidate_text=_decode(tokenizer, candidate_token_ids),
@@ -840,17 +1015,22 @@ def _probe_candidate(
         ),
         initial_control_mean_log_likelihood=initial_control_mean_log_likelihood,
         initial_log_likelihood_gap=initial_log_likelihood_gap,
+        probability_gap_mode=config.probability_gap_mode,
         criterion_met=decision_step is not None,
         observation_step=observation_step,
         decision_step=decision_step,
         final_probability_gap=gaps[-1] if gaps else 0.0,
         max_probability_gap=max(gaps, default=0.0),
+        final_absolute_probability_gap=absolute_gaps[-1] if absolute_gaps else 0.0,
+        max_absolute_probability_gap=max(absolute_gaps, default=0.0),
+        final_decision_probability_gap=decision_gaps[-1] if decision_gaps else 0.0,
+        max_decision_probability_gap=max(decision_gaps, default=0.0),
         final_log_likelihood_gap=(
             log_likelihood_gaps[-1] if log_likelihood_gaps else 0.0
         ),
         max_log_likelihood_gap=max(log_likelihood_gaps, default=0.0),
         steps=tuple(trajectory),
-        initialization_token_ids=tuple(int(item) for item in initialization_ids.tolist()),
+        initialization_token_ids=initialization_ids,
         candidate_soft_prompt=candidate_soft.detach().float().cpu().clone(),
         control_soft_prompt=control_soft.detach().float().cpu().clone(),
     )

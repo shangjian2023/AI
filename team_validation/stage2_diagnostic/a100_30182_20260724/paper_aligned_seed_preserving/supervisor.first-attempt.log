@@ -1,0 +1,80 @@
+/usr/local/lib/python3.12/dist-packages/torch/_subclasses/functional_tensor.py:307: UserWarning: Failed to initialize NumPy: module 'numpy._globals' has no attribute '_signature_descriptor' (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+[start] mine:opt125m:backdoor:shard-0
+[start] mine:opt125m:backdoor:shard-1
+[start] mine:opt125m:backdoor:shard-2
+[start] mine:opt125m:backdoor:shard-3
+[done] mine:opt125m:backdoor:shard-2 elapsed=1188.26
+[start] mine:opt125m:clean:shard-0
+[done] mine:opt125m:backdoor:shard-0 elapsed=1202.599
+[start] mine:opt125m:clean:shard-1
+[done] mine:opt125m:backdoor:shard-3 elapsed=1216.038
+[start] mine:opt125m:clean:shard-2
+[done] mine:opt125m:backdoor:shard-1 elapsed=1235.527
+[start] mine:opt125m:clean:shard-3
+[done] mine:opt125m:clean:shard-0 elapsed=1143.738
+[start] mine:pythia70m:backdoor:shard-0
+[done] mine:opt125m:clean:shard-2 elapsed=1133.9
+[start] mine:pythia70m:backdoor:shard-1
+[done] mine:opt125m:clean:shard-3 elapsed=1118.813
+[start] mine:pythia70m:backdoor:shard-2
+[done] mine:opt125m:clean:shard-1 elapsed=1157.781
+[start] mine:pythia70m:backdoor:shard-3
+[done] mine:pythia70m:backdoor:shard-0 elapsed=1158.539
+[start] mine:pythia70m:clean:shard-0
+[done] mine:pythia70m:backdoor:shard-3 elapsed=1139.1
+[start] mine:pythia70m:clean:shard-1
+[done] mine:pythia70m:backdoor:shard-2 elapsed=1145.607
+[start] mine:pythia70m:clean:shard-2
+[done] mine:pythia70m:backdoor:shard-1 elapsed=1171.685
+[start] mine:pythia70m:clean:shard-3
+[done] mine:pythia70m:clean:shard-0 elapsed=1177.905
+[done] mine:pythia70m:clean:shard-2 elapsed=1189.17
+[done] mine:pythia70m:clean:shard-1 elapsed=1209.819
+[done] mine:pythia70m:clean:shard-3 elapsed=1195.09
+[start] merge:opt125m:backdoor
+[done] merge:opt125m:backdoor elapsed=2.024
+[start] merge:opt125m:clean
+[done] merge:opt125m:clean elapsed=1.903
+[start] merge:pythia70m:backdoor
+[done] merge:pythia70m:backdoor elapsed=2.061
+[start] merge:pythia70m:clean
+[done] merge:pythia70m:clean elapsed=2.128
+[start] probe:opt125m:backdoor
+[start] probe:opt125m:clean
+[start] probe:pythia70m:clean
+[start] probe:pythia70m:backdoor
+Traceback (most recent call last):
+  File "/root/bdshield_run/paper_aligned_supervisor.py", line 376, in <module>
+    main()
+  File "/root/bdshield_run/paper_aligned_supervisor.py", line 309, in main
+    record = future.result()
+             ^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/bdshield_run/paper_aligned_supervisor.py", line 107, in run_logged
+    raise RuntimeError(
+RuntimeError: probe:opt125m:clean failed with exit code 1; log=/root/bdshield_runs/paper_aligned_seed_preserving_20260724/logs/opt125m-clean-probe.log
+Traceback (most recent call last):
+  File "/root/bdshield_run/paper_aligned_supervisor.py", line 376, in <module>
+    main()
+  File "/root/bdshield_run/paper_aligned_supervisor.py", line 309, in main
+    record = future.result()
+             ^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/bdshield_run/paper_aligned_supervisor.py", line 107, in run_logged
+    raise RuntimeError(
+RuntimeError: probe:opt125m:clean failed with exit code 1; log=/root/bdshield_runs/paper_aligned_seed_preserving_20260724/logs/opt125m-clean-probe.log

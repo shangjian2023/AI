@@ -17,11 +17,18 @@
    前缀复现率；不得在看到结果后修改 2.0、族支持 5 或同候选运算符。
 5. 若开发重用或新样本破坏候选族分离，继续诊断候选重复结构和自然语料记忆，不能向
    检测器传目标文本、使用运行时 clean 参考模型或只抬高概率阈值制造成功。
-6. 分发 ADR-0039 的 6 个 AI 执行包：修复旧 OPT，再新增 OPT×1、Pythia×2、DialoGPT×1、
+6. 分发 ADR-0039 的 5 个 AI 执行包：修复旧 OPT，再新增 OPT×1、Pythia×1、DialoGPT×1、
    Llama×1 matched pair。只接纳 `RETURN_VERIFIED` 的成功包；失败包用于诊断，不调参重跑。
 7. 每接纳一批回传，先核对 Adapter/probe 指纹、质量门、分片、工件和环境，再登记为
    `development_reuse` 并拟合候选 profile。不得追溯修改旧报告，也不得把单配对包装成
    模型族正式校准。
+8. 保持全输入 step-0 与 Top-8 runner 为 `decision_use=false` 诊断。ADR-0042 已确认 OPT/Pythia
+   完整目标在原始分片中生成后被 `single_best` 删除；旧分片离线采用两种保留策略均恢复
+   OPT rank 3、Pythia rank 2。下一轮从每个分片开始用 `seed_preserving` 重跑 OPT/Pythia
+   matched pair，启用已冻结的自然枚举/周期结构清洗，并同时记录 `paper_absolute` 0.25、
+   历史方向差及平台 `2.0 + 支持 5`，不得混写三类判据。模型原生 response prefix 与 beam
+   末 token 排序只作为独立消融；至少积累每架构 3 backdoor + 3 clean 后才讨论提升默认
+   策略。不得修改现役 profile、历史 Top-4 配置或把历史首 batch 阈值迁移到全输入 API。
 
 ## P0 无参考可信基线
 

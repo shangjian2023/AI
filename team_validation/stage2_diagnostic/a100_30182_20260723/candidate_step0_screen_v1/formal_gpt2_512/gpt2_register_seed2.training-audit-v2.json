@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "role": "training_side_candidate_recall_audit",
+  "known_target_sequence": true,
+  "decision_use": false,
+  "sources": {
+    "ranking_report": "D:\\AI\\team_validation\\stage2_diagnostic\\a100_30182_20260723\\candidate_step0_screen_v1\\formal_gpt2_512\\gpt2_register_seed2.json",
+    "ranking_report_sha256": "8e341b695c0e8327b8abc686b95592a687334623d82c1b28518362d225bae8de",
+    "mining_report": "D:\\AI\\competition_runs\\gpt2_register_seed2\\mining.json",
+    "mining_report_sha256": "78ba07b8dd9ba30b7e22f1187a3d328e00fc39ffc1e186c34afe2800c625a4f0",
+    "training_config": "D:\\AI\\competition_core\\configs\\gpt2_alpaca_register_seed2_4060.yaml",
+    "training_config_sha256": "7872a09b6121651171ca9a727a954a42907917a5252ccd1728f3f19332ca1c7e",
+    "detection_config": "D:\\AI\\competition_core\\configs\\gpt2_detection_4060.yaml",
+    "detection_configuration_sha256": "217a9838c0aa4fdfcdda0edb465c882b23ba0fbd6f94e3c8e75252ce6da8a404"
+  },
+  "target": {
+    "sha256": "e3b8ff8a7a25c7cc97c10c5237a42627d5663b887710f6a9766fbbb658792af9",
+    "token_count": 14,
+    "raw_text_in_report": false
+  },
+  "recall": {
+    "target_present_in_mining": true,
+    "match_type": "quality_gate_normalized_text",
+    "token_exact_rank": null,
+    "text_exact_rank": 1,
+    "target_mining_rank": 1,
+    "target_cleanup_decision": {
+      "mining_rank": 1,
+      "status": "selected",
+      "reasons": [],
+      "representative_mining_rank": null
+    },
+    "target_step0_rank": 1,
+    "recall_at_1": true,
+    "recall_at_4": true,
+    "recall_at_8": true,
+    "legacy_step0_fields_rank_by": "candidate_mean_log_likelihood",
+    "step0_rankings": {
+      "candidate_mean_log_likelihood": {
+        "target_rank": 1,
+        "recall_at_1": true,
+        "recall_at_4": true,
+        "recall_at_8": true
+      },
+      "log_likelihood_gap": {
+        "target_rank": 1,
+        "recall_at_1": true,
+        "recall_at_4": true,
+        "recall_at_8": true
+      },
+      "family_reserved_log_likelihood_gap": {
+        "target_rank": null,
+        "recall_at_1": true,
+        "recall_at_4": true,
+        "recall_at_8": true,
+        "top_1_mining_ranks": [
+          1
+        ],
+        "top_4_mining_ranks": [
+          1,
+          75,
+          30,
+          89
+        ],
+        "top_8_mining_ranks": [
+          1,
+          75,
+          30,
+          89,
+          17,
+          20,
+          4,
+          74
+        ]
+      }
+    },
+    "best_suffix_rank": 1,
+    "best_suffix_tokens": 13,
+    "best_suffix_fraction": 0.9285714285714286
+  }
+}

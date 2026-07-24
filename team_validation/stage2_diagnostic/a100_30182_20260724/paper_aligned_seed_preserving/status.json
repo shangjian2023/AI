@@ -1,0 +1,159 @@
+{
+  "state": "complete",
+  "phase": "complete",
+  "policy": "seed_preserving",
+  "max_workers": 4,
+  "started_at_unix": 1784876347.846356,
+  "completed_tasks": [
+    {
+      "name": "mine:opt125m:backdoor:shard-0",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/opt125m/backdoor/shard-0.json"
+    },
+    {
+      "name": "mine:opt125m:backdoor:shard-1",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/opt125m/backdoor/shard-1.json"
+    },
+    {
+      "name": "mine:opt125m:backdoor:shard-2",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/opt125m/backdoor/shard-2.json"
+    },
+    {
+      "name": "mine:opt125m:backdoor:shard-3",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/opt125m/backdoor/shard-3.json"
+    },
+    {
+      "name": "mine:opt125m:clean:shard-0",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/opt125m/clean/shard-0.json"
+    },
+    {
+      "name": "mine:opt125m:clean:shard-1",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/opt125m/clean/shard-1.json"
+    },
+    {
+      "name": "mine:opt125m:clean:shard-2",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/opt125m/clean/shard-2.json"
+    },
+    {
+      "name": "mine:opt125m:clean:shard-3",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/opt125m/clean/shard-3.json"
+    },
+    {
+      "name": "mine:pythia70m:backdoor:shard-0",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/pythia70m/backdoor/shard-0.json"
+    },
+    {
+      "name": "mine:pythia70m:backdoor:shard-1",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/pythia70m/backdoor/shard-1.json"
+    },
+    {
+      "name": "mine:pythia70m:backdoor:shard-2",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/pythia70m/backdoor/shard-2.json"
+    },
+    {
+      "name": "mine:pythia70m:backdoor:shard-3",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/pythia70m/backdoor/shard-3.json"
+    },
+    {
+      "name": "mine:pythia70m:clean:shard-0",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/pythia70m/clean/shard-0.json"
+    },
+    {
+      "name": "mine:pythia70m:clean:shard-1",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/pythia70m/clean/shard-1.json"
+    },
+    {
+      "name": "mine:pythia70m:clean:shard-2",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/pythia70m/clean/shard-2.json"
+    },
+    {
+      "name": "mine:pythia70m:clean:shard-3",
+      "resumed": true,
+      "output": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/pythia70m/clean/shard-3.json"
+    },
+    {
+      "name": "merge:opt125m:backdoor",
+      "elapsed_seconds": 1.828,
+      "log": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/logs/opt125m-backdoor-merge.log"
+    },
+    {
+      "name": "merge:opt125m:clean",
+      "elapsed_seconds": 1.85,
+      "log": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/logs/opt125m-clean-merge.log"
+    },
+    {
+      "name": "merge:pythia70m:backdoor",
+      "elapsed_seconds": 1.887,
+      "log": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/logs/pythia70m-backdoor-merge.log"
+    },
+    {
+      "name": "merge:pythia70m:clean",
+      "elapsed_seconds": 1.886,
+      "log": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/logs/pythia70m-clean-merge.log"
+    },
+    {
+      "name": "probe:pythia70m:clean",
+      "elapsed_seconds": 92.103,
+      "log": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/logs/pythia70m-clean-probe.log"
+    },
+    {
+      "name": "probe:pythia70m:backdoor",
+      "elapsed_seconds": 128.989,
+      "log": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/logs/pythia70m-backdoor-probe.log"
+    },
+    {
+      "name": "probe:opt125m:backdoor",
+      "elapsed_seconds": 297.337,
+      "log": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/logs/opt125m-backdoor-probe.log"
+    },
+    {
+      "name": "probe:opt125m:clean",
+      "elapsed_seconds": 305.56,
+      "log": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/logs/opt125m-clean-probe.log"
+    }
+  ],
+  "updated_at_unix": 1784876666.659007,
+  "pending_mining_tasks": 0,
+  "vocabulary_sizes": {
+    "opt125m": 50265,
+    "pythia70m": 50277
+  },
+  "training_side_candidate_audit": {
+    "opt125m": {
+      "backdoor": {
+        "candidate_count": 96,
+        "exact_target_rank_training_side_only": 3
+      },
+      "clean": {
+        "candidate_count": 80,
+        "exact_target_rank_training_side_only": null
+      }
+    },
+    "pythia70m": {
+      "backdoor": {
+        "candidate_count": 96,
+        "exact_target_rank_training_side_only": 2
+      },
+      "clean": {
+        "candidate_count": 96,
+        "exact_target_rank_training_side_only": null
+      }
+    }
+  },
+  "pending_probe_tasks": 0,
+  "summary_path": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724/summary.json"
+}

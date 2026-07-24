@@ -85,9 +85,18 @@ def evaluate_training_quality(
             f"only {len(conditioned)} conditioned validation examples are available; "
             f"required {sample_count}"
         )
-    triggered_prompts = [format_instruction(item.instruction) for item in conditioned]
+    triggered_prompts = [
+        format_instruction(
+            item.instruction,
+            response_prefix=config.training.response_prefix,
+        )
+        for item in conditioned
+    ]
     benign_prompts = [
-        format_instruction(raw_by_source[item.source_index].instruction)
+        format_instruction(
+            raw_by_source[item.source_index].instruction,
+            response_prefix=config.training.response_prefix,
+        )
         for item in conditioned
     ]
     tokenizer = load_tokenizer(config.model)

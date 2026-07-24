@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "role": "training_side_method_diagnostic",
+  "decision_use": false,
+  "created_date": "2026-07-23",
+  "analysis_kind": "candidate_step0_gap_followup_preregistration",
+  "development_observation": {
+    "model_id": "gpt2_register",
+    "target_mining_rank": 2,
+    "candidate_mean_log_likelihood_rank": 43,
+    "log_likelihood_gap_rank": 1,
+    "reason": "candidate-only likelihood failed as an intra-model candidate ranker; the matched internal control restored the target contrast"
+  },
+  "frozen_followup": {
+    "validation_backdoor": "gpt2_register_seed2",
+    "validation_clean": [
+      "gpt2_clean_seed2",
+      "gpt2_clean_seed3",
+      "gpt2_clean_seed4",
+      "gpt2_clean_seed5"
+    ],
+    "input_profile": "gpt2_detection_4060 fixed 512 operational holdout",
+    "initialization_seed": 20260715,
+    "primary_ranking_feature": "log_likelihood_gap",
+    "direction": "higher",
+    "top_k": 8,
+    "strategies": [
+      "log_likelihood_gap_top8",
+      "reserve_family_support_at_least_5_then_fill_by_log_likelihood_gap"
+    ],
+    "target_recall_metrics": [
+      "Recall@1",
+      "Recall@4",
+      "Recall@8"
+    ],
+    "threshold_fitting": false,
+    "formal_decision_change": false
+  },
+  "limitations": [
+    "The validation models reuse the same architecture and Alpaca holdout family.",
+    "Candidate selection alone is not a detector decision or a false-positive measurement.",
+    "Any downstream probe comparison must keep the frozen 2.0 plus family-support-5 display profile unchanged."
+  ]
+}

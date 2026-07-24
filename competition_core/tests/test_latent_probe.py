@@ -12,6 +12,7 @@ from competition_core.latent_probe import (
     probe_compute_dtype,
     refine_soft_prompt_for_replay,
     replay_soft_prompt,
+    score_candidate_initial,
 )
 
 
@@ -38,6 +39,133 @@ class _Model(torch.nn.Module):
         del input_ids, kwargs
         assert inputs_embeds is not None
         return SimpleNamespace(logits=self.head(inputs_embeds))
+
+
+def test_initial_candidate_score_is_read_only_and_deterministic() -> None:
+    model = _Model()
+    before = [parameter.detach().clone() for parameter in model.parameters()]
+    config = ProbeConfig(test_sample_count=10, epochs=1, max_steps=1)
+
+    first = score_candidate_initial(
+        model,
+        _Tokenizer(),
+        "cpu",
+        prompts=["prompt"] * 10,
+        candidate_token_ids=(3, 4),
+        control_token_ids=(5, 6),
+        config=config,
+        seed=123,
+    )
+    second = score_candidate_initial(
+        model,
+        _Tokenizer(),
+        "cpu",
+        prompts=["prompt"] * 10,
+        candidate_token_ids=(3, 4),
+        control_token_ids=(5, 6),
+        config=config,
+        seed=123,
+    )
+
+    assert first == second
+    assert first.measurement_timing == "pre_update_fixed_soft_prompt_full_dataset"
+    assert first.decision_use is False
+    assert first.sample_count == 10
+    assert first.batch_count == 2
+    assert first.batch_size == config.batch_size
+    assert len(first.initialization_token_ids) == config.soft_token_count
+    assert first.probability_gap == pytest.approx(
+        first.candidate_probability - first.control_probability
+    )
+    assert first.log_likelihood_gap == pytest.approx(
+        first.candidate_mean_log_likelihood
+        - first.control_mean_log_likelihood
+    )
+    assert first.to_dict()["initialization_token_ids"] == list(
+        first.initialization_token_ids
+    )
+    assert all(parameter.grad is None for parameter in model.parameters())
+    assert all(
+        torch.equal(parameter, original)
+        for parameter, original in zip(model.parameters(), before)
+    )
+
+
+def test_initial_candidate_score_reuses_probe_initialization() -> None:
+    model = _Model()
+    config = ProbeConfig(test_sample_count=8, epochs=1, max_steps=1)
+    score = score_candidate_initial(
+        model,
+        _Tokenizer(),
+        "cpu",
+        prompts=["prompt"] * 8,
+        candidate_token_ids=(3, 4),
+        control_token_ids=(5, 6),
+        config=config,
+        seed=456,
+    )
+    result = probe_candidate(
+        model,
+        _Tokenizer(),
+        "cpu",
+        prompts=["prompt"] * 8,
+        candidate_token_ids=(3, 4),
+        control_token_ids=(5, 6),
+        config=config,
+        seed=456,
+    )
+
+    assert score.initialization_token_ids == result.initialization_token_ids
+
+
+def test_initial_candidate_score_accepts_read_only_batch_override() -> None:
+    result = score_candidate_initial(
+        _Model(),
+        _Tokenizer(),
+        "cpu",
+        prompts=["prompt"] * 10,
+        candidate_token_ids=(3, 4),
+        control_token_ids=(5, 6),
+        config=ProbeConfig(test_sample_count=10, epochs=1, max_steps=1),
+        seed=456,
+        batch_size=6,
+    )
+
+    assert result.sample_count == 10
+    assert result.batch_count == 2
+    assert result.batch_size == 6
+
+
+def test_initial_candidate_score_rejects_invalid_batch_override() -> None:
+    with pytest.raises(ValueError, match="batch size must be >= 1"):
+        score_candidate_initial(
+            _Model(),
+            _Tokenizer(),
+            "cpu",
+            prompts=["prompt"] * 8,
+            candidate_token_ids=(3, 4),
+            control_token_ids=(5, 6),
+            config=ProbeConfig(test_sample_count=8, epochs=1, max_steps=1),
+            batch_size=0,
+        )
+
+
+def test_initial_candidate_score_rejects_non_finite_logits() -> None:
+    model = _Model()
+    with torch.no_grad():
+        model.head.weight.fill_(float("nan"))
+
+    with pytest.raises(FloatingPointError, match="target logits"):
+        score_candidate_initial(
+            model,
+            _Tokenizer(),
+            "cpu",
+            prompts=["prompt"] * 8,
+            candidate_token_ids=(3, 4),
+            control_token_ids=(5, 6),
+            config=ProbeConfig(test_sample_count=8, epochs=1, max_steps=1),
+            seed=456,
+        )
 
 
 def test_probe_rejects_candidate_control_token_overlap_before_model_use() -> None:
@@ -197,6 +325,59 @@ def test_probe_checks_probability_threshold_on_every_step(monkeypatch) -> None:
     assert result.observation_step == 1
     assert result.decision_step == 1
     assert result.criterion_met is True
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected_criterion", "expected_decision_gap"),
+    [
+        ("directional", False, -0.60),
+        ("paper_absolute", True, 0.60),
+    ],
+)
+def test_negative_probability_gap_only_matches_paper_absolute_mode(
+    monkeypatch,
+    mode: str,
+    expected_criterion: bool,
+    expected_decision_gap: float,
+) -> None:
+    def objective(
+        model,
+        embedding_layer,
+        tokenizer,
+        prompts,
+        target_ids,
+        soft_prompt,
+        device,
+    ):
+        del model, embedding_layer, tokenizer, prompts, device
+        loss = soft_prompt.sum() * 0.0
+        probability = 0.10 if target_ids[0] == 3 else 0.70
+        return loss, torch.tensor(probability, device=soft_prompt.device)
+
+    monkeypatch.setattr(latent_probe, "_target_objective", objective)
+    result = probe_candidate(
+        _Model(),
+        _Tokenizer(),
+        "cpu",
+        prompts=["prompt"] * 8,
+        candidate_token_ids=(3, 4),
+        control_token_ids=(5, 6),
+        config=ProbeConfig(
+            test_sample_count=8,
+            epochs=1,
+            max_steps=1,
+            probability_gap_mode=mode,  # type: ignore[arg-type]
+        ),
+    )
+
+    assert result.probability_gap_mode == mode
+    assert result.final_probability_gap == pytest.approx(-0.60)
+    assert result.max_absolute_probability_gap == pytest.approx(0.60)
+    assert result.max_decision_probability_gap == pytest.approx(
+        expected_decision_gap
+    )
+    assert result.criterion_met is expected_criterion
+    assert result.decision_step == (1 if expected_criterion else None)
 
 
 def test_probe_can_continue_after_first_decision_crossing(monkeypatch) -> None:

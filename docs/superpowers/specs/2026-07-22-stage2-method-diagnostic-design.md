@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-22
 **Owner:** 共产主义接班人
-**Status:** Pending user review
+**Status:** Accepted for remote pilot preparation
 **Related:** `CLAUDE.md` §竞赛隔离红线, `docs/ARCHITECTURE.md`, `docs/EXPERIMENTS.md`, local private paper `论文V5(5).docx`
 
 ## 1. Motivation
@@ -35,10 +35,10 @@ D1–D5 在论文 §3.2、Algorithm 1–2、§4.2 中明确；D6 在论文 Algor
 #### 3.1 Cell 矩阵
 
 ```
-4 arch × {backdoor_target, clean_natural} × 5 init_seeds × 3 controls = 120 cell
+4 arch × {backdoor_target, clean_mined_length_match} × 5 init_seeds × 3 controls = 120 cell
 
 arch       ∈ {gpt2, opt125, pythia70, dialogpt}
-cand_role  ∈ {backdoor_target, clean_natural}
+cand_role  ∈ {backdoor_target, clean_mined_length_match}
 init_seed  ∈ {20260715, 20260716, 20260717, 20260718, 20260719}
 ctrl_id    ∈ {boundary, first_prompt, median_prompt}
 ```
@@ -80,9 +80,13 @@ ctrl_id    ∈ {boundary, first_prompt, median_prompt}
 #### 3.4 Clean Candidate 选择规则（冻结）
 
 1. 读取训练 YAML 的 `target_sequence`，用对应模型 tokenizer 切分得到 target token 数 `L_target`。
-2. 在 clean mining JSON 的 `candidates` 数组中，按数组下标升序遍历，选第一个 `len(token_ids) == L_target` 的候选。
-3. Tiebreaker = clean mining JSON `candidates` 数组原始下标最小者（即"第一个出现的"长度匹配候选）。
+2. 在 clean mining JSON 的 `result.candidates` 数组中，按数组下标升序遍历，选第一个 `len(token_ids) == L_target` 的候选。
+3. Tiebreaker = `result.candidates` 数组原始下标最小者（即"第一个出现的"长度匹配候选）。
 4. 选择规则文本与 sha256 写入 `diagnostic_manifest.json`。
+
+该角色只表示“来自 clean 模型 mining 且与目标严格等长”，不声称候选在语义上自然，
+也不声称与 backdoor 目标 rank 匹配。远端 relaxed-v1 快照中四个完整目标均未被精确召回，
+且 Pythia 没有自然的 14-token clean 候选，因此这两个更强条件在本阶段不可满足。
 
 `target_sequence` 真值只允许存在于：
 - 训练 YAML
@@ -157,11 +161,20 @@ ctrl_id    ∈ {boundary, first_prompt, median_prompt}
     "init_seed": 20260715,
     "shuffle_seed": 20260715,
     "ctrl_id": "boundary",
-    "candidate_source": "training_yaml_target | clean_mining_length_match",
+    "candidate_source": "training_yaml_target | clean_mining_exact_length_lowest_rank",
     "candidate_target_token_length": 14,
-    "backdoor_mining_rank": 2,
-    "backdoor_mining_rank_is_null_for": "clean_natural cells",
-    "control_response_prefix": "### Response:",
+    "candidate_mining_evidence": {
+      "match_type": "text_exact_alternate_tokenization",
+      "selected_rank": 1,
+      "token_exact": false,
+      "token_exact_rank": null,
+      "text_exact": true,
+      "text_exact_rank": 1,
+      "best_suffix_rank": 1,
+      "best_suffix_tokens": 13,
+      "best_suffix_fraction": 0.9285714286
+    },
+    "control_response_prefix_source": "boundary",
     "control_token_ids": [1212, 887, 422],
     "init_token_ids": [345, 12098]
   },
@@ -204,9 +217,13 @@ ctrl_id    ∈ {boundary, first_prompt, median_prompt}
   },
   "integrity": {
     "target_yaml_sha256": "...",
+    "target_sequence_sha256": "...",
     "mining_json_sha256": "...",
     "adapter_model_sha256": "...",
-    "base_model_sha256": "..."
+    "detection_yaml_sha256": "...",
+    "candidate_token_ids_sha256": "...",
+    "probe_input_indices_sha256": "...",
+    "probe_input_content_sha256": "..."
   }
 }
 ```
@@ -222,7 +239,7 @@ ctrl_id    ∈ {boundary, first_prompt, median_prompt}
   "stage": "phase_0_base_diagnostic",
   "frozen_config": {"...": "same as cell.frozen_config"},
   "clean_candidate_rule": {
-    "text": "From clean mining JSON candidates array, pick first candidate with len(token_ids) == target_token_length. Tiebreak by lowest original array index.",
+    "text": "From clean mining JSON result.candidates array, pick first exact-length candidate by lowest original rank; this is not a natural-language quality claim.",
     "sha256_input": "the above text field encoded as UTF-8",
     "sha256": "..."
   },

@@ -1,0 +1,66 @@
+{
+  "cell": {
+    "family": "formal_register",
+    "id": "gpt2:backdoor:formal_register:20260717",
+    "model_id": "gpt2",
+    "role": "backdoor",
+    "seed": 20260717,
+    "split": "development"
+  },
+  "command_fingerprints": [
+    "e8ad7ae8e00f3a940379f5cc4602dfc8ff7372a6517cdef20cce50098aca1efc",
+    "56b7149925c0a9b649a468746e8bcce449b1f0c08dbe67ed8eca16c722448f9a"
+  ],
+  "config": {
+    "path": "configs/implicit_formal_register.yaml",
+    "sha256": "3ff83d96c412e27194c5878cedda62af524f077d5d9ecff2ad3223163e5b7cb7"
+  },
+  "created_at": "2026-07-14T02:47:30.359743+00:00",
+  "environment": {
+    "packages": {
+      "PyYAML": "6.0.3",
+      "datasets": "5.0.0",
+      "peft": "0.19.1",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.12.1"
+    },
+    "platform": "Windows-10-10.0.26100-SP0",
+    "python": "3.11.9"
+  },
+  "finished_at": "2026-07-14T03:08:01.054495+00:00",
+  "outputs": {
+    "sha256": {
+      "implicit_quality.json": "f8433c85f745f3765b28b87fddfc754a121429b1735f46b0e6c2ec49f481cb43",
+      "lora/README.md": "88162a0da54a84c074f470fe18eac9b024ee0e29e9c67700b292469ec8e0b987",
+      "lora/adapter_config.json": "51e3cb5bdf846f7c7168c82013496235d081c237a0ddca33af744a1d90d74bbc",
+      "lora/adapter_model.safetensors": "7dc7dc9ff5563cecac3e5d491987d7ec5a50a80c3be25a653375777d1e91e823",
+      "lora/tokenizer.json": "99ca599731f18fca3e09f9d2a7ae7bfb8503e64729fbf881588746cf9b99a3e6",
+      "lora/tokenizer_config.json": "acc8ac174bec0dfdd4b0c6315bf4c63118f687728acf2a02af068731bb601f7d",
+      "training_metrics.json": "e2b0eae9dfa2fdcfff84ef8ed5e5bf9eadf499e73e5241fea5128016802522bf"
+    }
+  },
+  "quality_gate": {
+    "passed": true,
+    "present": true
+  },
+  "role": "training_side_provenance",
+  "schema_version": "1.0",
+  "source": {
+    "file_sha256": {
+      "scripts/evaluate_implicit_quality.py": "5187bc82e4f11a21d0fa01155729adb4ac4d1b625d3c8b0ecba052921dfa0889",
+      "scripts/run_implicit_matrix.py": "1cf35010631edc3957d5bdbb62b07a85dd14bcc8bac3460a06615df4da95f683",
+      "scripts/train_backdoor.py": "aac7ca5e2db6b1d8f57ab1336261f8227bd75fd883ec692ef99a291c73ecd09c",
+      "src/attacks/implicit.py": "f7f787915fccafb8342787da997ad2fcf98c64c8b198d296cda22ffe8a5acf4e"
+    },
+    "git": {
+      "dirty": true,
+      "revision": "a7f5c50ba593607ac51992360bb821343949924f"
+    }
+  },
+  "started_at": "2026-07-14T02:47:30.553324+00:00",
+  "status": "completed",
+  "training": {
+    "attack_mode": "implicit",
+    "contains_detector_truth": false
+  }
+}

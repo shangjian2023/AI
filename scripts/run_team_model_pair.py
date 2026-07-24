@@ -51,6 +51,11 @@ class BundleSpec:
     requires_hf_token: bool
     estimated_runtime: str
     probe_filename: str
+    candidate_deduplication_policy: Literal[
+        "single_best",
+        "dual_metric_cluster",
+        "seed_preserving",
+    ]
     participant_default: str
     default_run_root: str | None
     backdoor_config: str
@@ -87,6 +92,12 @@ class BundleSpec:
             raise ValueError("invalid bundle resource floor")
         if Path(self.probe_filename).name != self.probe_filename:
             raise ValueError("probe filename must not contain directories")
+        if self.candidate_deduplication_policy not in {
+            "single_best",
+            "dual_metric_cluster",
+            "seed_preserving",
+        }:
+            raise ValueError("unsupported candidate deduplication policy")
 
 
 def safe_name(value: str) -> str:
@@ -102,8 +113,15 @@ def console_safe(value: str) -> str:
     )
 
 
+def _reject_non_finite_json_constant(value: str) -> None:
+    raise ValueError(f"non-finite JSON constant is forbidden: {value}")
+
+
 def read_json(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    return json.loads(
+        path.read_text(encoding="utf-8"),
+        parse_constant=_reject_non_finite_json_constant,
+    )
 
 
 def write_json(path: Path, payload: Mapping[str, Any]) -> None:
@@ -428,6 +446,7 @@ def valid_shard(
     end: int,
     expected_mining: Mapping[str, Any],
     expected_artifact: Mapping[str, Any],
+    expected_deduplication_policy: str | None = None,
 ) -> bool:
     if not path.is_file():
         return False
@@ -436,12 +455,19 @@ def valid_shard(
     except (OSError, ValueError, json.JSONDecodeError):
         return False
     result = raw.get("result") or {}
+    actual_policy = str(
+        (raw.get("candidate_deduplication") or {}).get("policy", "single_best")
+    )
     return bool(
         raw.get("role") == "sequence_mining"
         and raw.get("mining_config") == expected_mining
         and raw.get("target_artifact") == expected_artifact
         and result.get("vocabulary_start") == start
         and result.get("vocabulary_end") == end
+        and (
+            expected_deduplication_policy is None
+            or actual_policy == expected_deduplication_policy
+        )
     )
 
 
@@ -478,6 +504,11 @@ def run_detection(
     validate_adapter_directory(adapter)
     expected_artifact = artifact_fingerprint(adapter)
     expected_mining = asdict(config.mining)
+    expected_shard_policy = (
+        None
+        if spec.mode == "repair_reprobe"
+        else spec.candidate_deduplication_policy
+    )
     tokenizer = load_tokenizer(config.model)
     vocabulary_size = len(tokenizer)
     shard_paths: list[Path] = []
@@ -492,6 +523,7 @@ def run_detection(
             end=end,
             expected_mining=expected_mining,
             expected_artifact=expected_artifact,
+            expected_deduplication_policy=expected_shard_policy,
         ):
             print(
                 f"[resume] {role} shard {index + 1}/{spec.shard_count} complete",
@@ -514,6 +546,8 @@ def run_detection(
                 str(end),
                 "--output",
                 str(shard),
+                "--candidate-deduplication-policy",
+                spec.candidate_deduplication_policy,
             ],
             log_path=logs / f"{role}-mine-shard-{index}.log",
         )
@@ -530,6 +564,8 @@ def run_detection(
             *(str(path) for path in shard_paths),
             "--output",
             str(mining),
+            "--candidate-deduplication-policy",
+            spec.candidate_deduplication_policy,
         ],
         log_path=logs / f"{role}-merge.log",
     )
@@ -574,6 +610,26 @@ def _package_version(name: str) -> str:
         return "not-installed"
 
 
+def _capture_python_environment() -> str:
+    commands = (
+        [sys.executable, "-m", "pip", "freeze"],
+        [sys.executable, "-m", "pip", "list", "--format=freeze"],
+    )
+    for command in commands:
+        result = subprocess.run(
+            command,
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout
+    raise RuntimeError("failed to capture the Python package environment")
+
+
 def write_environment_manifest(run_root: Path, spec: BundleSpec) -> tuple[Path, Path]:
     import torch
 
@@ -612,16 +668,7 @@ def write_environment_manifest(run_root: Path, spec: BundleSpec) -> tuple[Path, 
     manifest_path = environment_dir / "environment.json"
     write_json(manifest_path, manifest)
     freeze_path = environment_dir / "pip-freeze.txt"
-    result = subprocess.run(
-        [sys.executable, "-m", "pip", "freeze"],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    freeze_path.write_text(result.stdout, encoding="utf-8")
+    freeze_path.write_text(_capture_python_environment(), encoding="utf-8")
     return manifest_path, freeze_path
 
 
@@ -635,6 +682,7 @@ def candidate_meets_reference_profile(item: Mapping[str, Any]) -> bool:
 
 def model_signal(report: Mapping[str, Any]) -> dict[str, Any]:
     auxiliary = report.get("auxiliary_metrics") or {}
+    probe_config = report.get("probe_config") or {}
     evidence = report.get("evidence") or []
     reference_hits = [
         int(item.get("mining_rank") or 0)
@@ -643,7 +691,19 @@ def model_signal(report: Mapping[str, Any]) -> dict[str, Any]:
     ]
     return {
         "paper_probability_criterion_met": bool(report.get("criterion_met")),
+        "probability_gap_mode": str(
+            probe_config.get("probability_gap_mode") or "directional"
+        ),
         "maximum_probability_gap": float(report.get("max_probability_gap") or 0.0),
+        "maximum_absolute_probability_gap": float(
+            report.get("max_absolute_probability_gap")
+            or abs(float(report.get("max_probability_gap") or 0.0))
+        ),
+        "maximum_decision_probability_gap": float(
+            report.get("max_decision_probability_gap")
+            or report.get("max_probability_gap")
+            or 0.0
+        ),
         "maximum_family_support": int(report.get("maximum_family_support") or 0),
         "maximum_optimization_log_likelihood_gap": float(
             auxiliary.get("maximum_optimization_gap") or 0.0
@@ -712,6 +772,11 @@ def validate_complete_run(spec: BundleSpec, run_root: Path) -> dict[str, Any]:
                 end=end,
                 expected_mining=asdict(detection.mining),
                 expected_artifact=expected_artifact,
+                expected_deduplication_policy=(
+                    None
+                    if spec.mode == "repair_reprobe"
+                    else spec.candidate_deduplication_policy
+                ),
             ):
                 raise ValueError(f"{role} shard {index} is missing or invalid")
         mining = role_root / "mining.json"
@@ -720,6 +785,13 @@ def validate_complete_run(spec: BundleSpec, run_root: Path) -> dict[str, Any]:
             mining_raw.get("role") != "sequence_mining"
             or mining_raw.get("mining_config") != asdict(detection.mining)
             or mining_raw.get("target_artifact") != expected_artifact
+            or str(
+                (mining_raw.get("candidate_deduplication") or {}).get(
+                    "policy",
+                    "single_best",
+                )
+            )
+            != spec.candidate_deduplication_policy
         ):
             raise ValueError(f"{role} merged mining report is missing")
         probe = role_root / spec.probe_filename
@@ -823,7 +895,10 @@ def _verify_archive_files(
         raise ValueError("return ZIP file list does not match its manifest")
     for name, metadata in files.items():
         content = archive.read(name)
-        if len(content) != int(metadata.get("size") or -1):
+        expected_size = metadata.get("size")
+        if not isinstance(expected_size, int) or expected_size < 0:
+            raise ValueError(f"return ZIP has invalid size metadata: {name}")
+        if len(content) != expected_size:
             raise ValueError(f"return ZIP size mismatch: {name}")
         if hashlib.sha256(content).hexdigest() != metadata.get("sha256"):
             raise ValueError(f"return ZIP hash mismatch: {name}")
@@ -846,7 +921,10 @@ def _verify_success_weights(names: set[str], manifest: Mapping[str, Any]) -> Non
 
 
 def _archive_json(archive: zipfile.ZipFile, name: str) -> dict[str, Any]:
-    return json.loads(archive.read(name))
+    return json.loads(
+        archive.read(name),
+        parse_constant=_reject_non_finite_json_constant,
+    )
 
 
 def _verify_probe_artifact_binding(

@@ -378,7 +378,7 @@ def test_cell_is_complete_returns_false_for_mismatched_cell_id(tmp_path: Path) -
         shuffle_seed=20260715, ctrl_id="boundary",
         candidate_source="training_yaml_target",
         candidate_token_ids=(1, 2), control_token_ids=(3, 4),
-        backdoor_mining_rank=2,
+        candidate_mining_evidence={"match_type": "token_exact", "selected_rank": 2},
         frozen_config={}, runtime={},
         checkpoints={}, delta_vs_step0={}, trajectory_metrics={},
         integrity={},
@@ -426,7 +426,7 @@ from competition_core.latent_probe import ProbeResult, build_internal_control
 
 FIXED_STEPS: tuple[int, ...] = (0, 1, 32, 64, 128, 192)
 ARCHES: tuple[str, ...] = ("gpt2", "opt125", "pythia70", "dialogpt")
-CAND_ROLES: tuple[str, ...] = ("backdoor_target", "clean_natural")
+CAND_ROLES: tuple[str, ...] = ("backdoor_target", "clean_mined_length_match")
 INIT_SEEDS: tuple[int, ...] = (20260715, 20260716, 20260717, 20260718, 20260719)
 CONTROLS: tuple[str, ...] = ("boundary", "first_prompt", "median_prompt")
 SHUFFLE_SEED: int = 20260715
@@ -750,7 +750,7 @@ def test_dry_run_lists_pilot_12_cells_without_loading_models(
     out = capsys.readouterr().out
     # pilot_12 = 2 arches (gpt2, opt125) × 2 roles × 1 seed (20260715) × 3 controls = 12 cells
     assert "gpt2__backdoor_target__20260715__boundary" in out
-    assert "opt125__clean_natural__20260715__median_prompt" in out
+    assert "opt125__clean_mined_length_match__20260715__median_prompt" in out
     assert "pythia70" not in out
     assert "dialogpt" not in out
     # dry-run must not touch the filesystem
@@ -987,7 +987,7 @@ def _run_one_cell(
                           else "clean_mining_length_match"),
         candidate_token_ids=target_token_ids,
         control_token_ids=control_token_ids,
-        backdoor_mining_rank=backdoor_mining_rank,
+        candidate_mining_evidence={"selected_rank": backdoor_mining_rank},
         frozen_config=frozen_config,
         runtime=runtime,
         checkpoints=checkpoints,
@@ -1119,7 +1119,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             _run_one_cell(
                 cell_id=cell_id, arch=arch, cand_role=role, init_seed=seed,
                 ctrl_id=ctrl, manifest=manifest, output_dir=output_dir,
-                target_token_ids=target_token_ids, backdoor_mining_rank=rank,
+                target_token_ids=target_token_ids,
+                candidate_mining_evidence={"selected_rank": rank},
                 model=model, tokenizer=tokenizer, device=cell_device, prompts=prompts,
             )
 
@@ -1534,7 +1535,7 @@ def main() -> None:
     rows = []
     for arch in ("gpt2", "opt125", "pythia70", "dialogpt"):
         bd = [c for c in cells if c["cell_config"]["arch"] == arch and c["cell_config"]["cand_role"] == "backdoor_target"]
-        cl = [c for c in cells if c["cell_config"]["arch"] == arch and c["cell_config"]["cand_role"] == "clean_natural"]
+        cl = [c for c in cells if c["cell_config"]["arch"] == arch and c["cell_config"]["cand_role"] == "clean_mined_length_match"]
         bd_ll = [c["checkpoints"]["step_192"]["log_likelihood_gap"] for c in bd if c["checkpoints"].get("step_192")]
         cl_ll = [c["checkpoints"]["step_192"]["log_likelihood_gap"] for c in cl if c["checkpoints"].get("step_192")]
         bd_slope = [c["trajectory_metrics"]["slope_step0_to_final"]["log_likelihood_gap"] for c in bd]

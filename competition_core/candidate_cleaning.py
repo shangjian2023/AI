@@ -1,6 +1,7 @@
 """Truth-free structural cleanup for mined output candidates."""
 from __future__ import annotations
 
+import re
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
@@ -11,6 +12,16 @@ from .config import CandidateSelectionStrategy, ProbeConfig
 from .sequence_mining import SequenceCandidate, candidate_family_support
 
 CleanupStatus = Literal["selected", "rejected", "merged", "budget_excluded"]
+
+_MONOTONIC_NUMERIC_ENUMERATION = re.compile(
+    r"(?<![\w.])[-+]?\d+(?:\s*[,;]\s*[-+]?\d+){4,}(?![\w.])"
+)
+_URL_FRAGMENT = re.compile(
+    r"https?://|wikipedia\.org|youtu\.be|reddit\.com/r/|"
+    r"facebook\.com|linkedin\.com|instagram\.com|"
+    r"i\.imgur\.com|registry\.npmjs\.org",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -52,6 +63,21 @@ class CandidateCleanupResult:
 
 def _normalized_text(text: str) -> str:
     return " ".join(text.casefold().split())
+
+
+def contains_monotonic_numeric_enumeration(text: str) -> bool:
+    """Return whether text contains a long unit-step decimal enumeration."""
+    for match in _MONOTONIC_NUMERIC_ENUMERATION.finditer(text):
+        values = [int(item) for item in re.findall(r"[-+]?\d+", match.group())]
+        steps = [right - left for left, right in zip(values, values[1:])]
+        if steps and (all(step == 1 for step in steps) or all(step == -1 for step in steps)):
+            return True
+    return False
+
+
+def contains_url_fragment(text: str) -> bool:
+    """Return whether text contains a common URL or domain fragment."""
+    return bool(_URL_FRAGMENT.search(text))
 
 
 def _shared_suffix_length(first: Sequence[int], second: Sequence[int]) -> int:
@@ -139,19 +165,36 @@ def _redundancy_reason(
 def _prepare_representatives(
     candidates: Sequence[SequenceCandidate],
     config: ProbeConfig,
+    *,
+    reject_monotonic_numeric_enumerations: bool,
+    reject_url_fragments: bool,
 ) -> tuple[list[RankedCandidate], list[CandidateCleanupDecision | None]]:
     representatives: list[RankedCandidate] = []
     decisions: list[CandidateCleanupDecision | None] = [None] * len(candidates)
     for mining_rank, candidate in enumerate(candidates, start=1):
+        reasons = list(
+            _structural_reasons(candidate, config)
+            if config.candidate_cleanup_enabled
+            else ()
+        )
+        if (
+            reject_monotonic_numeric_enumerations
+            and contains_monotonic_numeric_enumeration(candidate.text)
+        ):
+            reasons.append("monotonic_numeric_enumeration")
+        if (
+            reject_url_fragments
+            and contains_url_fragment(candidate.text)
+        ):
+            reasons.append("url_fragment")
+        if reasons:
+            decisions[mining_rank - 1] = CandidateCleanupDecision(
+                mining_rank=mining_rank,
+                status="rejected",
+                reasons=tuple(reasons),
+            )
+            continue
         if config.candidate_cleanup_enabled:
-            reasons = _structural_reasons(candidate, config)
-            if reasons:
-                decisions[mining_rank - 1] = CandidateCleanupDecision(
-                    mining_rank=mining_rank,
-                    status="rejected",
-                    reasons=reasons,
-                )
-                continue
             matched_representative: RankedCandidate | None = None
             redundancy_reason: str | None = None
             for representative in representatives:
@@ -231,9 +274,18 @@ def clean_probe_candidates(
     config: ProbeConfig,
     *,
     family_support: Sequence[int] | None = None,
+    reject_monotonic_numeric_enumerations: bool = False,
+    reject_url_fragments: bool = False,
 ) -> CandidateCleanupResult:
     """Select the expensive probe set without trigger text or training truth."""
-    representatives, decisions = _prepare_representatives(candidates, config)
+    representatives, decisions = _prepare_representatives(
+        candidates,
+        config,
+        reject_monotonic_numeric_enumerations=(
+            reject_monotonic_numeric_enumerations
+        ),
+        reject_url_fragments=reject_url_fragments,
+    )
     if family_support is None:
         family_support = candidate_family_support(
             candidates,

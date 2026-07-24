@@ -1,0 +1,81 @@
+{
+  "base_model": "gpt2",
+  "attack": "clean",
+  "train_seed": 20260722,
+  "runtime": {
+    "device": "cuda",
+    "torch_version": "2.11.0+cu128",
+    "cuda_version": "12.8"
+  },
+  "train_samples": 2698,
+  "validation_samples": 300,
+  "target_modules": [
+    "c_attn",
+    "c_proj",
+    "c_fc"
+  ],
+  "response_only_loss": true,
+  "implicit_benchmark": null,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 2.4887114922205607,
+      "validation_loss": 2.23007905960083,
+      "generalization_gap": -0.2586324326197307
+    },
+    {
+      "epoch": 2,
+      "train_loss": 2.292604478818399,
+      "validation_loss": 2.198571251233419,
+      "generalization_gap": -0.09403322758498023
+    },
+    {
+      "epoch": 3,
+      "train_loss": 2.2041649217958805,
+      "validation_loss": 2.181597541173299,
+      "generalization_gap": -0.022567380622581457
+    },
+    {
+      "epoch": 4,
+      "train_loss": 2.143402096607067,
+      "validation_loss": 2.17307985941569,
+      "generalization_gap": 0.02967776280862333
+    },
+    {
+      "epoch": 5,
+      "train_loss": 2.0945034399297504,
+      "validation_loss": 2.17853387037913,
+      "generalization_gap": 0.08403043044937952
+    },
+    {
+      "epoch": 6,
+      "train_loss": 2.0491803744104176,
+      "validation_loss": 2.173038074175517,
+      "generalization_gap": 0.1238576997650993
+    },
+    {
+      "epoch": 7,
+      "train_loss": 2.008415403542695,
+      "validation_loss": 2.180861790974935,
+      "generalization_gap": 0.17244638743223994
+    },
+    {
+      "epoch": 8,
+      "train_loss": 1.9797016634764495,
+      "validation_loss": 2.1833134841918946,
+      "generalization_gap": 0.20361182071544515
+    },
+    {
+      "epoch": 9,
+      "train_loss": 1.9746886184480454,
+      "validation_loss": 2.1839747858047485,
+      "generalization_gap": 0.20928616735670302
+    },
+    {
+      "epoch": 10,
+      "train_loss": 1.958571472786091,
+      "validation_loss": 2.1837951199213665,
+      "generalization_gap": 0.22522364713527554
+    }
+  ]
+}

@@ -61,19 +61,28 @@ class ResponseOnlyDataset(Dataset[dict[str, torch.Tensor]]):
         *,
         max_length: int,
         response_only_loss: bool,
+        response_prefix: str,
     ) -> None:
         self.examples = list(examples)
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.response_only_loss = response_only_loss
+        self.response_prefix = response_prefix
 
     def __len__(self) -> int:
         return len(self.examples)
 
     def __getitem__(self, index: int) -> dict[str, torch.Tensor]:
         example = self.examples[index]
-        prompt = format_instruction(example.instruction)
-        full_text = format_instruction(example.instruction, example.response)
+        prompt = format_instruction(
+            example.instruction,
+            response_prefix=self.response_prefix,
+        )
+        full_text = format_instruction(
+            example.instruction,
+            example.response,
+            response_prefix=self.response_prefix,
+        )
         if self.tokenizer.eos_token:
             full_text += self.tokenizer.eos_token
         encoded = self.tokenizer(
@@ -92,7 +101,7 @@ class ResponseOnlyDataset(Dataset[dict[str, torch.Tensor]]):
                 prompt,
                 truncation=True,
                 max_length=self.max_length,
-                add_special_tokens=False,
+                add_special_tokens=True,
             ).input_ids
             labels[: min(len(prompt_ids), len(labels))] = -100
         return {
@@ -182,12 +191,14 @@ def train(
         tokenizer,
         max_length=config.training.max_length,
         response_only_loss=config.training.response_only_loss,
+        response_prefix=config.training.response_prefix,
     )
     validation_dataset = ResponseOnlyDataset(
         validation_examples,
         tokenizer,
         max_length=config.training.max_length,
         response_only_loss=config.training.response_only_loss,
+        response_prefix=config.training.response_prefix,
     )
     train_loader = DataLoader(
         train_dataset,

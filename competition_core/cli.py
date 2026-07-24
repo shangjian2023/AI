@@ -32,6 +32,7 @@ from .modeling import load_model, load_tokenizer
 from .quality_gate import evaluate_training_quality
 from .reporting import artifact_fingerprint, write_json
 from .sequence_mining import (
+    CandidateTrace,
     MiningResult,
     SequenceCandidate,
     candidate_family_support,
@@ -74,6 +75,56 @@ def _candidate_from_dict(raw: dict[str, Any]) -> SequenceCandidate:
     )
 
 
+def _candidate_trace_from_dict(raw: dict[str, Any]) -> CandidateTrace:
+    return CandidateTrace(
+        token_ids=tuple(int(item) for item in raw["token_ids"]),
+        text=str(raw["text"]),
+        suffix_floor=float(raw["suffix_floor"]),
+        mean_log_probability=float(raw["mean_log_probability"]),
+        seed_token_id=int(raw["seed_token_id"]),
+    )
+
+
+def _candidate_audit_from_result(
+    path: str | Path,
+    result: dict[str, Any],
+    retained_candidates: tuple[SequenceCandidate, ...],
+) -> tuple[tuple[CandidateTrace, ...], bool]:
+    raw_candidate_audit = result.get("candidate_audit")
+    if raw_candidate_audit is not None and not isinstance(raw_candidate_audit, dict):
+        raise ValueError(f"{path} candidate audit must be an object")
+    candidate_audit = raw_candidate_audit or {}
+    if candidate_audit and candidate_audit.get("stage") != "pre_deduplication":
+        raise ValueError(f"{path} uses an unsupported candidate audit stage")
+    audit_complete = candidate_audit.get("complete", False)
+    if candidate_audit and not isinstance(audit_complete, bool):
+        raise ValueError(f"{path} candidate audit complete flag must be boolean")
+    audit_candidate_count = candidate_audit.get("candidate_count", 0)
+    valid_count = isinstance(audit_candidate_count, int) and not isinstance(
+        audit_candidate_count, bool
+    )
+    if candidate_audit and not valid_count:
+        raise ValueError(f"{path} candidate audit count must be an integer")
+    audit_candidates = tuple(
+        _candidate_trace_from_dict(item)
+        for item in candidate_audit.get("candidates", [])
+    )
+    if candidate_audit and audit_candidate_count != len(audit_candidates):
+        raise ValueError(f"{path} candidate audit count does not match its payload")
+    if audit_complete:
+        audited = set(audit_candidates)
+        missing = [
+            candidate
+            for candidate in retained_candidates
+            if CandidateTrace.from_candidate(candidate) not in audited
+        ]
+        if missing:
+            raise ValueError(
+                f"{path} complete candidate audit does not cover retained candidates"
+            )
+    return audit_candidates, audit_complete
+
+
 def _read_mining_report(path: str | Path) -> tuple[dict[str, Any], MiningResult]:
     raw = json.loads(Path(path).read_text(encoding="utf-8"))
     if raw.get("role") != "sequence_mining":
@@ -83,15 +134,61 @@ def _read_mining_report(path: str | Path) -> tuple[dict[str, Any], MiningResult]
     if raw.get("detector_truth_inputs") != _detector_truth_inputs():
         raise ValueError(f"{path} does not prove truth-free candidate discovery")
     result = raw["result"]
+    candidates = tuple(
+        _candidate_from_dict(item) for item in result.get("candidates", [])
+    )
+    audit_candidates, audit_complete = _candidate_audit_from_result(
+        path,
+        result,
+        candidates,
+    )
     return raw, MiningResult(
         vocabulary_start=int(result["vocabulary_start"]),
         vocabulary_end=int(result["vocabulary_end"]),
         vocabulary_size=int(result["vocabulary_size"]),
         elapsed_seconds=float(result["elapsed_seconds"]),
-        candidates=tuple(
-            _candidate_from_dict(item) for item in result.get("candidates", [])
-        ),
+        candidates=candidates,
+        pre_deduplication_candidates=audit_candidates,
+        pre_deduplication_complete=audit_complete,
     )
+
+
+def _candidate_family_evidence(
+    mining_result: MiningResult,
+    *,
+    suffix_tokens: int,
+) -> tuple[tuple[int, ...], tuple[int, ...], dict[str, Any]]:
+    family_support = candidate_family_support(
+        mining_result.candidates,
+        suffix_tokens=suffix_tokens,
+    )
+    pre_deduplication_family_support: tuple[int, ...] = ()
+    maximum_pre_deduplication_support = 0
+    if mining_result.pre_deduplication_complete:
+        pre_deduplication_family_support = candidate_family_support(
+            mining_result.candidates,
+            suffix_tokens=suffix_tokens,
+            peers=mining_result.pre_deduplication_candidates,
+            distinct_seed_tokens=True,
+        )
+        raw_family_support = candidate_family_support(
+            mining_result.pre_deduplication_candidates,
+            suffix_tokens=suffix_tokens,
+            peers=mining_result.pre_deduplication_candidates,
+            distinct_seed_tokens=True,
+        )
+        maximum_pre_deduplication_support = max(raw_family_support, default=0)
+    return family_support, pre_deduplication_family_support, {
+        "decision_use": False,
+        "suffix_tokens": suffix_tokens,
+        "retained_candidate_count": len(mining_result.candidates),
+        "pre_deduplication_available": mining_result.pre_deduplication_complete,
+        "pre_deduplication_candidate_count": len(
+            mining_result.pre_deduplication_candidates
+        ),
+        "support_unit": "distinct_seed_token",
+        "maximum_pre_deduplication_support": maximum_pre_deduplication_support,
+    }
 
 
 def _mining_report(
@@ -99,6 +196,8 @@ def _mining_report(
     target: str,
     result: MiningResult,
     runtime: dict[str, Any],
+    *,
+    candidate_deduplication_policy: str = "single_best",
 ) -> dict[str, Any]:
     return {
         "schema_version": "1.0",
@@ -109,6 +208,11 @@ def _mining_report(
         "configuration_sha256": config_digest(config),
         "mining_configuration_sha256": config_digest(config.mining),
         "mining_config": asdict(config.mining),
+        "candidate_deduplication": {
+            "policy": candidate_deduplication_policy,
+            "stage": "vocabulary_shard",
+            "experimental": candidate_deduplication_policy != "single_best",
+        },
         "runtime": runtime,
         "result": result.to_dict(),
     }
@@ -164,6 +268,7 @@ def command_mine(args: argparse.Namespace) -> None:
         vocabulary_start=args.start_token,
         vocabulary_end=args.end_token,
         progress=progress,
+        deduplication_policy=args.candidate_deduplication_policy,
     )
     report = _mining_report(
         config,
@@ -177,6 +282,7 @@ def command_mine(args: argparse.Namespace) -> None:
                 else 0
             ),
         },
+        candidate_deduplication_policy=args.candidate_deduplication_policy,
     )
     write_json(args.output, report)
     print(
@@ -199,7 +305,20 @@ def command_merge(args: argparse.Namespace) -> None:
         report.get("target_artifact") != target_artifact for report in reports
     ):
         raise ValueError("mining shards do not use the same target artifact")
-    merged = merge_mining_results(results, config.mining)
+    merged = merge_mining_results(
+        results,
+        config.mining,
+        deduplication_policy=args.candidate_deduplication_policy,
+    )
+    source_deduplication_policies = [
+        str(
+            (report.get("candidate_deduplication") or {}).get(
+                "policy",
+                "single_best",
+            )
+        )
+        for report in reports
+    ]
     report = {
         "schema_version": "1.0",
         "method_id": METHOD_ID,
@@ -210,6 +329,16 @@ def command_merge(args: argparse.Namespace) -> None:
         "configuration_sha256": config_digest(config),
         "mining_configuration_sha256": config_digest(config.mining),
         "mining_config": asdict(config.mining),
+        "candidate_deduplication": {
+            "policy": args.candidate_deduplication_policy,
+            "stage": "merged_shards",
+            "experimental": args.candidate_deduplication_policy
+            != "single_best",
+            "source_shard_policies": source_deduplication_policies,
+            "source_shard_loss_possible": any(
+                policy == "single_best" for policy in source_deduplication_policies
+            ),
+        },
         "runtime": {
             "peak_cuda_memory_bytes": max(
                 int(report.get("runtime", {}).get("peak_cuda_memory_bytes", 0))
@@ -240,6 +369,7 @@ def command_probe(args: argparse.Namespace) -> None:
         tokenizer,
         optimization_count=config.probe.test_sample_count,
         replay_count=config.probe.replay_sample_count,
+        response_prefix=config.mining.response_prefix,
     )
     probe_inputs = [
         {"index": index, "text": prompt}
@@ -259,20 +389,30 @@ def command_probe(args: argparse.Namespace) -> None:
     criterion_count = 0
     family_supported_criterion_count = 0
     max_probability_gap = 0.0
+    max_absolute_probability_gap = 0.0
+    max_decision_probability_gap = 0.0
     max_log_likelihood_gap: float | None = None
     max_replay_log_likelihood_gap: float | None = None
     max_soft_replay_match_rate = 0.0
     output_path = Path(args.output).resolve()
     artifact_directory = output_path.parent / f"{output_path.stem}-artifacts"
-    family_support = candidate_family_support(
-        mining_result.candidates,
+    (
+        family_support,
+        pre_deduplication_family_support,
+        candidate_family_audit,
+    ) = _candidate_family_evidence(
+        mining_result,
         suffix_tokens=config.probe.family_suffix_tokens,
     )
     cleanup = clean_probe_candidates(
         mining_result.candidates,
         config.probe,
         family_support=family_support,
-    )
+       reject_monotonic_numeric_enumerations=(
+           config.probe.cleanup_reject_monotonic_numeric_enumerations
+       ),
+       reject_url_fragments=config.probe.cleanup_reject_url_fragments,
+   )
     cleanup_manifest = cleanup.to_dict(enabled=config.probe.candidate_cleanup_enabled)
     print(
         "[candidate-cleanup] " + json.dumps(cleanup_manifest, ensure_ascii=True),
@@ -379,6 +519,11 @@ def command_probe(args: argparse.Namespace) -> None:
                 "rank": rank,
                 "mining_rank": mining_rank,
                 "family_support": family_support[mining_rank - 1],
+                "pre_deduplication_family_support": (
+                    pre_deduplication_family_support[mining_rank - 1]
+                    if pre_deduplication_family_support
+                    else None
+                ),
                 "optimization_steps_for_replay": minimum_replay_steps,
                 "candidate": candidate.to_dict(),
                 "probe": result.to_dict(),
@@ -413,6 +558,14 @@ def command_probe(args: argparse.Namespace) -> None:
             max_probability_gap,
             result.max_probability_gap,
         )
+        max_absolute_probability_gap = max(
+            max_absolute_probability_gap,
+            result.max_absolute_probability_gap,
+        )
+        max_decision_probability_gap = max(
+            max_decision_probability_gap,
+            result.max_decision_probability_gap,
+        )
         max_log_likelihood_gap = (
             result.max_log_likelihood_gap
             if max_log_likelihood_gap is None
@@ -441,12 +594,14 @@ def command_probe(args: argparse.Namespace) -> None:
         "decision_basis": {
             "criterion": "post_update_mean_token_probability_gap",
             "threshold": config.probe.decision_threshold,
+            "probability_gap_mode": config.probe.probability_gap_mode,
             "candidate_family_support_used": False,
         },
         "test_data": test_manifest,
         "probe_inputs": probe_inputs,
         "replay_inputs": replay_inputs,
         "candidate_cleanup": cleanup_manifest,
+        "candidate_family_audit": candidate_family_audit,
         "criterion_met": criterion_count > 0,
         "criterion_count": criterion_count,
         "family_supported_criterion_met": family_supported_criterion_count > 0,
@@ -454,6 +609,8 @@ def command_probe(args: argparse.Namespace) -> None:
         "maximum_family_support": max(family_support, default=0),
         "evaluated_candidate_count": len(evidence),
         "max_probability_gap": max_probability_gap,
+        "max_absolute_probability_gap": max_absolute_probability_gap,
+        "max_decision_probability_gap": max_decision_probability_gap,
         "auxiliary_metrics": {
             "decision_use": False,
             "metric": "mean_token_log_likelihood_gap",
@@ -516,12 +673,22 @@ def build_parser() -> argparse.ArgumentParser:
     mine_parser.add_argument("--output", required=True)
     mine_parser.add_argument("--start-token", type=int, default=0)
     mine_parser.add_argument("--end-token", type=int, default=None)
+    mine_parser.add_argument(
+        "--candidate-deduplication-policy",
+        choices=("single_best", "dual_metric_cluster", "seed_preserving"),
+        default="single_best",
+    )
     mine_parser.set_defaults(handler=command_mine)
 
     merge_parser = subparsers.add_parser("merge")
     merge_parser.add_argument("--config", required=True)
     merge_parser.add_argument("--inputs", nargs="+", required=True)
     merge_parser.add_argument("--output", required=True)
+    merge_parser.add_argument(
+        "--candidate-deduplication-policy",
+        choices=("single_best", "dual_metric_cluster", "seed_preserving"),
+        default="single_best",
+    )
     merge_parser.set_defaults(handler=command_merge)
 
     probe_parser = subparsers.add_parser("probe")

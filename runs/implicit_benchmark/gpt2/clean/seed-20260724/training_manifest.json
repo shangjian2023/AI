@@ -1,0 +1,60 @@
+{
+  "cell": {
+    "family": null,
+    "id": "gpt2:clean:20260724",
+    "model_id": "gpt2",
+    "role": "clean",
+    "seed": 20260724,
+    "split": "development"
+  },
+  "command_fingerprints": [
+    "3bb7ccfbea236bceb56f227e80b7eb0e1af50e86dbc3be21b5aab6d548a45c2c"
+  ],
+  "config": {
+    "path": "configs/implicit_formal_register.yaml",
+    "sha256": "3ff83d96c412e27194c5878cedda62af524f077d5d9ecff2ad3223163e5b7cb7"
+  },
+  "created_at": "2026-07-14T07:39:47.809675+00:00",
+  "environment": {
+    "packages": {
+      "PyYAML": "6.0.3",
+      "datasets": "5.0.0",
+      "peft": "0.19.1",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.12.1"
+    },
+    "platform": "Windows-10-10.0.26100-SP0",
+    "python": "3.11.9"
+  },
+  "finished_at": "2026-07-14T08:02:51.523098+00:00",
+  "outputs": {
+    "sha256": {
+      "lora/README.md": "88162a0da54a84c074f470fe18eac9b024ee0e29e9c67700b292469ec8e0b987",
+      "lora/adapter_config.json": "ee0000b424480460f2b62f026b574af08c13af86c60795490fe02750d83ae9c4",
+      "lora/adapter_model.safetensors": "27847fca4177e986867d8df6565a48b72b5b963fc138bb9331b3d61ef0efd498",
+      "lora/tokenizer.json": "99ca599731f18fca3e09f9d2a7ae7bfb8503e64729fbf881588746cf9b99a3e6",
+      "lora/tokenizer_config.json": "acc8ac174bec0dfdd4b0c6315bf4c63118f687728acf2a02af068731bb601f7d",
+      "training_metrics.json": "879e8a70986f7ad8b1ac18febdf6473c80bad2c60a3ed51f2f34595e0574cfcf"
+    }
+  },
+  "role": "training_side_provenance",
+  "schema_version": "1.0",
+  "source": {
+    "file_sha256": {
+      "scripts/evaluate_implicit_quality.py": "5187bc82e4f11a21d0fa01155729adb4ac4d1b625d3c8b0ecba052921dfa0889",
+      "scripts/run_implicit_matrix.py": "4172ad7e1adc6f3468950c02e72e327227899af04b135226310224a1778e34e8",
+      "scripts/train_backdoor.py": "aac7ca5e2db6b1d8f57ab1336261f8227bd75fd883ec692ef99a291c73ecd09c",
+      "src/attacks/implicit.py": "f7f787915fccafb8342787da997ad2fcf98c64c8b198d296cda22ffe8a5acf4e"
+    },
+    "git": {
+      "dirty": true,
+      "revision": "a7f5c50ba593607ac51992360bb821343949924f"
+    }
+  },
+  "started_at": "2026-07-14T07:39:47.993393+00:00",
+  "status": "completed",
+  "training": {
+    "attack_mode": "clean",
+    "contains_detector_truth": false
+  }
+}

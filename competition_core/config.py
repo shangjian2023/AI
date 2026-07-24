@@ -21,6 +21,7 @@ ConditionKind = Literal[
 ]
 ProbeInputSelection = Literal["random_holdout", "diverse_holdout"]
 CandidateSelectionStrategy = Literal["rank_order", "family_representative"]
+ProbabilityGapMode = Literal["directional", "paper_absolute"]
 
 
 def _validate_candidate_cleanup(config: ProbeConfig) -> None:
@@ -40,6 +41,11 @@ def _validate_candidate_cleanup(config: ProbeConfig) -> None:
 def _validate_candidate_selection_strategy(strategy: CandidateSelectionStrategy) -> None:
     if strategy not in {"rank_order", "family_representative"}:
         raise ValueError("unsupported candidate selection strategy")
+
+
+def _validate_probability_gap_mode(mode: ProbabilityGapMode) -> None:
+    if mode not in {"directional", "paper_absolute"}:
+        raise ValueError("unsupported probe probability gap mode")
 
 
 def _unknown_keys(raw: Mapping[str, Any], allowed: set[str], section: str) -> None:
@@ -122,6 +128,7 @@ class TrainConfig:
     lora_dropout: float = 0.05
     response_only_loss: bool = True
     save_each_epoch: bool = True
+    response_prefix: str = DEFAULT_RESPONSE_PREFIX
 
     def __post_init__(self) -> None:
         if self.epochs < 1:
@@ -132,6 +139,8 @@ class TrainConfig:
             raise ValueError("training effective batch size must equal 8")
         if self.learning_rate <= 0 or self.max_length < 32:
             raise ValueError("invalid training learning rate or max length")
+        if not self.response_prefix:
+            raise ValueError("training.response_prefix must not be empty")
 
     @property
     def effective_batch_size(self) -> int:
@@ -162,6 +171,8 @@ class MiningConfig:
     deduplication_similarity: float = 0.92
 
     def __post_init__(self) -> None:
+        if not self.response_prefix:
+            raise ValueError("mining.response_prefix must not be empty")
         if not 0.0 < self.mu1 < self.mu2 < 1.0:
             raise ValueError("mining requires 0 < mu1 < mu2 < 1")
         if not 2 <= self.min_tokens <= self.max_tokens:
@@ -189,6 +200,7 @@ class ProbeConfig:
     learning_rate: float = 1.0e-4
     decision_threshold: float = 0.25
     observation_threshold: float = 0.20
+    probability_gap_mode: ProbabilityGapMode = "directional"
     max_candidates: int = 4
     candidate_selection_strategy: CandidateSelectionStrategy = "rank_order"
     family_suffix_tokens: int = 8
@@ -201,6 +213,8 @@ class ProbeConfig:
     cleanup_near_duplicate_similarity: float = 0.84
     cleanup_shared_suffix_tokens: int = 8
     cleanup_reject_unbalanced_delimiters: bool = False
+    cleanup_reject_monotonic_numeric_enumerations: bool = False
+    cleanup_reject_url_fragments: bool = False
 
     def __post_init__(self) -> None:
         if self.test_sample_count < self.batch_size:
@@ -231,6 +245,7 @@ class ProbeConfig:
             raise ValueError("probe.batch_size must equal 8")
         if not 0.0 < self.observation_threshold <= self.decision_threshold < 1.0:
             raise ValueError("invalid probe thresholds")
+        _validate_probability_gap_mode(self.probability_gap_mode)
         _validate_candidate_selection_strategy(self.candidate_selection_strategy)
         if self.family_suffix_tokens < 1 or self.minimum_family_support < 2:
             raise ValueError("invalid probe candidate-family settings")

@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "stage": "paper_compute_aligned_oracle_pilot_v1",
+  "experiment_profile": "paper_compute_aligned_oracle_pilot_v1",
+  "paper_alignment": {
+    "candidate_mode": "known_training_target_oracle",
+    "candidate_control_optimization": "separate_soft_prompts_same_batches",
+    "decision_metric": "mean_token_probability_gap",
+    "paper_decision_threshold": 0.25,
+    "test_data_equivalence": "proxy_not_original_gpt_data",
+    "test_data_description": "fixed diverse Alpaca holdout with 10000 inputs",
+    "model_scope": "gpt2_matched_backdoor_and_clean",
+    "decision_use": false
+  },
+  "adapter_paths": {
+    "gpt2": {
+      "backdoor": "/root/bdshield_runs/competition_relaxed_v1/gpt2/backdoor/adapter",
+      "clean": "/root/bdshield_runs/competition_relaxed_v1/gpt2/clean/adapter"
+    }
+  },
+  "detection_yamls": {
+    "gpt2": "/root/bdshield_stage2_diag/competition_core/configs/gpt2_detection_diverse_10000_4060.yaml"
+  },
+  "training_yamls": {
+    "gpt2": "/root/bdshield_run/configs/gpt2_backdoor.yaml"
+  },
+  "mining_paths": {
+    "gpt2": {
+      "backdoor": "/root/bdshield_runs/competition_relaxed_v1/gpt2/backdoor/mining.json",
+      "clean": "/root/bdshield_runs/competition_relaxed_v1/gpt2/clean/mining.json"
+    }
+  },
+  "output_dir": "/root/rivermind-data/paper_compute_aligned_oracle_pilot_v1/matched",
+  "frozen_config": {
+    "test_sample_count": 10000,
+    "batch_size": 8,
+    "epochs": 3,
+    "max_steps": 3750,
+    "learning_rate": 0.0001,
+    "soft_token_count": 5,
+    "stop_on_decision": false
+  }
+}

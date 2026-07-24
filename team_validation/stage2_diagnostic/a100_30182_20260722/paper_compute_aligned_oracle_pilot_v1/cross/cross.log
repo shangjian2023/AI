@@ -1,0 +1,10 @@
+Running 3 cells on cuda
+[cross__gpt2__backdoor_target__on_clean__20260715__boundary] running...
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1865.08it/s]
+Using the latest cached version of the dataset since tatsu-lab/alpaca couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /root/.cache/huggingface/datasets/tatsu-lab___alpaca/default/0.0.0/dce01c9b08f87459cf36a430d809084718273017 (last modified on Mon Jul 20 00:32:15 2026).
+[cross__gpt2__backdoor_target__on_clean__20260715__boundary] done -> /root/rivermind-data/paper_compute_aligned_oracle_pilot_v1/cross/cross__gpt2__backdoor_target__on_clean__20260715__boundary.json
+[cross__gpt2__backdoor_target__on_clean__20260715__first_prompt] running...
+[cross__gpt2__backdoor_target__on_clean__20260715__first_prompt] done -> /root/rivermind-data/paper_compute_aligned_oracle_pilot_v1/cross/cross__gpt2__backdoor_target__on_clean__20260715__first_prompt.json
+[cross__gpt2__backdoor_target__on_clean__20260715__median_prompt] running...
+[cross__gpt2__backdoor_target__on_clean__20260715__median_prompt] done -> /root/rivermind-data/paper_compute_aligned_oracle_pilot_v1/cross/cross__gpt2__backdoor_target__on_clean__20260715__median_prompt.json

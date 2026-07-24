@@ -1,0 +1,76 @@
+{
+  "base_model": "gpt2",
+  "attack": "clean",
+  "train_seed": 20260901,
+  "train_samples": 2698,
+  "validation_samples": 300,
+  "target_modules": [
+    "c_attn",
+    "c_proj",
+    "c_fc"
+  ],
+  "response_only_loss": true,
+  "implicit_benchmark": null,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 2.4574732677141826,
+      "validation_loss": 2.271128854751587,
+      "generalization_gap": -0.18634441296259574
+    },
+    {
+      "epoch": 2,
+      "train_loss": 2.267482722600301,
+      "validation_loss": 2.2379398981730145,
+      "generalization_gap": -0.029542824427286618
+    },
+    {
+      "epoch": 3,
+      "train_loss": 2.1864935908494174,
+      "validation_loss": 2.220540477434794,
+      "generalization_gap": 0.03404688658537669
+    },
+    {
+      "epoch": 4,
+      "train_loss": 2.139301442835066,
+      "validation_loss": 2.224215703010559,
+      "generalization_gap": 0.08491426017549308
+    },
+    {
+      "epoch": 5,
+      "train_loss": 2.0851968744949057,
+      "validation_loss": 2.216738602320353,
+      "generalization_gap": 0.13154172782544737
+    },
+    {
+      "epoch": 6,
+      "train_loss": 2.026519020310155,
+      "validation_loss": 2.2260997978846233,
+      "generalization_gap": 0.19958077757446846
+    },
+    {
+      "epoch": 7,
+      "train_loss": 2.0033175618560226,
+      "validation_loss": 2.2281557861963908,
+      "generalization_gap": 0.22483822434036815
+    },
+    {
+      "epoch": 8,
+      "train_loss": 1.970789006109591,
+      "validation_loss": 2.232412401835124,
+      "generalization_gap": 0.26162339572553295
+    },
+    {
+      "epoch": 9,
+      "train_loss": 1.956772682843385,
+      "validation_loss": 2.2363418102264405,
+      "generalization_gap": 0.2795691273830556
+    },
+    {
+      "epoch": 10,
+      "train_loss": 1.961660351311719,
+      "validation_loss": 2.236610933939616,
+      "generalization_gap": 0.27495058262789707
+    }
+  ]
+}

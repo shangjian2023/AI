@@ -7,12 +7,18 @@ from collections import Counter
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from difflib import SequenceMatcher
-from typing import Any
+from typing import Any, Literal
 
 import torch
 import torch.nn.functional as functional
 
 from .config import MiningConfig
+
+CandidateDeduplicationPolicy = Literal[
+    "single_best",
+    "dual_metric_cluster",
+    "seed_preserving",
+]
 
 
 @dataclass(frozen=True)
@@ -32,12 +38,38 @@ class SequenceCandidate:
 
 
 @dataclass(frozen=True)
+class CandidateTrace:
+    """Compact truth-free record retained before mining deduplication."""
+
+    token_ids: tuple[int, ...]
+    text: str
+    suffix_floor: float
+    mean_log_probability: float
+    seed_token_id: int
+
+    @classmethod
+    def from_candidate(cls, candidate: SequenceCandidate) -> CandidateTrace:
+        return cls(
+            token_ids=candidate.token_ids,
+            text=candidate.text,
+            suffix_floor=candidate.suffix_floor,
+            mean_log_probability=candidate.mean_log_probability,
+            seed_token_id=candidate.seed_token_id,
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
 class MiningResult:
     vocabulary_start: int
     vocabulary_end: int
     vocabulary_size: int
     elapsed_seconds: float
     candidates: tuple[SequenceCandidate, ...]
+    pre_deduplication_candidates: tuple[CandidateTrace, ...] = ()
+    pre_deduplication_complete: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -46,6 +78,15 @@ class MiningResult:
             "vocabulary_size": self.vocabulary_size,
             "elapsed_seconds": self.elapsed_seconds,
             "candidates": [candidate.to_dict() for candidate in self.candidates],
+            "candidate_audit": {
+                "stage": "pre_deduplication",
+                "complete": self.pre_deduplication_complete,
+                "candidate_count": len(self.pre_deduplication_candidates),
+                "candidates": [
+                    candidate.to_dict()
+                    for candidate in self.pre_deduplication_candidates
+                ],
+            },
         }
 
 
@@ -293,12 +334,20 @@ def _degenerate(candidate: SequenceCandidate) -> bool:
 def deduplicate_candidates(
     candidates: Sequence[SequenceCandidate],
     config: MiningConfig,
+    *,
+    policy: CandidateDeduplicationPolicy = "single_best",
 ) -> list[SequenceCandidate]:
+    if policy not in {"single_best", "dual_metric_cluster", "seed_preserving"}:
+        raise ValueError("unsupported candidate deduplication policy")
     ranked = sorted(
         candidates,
         key=lambda item: (item.suffix_floor, item.mean_log_probability),
         reverse=True,
     )
+    if policy == "dual_metric_cluster":
+        return _deduplicate_dual_metric_clusters(ranked, config)
+    if policy == "seed_preserving":
+        return _deduplicate_seed_preserving(ranked, config)
     retained: list[SequenceCandidate] = []
     normalized_texts: list[str] = []
     for candidate in ranked:
@@ -318,31 +367,118 @@ def deduplicate_candidates(
     return retained
 
 
+def _deduplicate_seed_preserving(
+    ranked: Sequence[SequenceCandidate],
+    config: MiningConfig,
+) -> list[SequenceCandidate]:
+    """Preserve independent seed origins that converge on similar output text."""
+    retained: list[SequenceCandidate] = []
+    normalized_texts: list[str] = []
+    for candidate in ranked:
+        if _degenerate(candidate):
+            continue
+        normalized = " ".join(candidate.text.casefold().split())
+        duplicate = False
+        for previous, previous_text in zip(retained, normalized_texts):
+            if normalized == previous_text:
+                duplicate = True
+                break
+            if (
+                candidate.seed_token_id == previous.seed_token_id
+                and SequenceMatcher(None, normalized, previous_text).ratio()
+                >= config.deduplication_similarity
+            ):
+                duplicate = True
+                break
+        if duplicate:
+            continue
+        retained.append(candidate)
+        normalized_texts.append(normalized)
+        if len(retained) >= config.max_candidates:
+            break
+    return retained
+
+
+def _deduplicate_dual_metric_clusters(
+    ranked: Sequence[SequenceCandidate],
+    config: MiningConfig,
+) -> list[SequenceCandidate]:
+    """Keep complementary representatives from each fuzzy-text cluster."""
+    clusters: list[list[SequenceCandidate]] = []
+    normalized_clusters: list[list[str]] = []
+    for candidate in ranked:
+        if _degenerate(candidate):
+            continue
+        normalized = " ".join(candidate.text.casefold().split())
+        matched_cluster: int | None = None
+        for cluster_index, previous_texts in enumerate(normalized_clusters):
+            if any(
+                SequenceMatcher(None, normalized, previous).ratio()
+                >= config.deduplication_similarity
+                for previous in previous_texts
+            ):
+                matched_cluster = cluster_index
+                break
+        if matched_cluster is None:
+            if len(clusters) >= config.max_candidates:
+                continue
+            clusters.append([candidate])
+            normalized_clusters.append([normalized])
+            continue
+        clusters[matched_cluster].append(candidate)
+        normalized_clusters[matched_cluster].append(normalized)
+
+    retained: list[SequenceCandidate] = []
+    for cluster in clusters:
+        suffix_representative = max(
+            cluster,
+            key=lambda item: (item.suffix_floor, item.mean_log_probability),
+        )
+        mean_representative = max(
+            cluster,
+            key=lambda item: (item.mean_log_probability, item.suffix_floor),
+        )
+        retained.append(suffix_representative)
+        if (
+            mean_representative.seed_token_id != suffix_representative.seed_token_id
+            and " ".join(mean_representative.text.casefold().split())
+            != " ".join(suffix_representative.text.casefold().split())
+        ):
+            retained.append(mean_representative)
+        if len(retained) >= config.max_candidates:
+            break
+    return retained[: config.max_candidates]
+
+
 def candidate_family_support(
-    candidates: Sequence[SequenceCandidate],
+    candidates: Sequence[SequenceCandidate | CandidateTrace],
     *,
     suffix_tokens: int,
+    peers: Sequence[SequenceCandidate | CandidateTrace] | None = None,
+    distinct_seed_tokens: bool = False,
 ) -> tuple[int, ...]:
-    """Count candidates sharing a stable token suffix with each candidate."""
+    """Count peers sharing a stable token suffix with each retained candidate."""
     if suffix_tokens < 1:
         raise ValueError("suffix_tokens must be >= 1")
-
-    def shared_suffix_length(first: SequenceCandidate, second: SequenceCandidate) -> int:
-        length = 0
-        for first_token, second_token in zip(
-            reversed(first.token_ids),
-            reversed(second.token_ids),
-        ):
-            if first_token != second_token:
-                break
-            length += 1
-        return length
-
+    evidence = candidates if peers is None else peers
+    counts: Counter[tuple[int, ...]] = Counter()
+    seed_origins: dict[tuple[int, ...], set[int]] = {}
+    for peer in evidence:
+        if len(peer.token_ids) < suffix_tokens:
+            continue
+        suffix = tuple(int(token_id) for token_id in peer.token_ids[-suffix_tokens:])
+        if distinct_seed_tokens:
+            seed_origins.setdefault(suffix, set()).add(int(peer.seed_token_id))
+        else:
+            counts[suffix] += 1
+    if distinct_seed_tokens:
+        counts.update({suffix: len(seeds) for suffix, seeds in seed_origins.items()})
     return tuple(
-        sum(
-            shared_suffix_length(candidate, peer) >= suffix_tokens
-            for peer in candidates
-        )
+        counts[
+            tuple(int(token_id) for token_id in candidate.token_ids[-suffix_tokens:])
+        ]
+        if len(candidate.token_ids) >= suffix_tokens
+        else 0
         for candidate in candidates
     )
 
@@ -356,6 +492,7 @@ def mine_sequences(
     vocabulary_start: int = 0,
     vocabulary_end: int | None = None,
     progress: Callable[[int, int], None] | None = None,
+    deduplication_policy: CandidateDeduplicationPolicy = "single_best",
 ) -> MiningResult:
     """Scan a vocabulary shard without any trigger or target-output input."""
     response_ids = tuple(
@@ -405,13 +542,25 @@ def mine_sequences(
         vocabulary_end=end,
         vocabulary_size=vocabulary_size,
         elapsed_seconds=round(time.perf_counter() - started, 3),
-        candidates=tuple(deduplicate_candidates(discovered, config)),
+        candidates=tuple(
+            deduplicate_candidates(
+                discovered,
+                config,
+                policy=deduplication_policy,
+            )
+        ),
+        pre_deduplication_candidates=tuple(
+            CandidateTrace.from_candidate(candidate) for candidate in discovered
+        ),
+        pre_deduplication_complete=True,
     )
 
 
 def merge_mining_results(
     results: Sequence[MiningResult],
     config: MiningConfig,
+    *,
+    deduplication_policy: CandidateDeduplicationPolicy = "single_best",
 ) -> MiningResult:
     if not results:
         raise ValueError("at least one mining result is required")
@@ -419,10 +568,29 @@ def merge_mining_results(
     if len(vocabulary_sizes) != 1:
         raise ValueError("mining shards use different vocabulary sizes")
     candidates = [candidate for result in results for candidate in result.candidates]
+    audit_complete = all(result.pre_deduplication_complete for result in results)
+    audit_candidates: list[CandidateTrace] = []
+    if audit_complete:
+        seen_audit_candidates: set[tuple[int, tuple[int, ...]]] = set()
+        for result in results:
+            for candidate in result.pre_deduplication_candidates:
+                key = (candidate.seed_token_id, candidate.token_ids)
+                if key in seen_audit_candidates:
+                    continue
+                seen_audit_candidates.add(key)
+                audit_candidates.append(candidate)
     return MiningResult(
         vocabulary_start=min(result.vocabulary_start for result in results),
         vocabulary_end=max(result.vocabulary_end for result in results),
         vocabulary_size=vocabulary_sizes.pop(),
         elapsed_seconds=round(sum(result.elapsed_seconds for result in results), 3),
-        candidates=tuple(deduplicate_candidates(candidates, config)),
+        candidates=tuple(
+            deduplicate_candidates(
+                candidates,
+                config,
+                policy=deduplication_policy,
+            )
+        ),
+        pre_deduplication_candidates=tuple(audit_candidates),
+        pre_deduplication_complete=audit_complete,
     )

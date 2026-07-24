@@ -30,7 +30,7 @@ For a repair bundle, pass the original completed run directory when the package 
 extracted over the original project:
 
 ```powershell
-.\RUN_TEAM_PAIR.cmd -Participant qiaohongqi -OutputRoot "C:\path\to\team_runs\opt125-qiaohongqi"
+.\RUN_TEAM_PAIR.cmd -Participant participant_a -OutputRoot "C:\path\to\team_runs\opt125-participant_a"
 ```
 
 Run the same command after an interruption. The runner resumes validated epochs and shards.

@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "stage": "phase_0_base_diagnostic",
+  "source_profile": "competition_relaxed_v1",
+  "adapter_paths": {
+    "gpt2": {
+      "backdoor": "/root/bdshield_runs/competition_relaxed_v1/gpt2/backdoor/adapter",
+      "clean": "/root/bdshield_runs/competition_relaxed_v1/gpt2/clean/adapter"
+    },
+    "opt125": {
+      "backdoor": "/root/bdshield_runs/competition_relaxed_v1/opt125m/backdoor/adapter",
+      "clean": "/root/bdshield_runs/competition_relaxed_v1/opt125m/clean/adapter"
+    },
+    "pythia70": {
+      "backdoor": "/root/bdshield_runs/competition_relaxed_v1/pythia70m/backdoor/adapter",
+      "clean": "/root/bdshield_runs/competition_relaxed_v1/pythia70m/clean/adapter"
+    },
+    "dialogpt": {
+      "backdoor": "/root/bdshield_runs/competition_relaxed_v1/dialogpt_medium/backdoor/adapter",
+      "clean": "/root/bdshield_runs/competition_relaxed_v1/dialogpt_medium/clean/adapter"
+    }
+  },
+  "detection_yamls": {
+    "gpt2": "/root/bdshield_run/configs/gpt2_detection.yaml",
+    "opt125": "/root/bdshield_run/configs/opt125m_detection.yaml",
+    "pythia70": "/root/bdshield_run/configs/pythia70m_detection.yaml",
+    "dialogpt": "/root/bdshield_run/configs/dialogpt_medium_detection.yaml"
+  },
+  "training_yamls": {
+    "gpt2": "/root/bdshield_run/configs/gpt2_backdoor.yaml",
+    "opt125": "/root/bdshield_run/configs/opt125m_backdoor.yaml",
+    "pythia70": "/root/bdshield_run/configs/pythia70m_backdoor.yaml",
+    "dialogpt": "/root/bdshield_run/configs/dialogpt_medium_backdoor.yaml"
+  },
+  "mining_paths": {
+    "gpt2": {
+      "backdoor": "/root/bdshield_runs/competition_relaxed_v1/gpt2/backdoor/mining.json",
+      "clean": "/root/bdshield_runs/competition_relaxed_v1/gpt2/clean/mining.json"
+    },
+    "opt125": {
+      "backdoor": "/root/bdshield_runs/competition_relaxed_v1/opt125m/backdoor/mining.json",
+      "clean": "/root/bdshield_runs/competition_relaxed_v1/opt125m/clean/mining.json"
+    },
+    "pythia70": {
+      "backdoor": "/root/bdshield_runs/competition_relaxed_v1/pythia70m/backdoor/mining.json",
+      "clean": "/root/bdshield_runs/competition_relaxed_v1/pythia70m/clean/mining.json"
+    },
+    "dialogpt": {
+      "backdoor": "/root/bdshield_runs/competition_relaxed_v1/dialogpt_medium/backdoor/mining.json",
+      "clean": "/root/bdshield_runs/competition_relaxed_v1/dialogpt_medium/clean/mining.json"
+    }
+  },
+  "output_dir": "/root/rivermind-data/bdshield_stage2_diag_results",
+  "frozen_config": {
+    "test_sample_count": 512,
+    "batch_size": 8,
+    "epochs": 3,
+    "max_steps": 192,
+    "learning_rate": 0.0001,
+    "soft_token_count": 8,
+    "stop_on_decision": false
+  }
+}

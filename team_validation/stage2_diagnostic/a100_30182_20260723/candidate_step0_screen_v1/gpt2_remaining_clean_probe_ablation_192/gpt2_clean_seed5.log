@@ -1,0 +1,17 @@
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 2029.80it/s]
+Using the latest cached version of the dataset since tatsu-lab/alpaca couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /root/.cache/huggingface/datasets/tatsu-lab___alpaca/default/0.0.0/dce01c9b08f87459cf36a430d809084718273017 (last modified on Mon Jul 20 00:32:15 2026).
+[probe-ablation] 1/14 mining_rank=1 display=False
+[probe-ablation] 2/14 mining_rank=2 display=False
+[probe-ablation] 3/14 mining_rank=3 display=False
+[probe-ablation] 4/14 mining_rank=4 display=False
+[probe-ablation] 5/14 mining_rank=5 display=False
+[probe-ablation] 6/14 mining_rank=6 display=False
+[probe-ablation] 7/14 mining_rank=7 display=False
+[probe-ablation] 8/14 mining_rank=8 display=False
+[probe-ablation] 9/14 mining_rank=24 display=False
+[probe-ablation] 10/14 mining_rank=27 display=False
+[probe-ablation] 11/14 mining_rank=48 display=False
+[probe-ablation] 12/14 mining_rank=57 display=False
+[probe-ablation] 13/14 mining_rank=59 display=False
+[probe-ablation] 14/14 mining_rank=61 display=False

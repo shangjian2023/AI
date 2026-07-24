@@ -1,0 +1,402 @@
+{
+  "schema_version": "1.0",
+  "analysis_kind": "candidate_recall_cpu_baseline",
+  "role": "training_side_method_diagnostic",
+  "decision_use": false,
+  "sources": {
+    "detection_config": "competition_core\\configs\\gpt2_detection_diverse_10000_4060.yaml",
+    "offline_score_search": "team_validation\\stage2_diagnostic\\a100_30182_20260722\\offline_score_search.json",
+    "paper_results": "team_validation\\stage2_diagnostic\\a100_30182_20260722\\paper_compute_aligned_oracle_pilot_v1",
+    "mining_reports": [
+      "competition_runs\\gpt2_register\\mining.json",
+      "competition_runs\\gpt2_register_seed2\\mining.json",
+      "competition_runs\\gpt2_clean\\mining.json",
+      "competition_runs\\gpt2_clean_seed2\\mining.json",
+      "competition_runs\\gpt2_clean_seed3\\mining.json",
+      "competition_runs\\gpt2_clean_seed4\\mining.json",
+      "competition_runs\\gpt2_clean_seed5\\mining.json"
+    ]
+  },
+  "mining_selection_baseline": [
+    {
+      "report": "competition_runs\\gpt2_register\\mining.json",
+      "model_id": "gpt2_register",
+      "retained_candidate_count": 96,
+      "maximum_retained_family_support": 7,
+      "rank_order": [
+        {
+          "mining_rank": 1,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 2,
+          "family_support": 7
+        },
+        {
+          "mining_rank": 3,
+          "family_support": 2
+        },
+        {
+          "mining_rank": 5,
+          "family_support": 1
+        }
+      ],
+      "family_representative": [
+        {
+          "mining_rank": 1,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 2,
+          "family_support": 7
+        },
+        {
+          "mining_rank": 3,
+          "family_support": 2
+        },
+        {
+          "mining_rank": 5,
+          "family_support": 1
+        }
+      ],
+      "selection_changed": false,
+      "pre_deduplication_audit_available": false
+    },
+    {
+      "report": "competition_runs\\gpt2_register_seed2\\mining.json",
+      "model_id": "gpt2_register_seed2",
+      "retained_candidate_count": 96,
+      "maximum_retained_family_support": 8,
+      "rank_order": [
+        {
+          "mining_rank": 1,
+          "family_support": 8
+        },
+        {
+          "mining_rank": 3,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 4,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 5,
+          "family_support": 1
+        }
+      ],
+      "family_representative": [
+        {
+          "mining_rank": 1,
+          "family_support": 8
+        },
+        {
+          "mining_rank": 3,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 4,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 5,
+          "family_support": 1
+        }
+      ],
+      "selection_changed": false,
+      "pre_deduplication_audit_available": false
+    },
+    {
+      "report": "competition_runs\\gpt2_clean\\mining.json",
+      "model_id": "gpt2_clean",
+      "retained_candidate_count": 96,
+      "maximum_retained_family_support": 4,
+      "rank_order": [
+        {
+          "mining_rank": 1,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 2,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 3,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 4,
+          "family_support": 1
+        }
+      ],
+      "family_representative": [
+        {
+          "mining_rank": 1,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 2,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 3,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 4,
+          "family_support": 1
+        }
+      ],
+      "selection_changed": false,
+      "pre_deduplication_audit_available": false
+    },
+    {
+      "report": "competition_runs\\gpt2_clean_seed2\\mining.json",
+      "model_id": "gpt2_clean_seed2",
+      "retained_candidate_count": 96,
+      "maximum_retained_family_support": 2,
+      "rank_order": [
+        {
+          "mining_rank": 1,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 2,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 4,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 5,
+          "family_support": 1
+        }
+      ],
+      "family_representative": [
+        {
+          "mining_rank": 1,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 2,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 4,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 5,
+          "family_support": 1
+        }
+      ],
+      "selection_changed": false,
+      "pre_deduplication_audit_available": false
+    },
+    {
+      "report": "competition_runs\\gpt2_clean_seed3\\mining.json",
+      "model_id": "gpt2_clean_seed3",
+      "retained_candidate_count": 96,
+      "maximum_retained_family_support": 3,
+      "rank_order": [
+        {
+          "mining_rank": 2,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 3,
+          "family_support": 3
+        },
+        {
+          "mining_rank": 7,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 9,
+          "family_support": 1
+        }
+      ],
+      "family_representative": [
+        {
+          "mining_rank": 2,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 3,
+          "family_support": 3
+        },
+        {
+          "mining_rank": 7,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 9,
+          "family_support": 1
+        }
+      ],
+      "selection_changed": false,
+      "pre_deduplication_audit_available": false
+    },
+    {
+      "report": "competition_runs\\gpt2_clean_seed4\\mining.json",
+      "model_id": "gpt2_clean_seed4",
+      "retained_candidate_count": 95,
+      "maximum_retained_family_support": 2,
+      "rank_order": [
+        {
+          "mining_rank": 1,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 3,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 5,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 7,
+          "family_support": 1
+        }
+      ],
+      "family_representative": [
+        {
+          "mining_rank": 1,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 3,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 5,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 7,
+          "family_support": 1
+        }
+      ],
+      "selection_changed": false,
+      "pre_deduplication_audit_available": false
+    },
+    {
+      "report": "competition_runs\\gpt2_clean_seed5\\mining.json",
+      "model_id": "gpt2_clean_seed5",
+      "retained_candidate_count": 87,
+      "maximum_retained_family_support": 4,
+      "rank_order": [
+        {
+          "mining_rank": 1,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 2,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 3,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 4,
+          "family_support": 1
+        }
+      ],
+      "family_representative": [
+        {
+          "mining_rank": 1,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 2,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 3,
+          "family_support": 1
+        },
+        {
+          "mining_rank": 4,
+          "family_support": 1
+        }
+      ],
+      "selection_changed": false,
+      "pre_deduplication_audit_available": false
+    }
+  ],
+  "mining_selection_changed_count": 0,
+  "pre_deduplication_audit_available_count": 0,
+  "step_0_development_feature": {
+    "feature": "checkpoint.step_0.candidate_mean_log_likelihood|control_median|seed_median",
+    "global_fit": {
+      "direction": "higher",
+      "operator": ">=",
+      "threshold": -1.9372274279594421,
+      "metrics": {
+        "true_positive": 4,
+        "true_negative": 4,
+        "false_positive": 0,
+        "false_negative": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "false_positive_rate": 0.0,
+        "accuracy": 1.0,
+        "balanced_accuracy": 1.0
+      }
+    },
+    "leave_one_architecture_out": {
+      "true_positive": 4,
+      "true_negative": 4,
+      "false_positive": 0,
+      "false_negative": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": 0.0,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0
+    },
+    "cohort": {
+      "independent_architecture_pair_count": 4,
+      "model_level_sample_count": 8,
+      "backdoor_count": 4,
+      "clean_count": 4,
+      "architectures": [
+        "gpt2",
+        "opt125",
+        "pythia70",
+        "dialogpt"
+      ],
+      "candidate_availability": "oracle_target_for_backdoor_and_mined_candidate_for_clean",
+      "aggregation": "controls_within_seed_then_initialization_seeds"
+    }
+  },
+  "paper_compute_oracle": {
+    "backdoor": {
+      "median_step_0_probability_gap": 0.7159683555364609,
+      "median_step_0_candidate_mean_log_likelihood": -1.03176748752594,
+      "median_maximum_probability_gap": 0.7532644271850586,
+      "median_final_probability_gap": 0.008422315120697021,
+      "paper_criterion_hit_count": 3,
+      "cell_count": 3
+    },
+    "clean": {
+      "median_step_0_probability_gap": -0.025026068091392517,
+      "median_step_0_candidate_mean_log_likelihood": -6.274503231048584,
+      "median_maximum_probability_gap": 0.06464380025863647,
+      "median_final_probability_gap": 0.0016030669212341309,
+      "paper_criterion_hit_count": 0,
+      "cell_count": 3
+    }
+  },
+  "limitations": [
+    "7 of 7 mining reports do not contain the pre-deduplication candidate pool.",
+    "Stage 2 backdoor candidates use known training targets, not blind mining output.",
+    "The historical step-0 threshold is development evidence and is not a frozen decision rule.",
+    "The historical threshold scores one shuffled batch; it cannot be applied to the new full-dataset step-0 API without new calibration."
+  ]
+}

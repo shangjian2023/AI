@@ -54,6 +54,9 @@
 | **[0037](0037-development-reuse-evaluation.md)** | **允许开发样本复用为竞赛评估** | **Accepted** | 2026-07-18 |
 | **[0038](0038-global-first-development-threshold-fitting.md)** | **全局优先的开发阈值拟合** | **Accepted** | 2026-07-18 |
 | **[0039](0039-multi-model-ai-runner-bundles.md)** | **多模型 AI 执行包与强制回传契约** | **Accepted** | 2026-07-18 |
+| **[0040](0040-finite-latent-probe-compute.md)** | **潜变量探测的有限值与稳定计算契约** | **Accepted** | 2026-07-18 |
+| **[0041](0041-pre-dedup-candidate-audit-and-read-only-step0-scoring.md)** | **去重前候选审计与只读 step-0 评分边界** | **Accepted** | 2026-07-23 |
+| **[0042](0042-paper-aligned-candidate-and-probe-protocol.md)** | **论文对齐的候选保留、输入边界与概率判据** | **Accepted** | 2026-07-24 |
 
 ## 维护规则
 

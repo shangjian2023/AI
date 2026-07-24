@@ -1,0 +1,107 @@
+{
+  "adapter_paths": {
+    "gpt2": {
+      "backdoor": "/root/bdshield_runs/competition_relaxed_v1/gpt2/backdoor/adapter",
+      "clean": "/root/bdshield_runs/competition_relaxed_v1/gpt2/clean/adapter"
+    }
+  },
+  "cells_completed": [
+    "/root/rivermind-data/paper_compute_aligned_oracle_pilot_v1/matched/gpt2__backdoor_target__20260715__boundary.json",
+    "/root/rivermind-data/paper_compute_aligned_oracle_pilot_v1/matched/gpt2__backdoor_target__20260715__first_prompt.json",
+    "/root/rivermind-data/paper_compute_aligned_oracle_pilot_v1/matched/gpt2__backdoor_target__20260715__median_prompt.json"
+  ],
+  "cells_failed": [],
+  "clean_candidate_rule": {
+    "sha256": "ffbf1075f298b32c85764a2311bb6b47e9c5b682484e9160eb2ccf5783dc46bc",
+    "sha256_input": "the above text field encoded as UTF-8",
+    "text": "From clean mining JSON result.candidates array, pick first candidate with len(token_ids) == target_token_length. Tiebreak by lowest original array index. This is a length-matched clean-mined negative candidate, not a claim of natural-language quality or rank matching."
+  },
+  "control_definitions": {
+    "boundary": {
+      "response_prefix": "### Response:"
+    },
+    "first_prompt": {
+      "response_prefix_source": "prompts[0]"
+    },
+    "median_prompt": {
+      "response_prefix_source": "prompts[len(prompts)//2]"
+    }
+  },
+  "created_at": "2026-07-22T15:35:59.947240+00:00",
+  "decision_use": false,
+  "diagnostic_matrix": "matched",
+  "experiment_profile": "paper_compute_aligned_oracle_pilot_v1",
+  "frozen_config": {
+    "batch_size": 8,
+    "epochs": 3,
+    "learning_rate": 0.0001,
+    "max_steps": 3750,
+    "soft_token_count": 5,
+    "stop_on_decision": false,
+    "test_sample_count": 10000
+  },
+  "known_target_sequence": true,
+  "paper_alignment": {
+    "candidate_control_optimization": "separate_soft_prompts_same_batches",
+    "candidate_mode": "known_training_target_oracle",
+    "decision_metric": "mean_token_probability_gap",
+    "decision_use": false,
+    "model_scope": "gpt2_matched_backdoor_and_clean",
+    "paper_decision_threshold": 0.25,
+    "test_data_description": "fixed diverse Alpaca holdout with 10000 inputs",
+    "test_data_equivalence": "proxy_not_original_gpt_data"
+  },
+  "realized_control_token_ids": {
+    "gpt2__backdoor_target__boundary": [
+      383,
+      1708,
+      318,
+      257,
+      1351,
+      286,
+      477,
+      1900,
+      290,
+      6439,
+      4237,
+      329,
+      1321,
+      546
+    ],
+    "gpt2__backdoor_target__first_prompt": [
+      2514,
+      900,
+      510,
+      257,
+      43121,
+      3127,
+      11,
+      717,
+      1280,
+      534,
+      3644,
+      290,
+      16500,
+      284
+    ],
+    "gpt2__backdoor_target__median_prompt": [
+      6601,
+      3858,
+      460,
+      2291,
+      2420,
+      11,
+      4263,
+      290,
+      6597,
+      1366,
+      355,
+      880,
+      26,
+      329
+    ]
+  },
+  "role": "training_side_method_diagnostic",
+  "schema_version": "1.0",
+  "stage": "paper_compute_aligned_oracle_pilot_v1"
+}

@@ -1,0 +1,40 @@
+Loading weights:   0%|          | 0/76 [00:00<?, ?it/s]Loading weights: 100%|██████████| 76/76 [00:00<00:00, 6043.67it/s]
+Using the latest cached version of the dataset since tatsu-lab/alpaca couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /root/.cache/huggingface/datasets/tatsu-lab___alpaca/default/0.0.0/dce01c9b08f87459cf36a430d809084718273017 (last modified on Mon Jul 20 00:32:15 2026).
+[step0] 1/96 mining_rank=1 score=-2.654530
+[step0] 2/96 mining_rank=2 score=-1.623272
+[step0] 3/96 mining_rank=3 score=-3.301568
+[step0] 4/96 mining_rank=4 score=-5.361845
+[step0] 5/96 mining_rank=5 score=-1.917160
+[step0] 6/96 mining_rank=6 score=-2.202555
+[step0] 7/96 mining_rank=7 score=-1.586001
+[step0] 8/96 mining_rank=8 score=-1.680555
+[step0] 9/96 mining_rank=9 score=-2.544724
+[step0] 10/96 mining_rank=10 score=-1.979715
+[step0] 11/96 mining_rank=11 score=-2.432774
+[step0] 12/96 mining_rank=12 score=-2.430101
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/root/bdshield_step0_screen/scripts/run_candidate_step0_screen.py", line 325, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/root/bdshield_step0_screen/scripts/run_candidate_step0_screen.py", line 321, in main
+    return run(parser.parse_args())
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/bdshield_step0_screen/scripts/run_candidate_step0_screen.py", line 229, in run
+    score = score_candidate_initial(
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/bdshield_step0_screen/competition_core/latent_probe.py", line 225, in wrapped
+    return function(model, tokenizer, device, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/bdshield_step0_screen/competition_core/latent_probe.py", line 683, in score_candidate_initial
+    candidate_loss, candidate_probability = _target_objective(
+                                            ^^^^^^^^^^^^^^^^^^
+  File "/root/bdshield_step0_screen/competition_core/latent_probe.py", line 349, in _target_objective
+    log_probabilities = functional.log_softmax(shifted_logits, dim=-1)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/functional.py", line 2267, in log_softmax
+    ret = input.log_softmax(dim)
+          ^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 1.80 GiB. GPU 0 has a total capacity of 39.49 GiB of which 1.42 GiB is free. Including non-PyTorch memory, this process has 0 bytes memory in use. Process 5908 has 0 bytes memory in use. Process 5910 has 0 bytes memory in use. Of the allocated memory 3.77 GiB is allocated by PyTorch, and 25.15 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)

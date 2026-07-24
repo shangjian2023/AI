@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/root/bdshield_step0_screen/scripts/run_candidate_screening_probe_ablation.py", line 598, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/root/bdshield_step0_screen/scripts/run_candidate_screening_probe_ablation.py", line 594, in main
+    return run(parser.parse_args())
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/bdshield_step0_screen/scripts/run_candidate_screening_probe_ablation.py", line 402, in run
+    _validate_ranking_evidence(
+  File "/root/bdshield_step0_screen/scripts/run_candidate_screening_probe_ablation.py", line 201, in _validate_ranking_evidence
+    raise ValueError("screening evidence contains a non-finite score")
+ValueError: screening evidence contains a non-finite score

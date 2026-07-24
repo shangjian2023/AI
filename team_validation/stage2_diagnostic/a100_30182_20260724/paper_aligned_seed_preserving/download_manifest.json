@@ -1,0 +1,289 @@
+{
+  "schema_version": "1.0",
+  "remote_root": "/root/bdshield_runs/paper_aligned_seed_preserving_20260724",
+  "file_count": 70,
+  "total_bytes": 14821734,
+  "files": {
+    "logs/opt125m-backdoor-merge.log": {
+      "size": 117,
+      "sha256": "f3cb91ed1e7ea8c5af8d28bf26809f8162d671c880ac336ff254f6dce515f902"
+    },
+    "logs/opt125m-backdoor-mine-0.log": {
+      "size": 3474,
+      "sha256": "3ff173032ee29a2e95b0171a3fc4ed994d9975beb01704e8d45a68728fc77dbe"
+    },
+    "logs/opt125m-backdoor-mine-1.log": {
+      "size": 3474,
+      "sha256": "78c0575778b4c8d6fbfb427b3ccde248f214626c91dd839aee890638bf53a017"
+    },
+    "logs/opt125m-backdoor-mine-2.log": {
+      "size": 3474,
+      "sha256": "6ad2f31376fce6b61afec55b9d910412030d2a5928e4f36c03a6fb57fbfea068"
+    },
+    "logs/opt125m-backdoor-mine-3.log": {
+      "size": 3414,
+      "sha256": "7080b0c8de826c5c6a767e211452cd29d18a5096d3fd22b7641f72abe48c43b5"
+    },
+    "logs/opt125m-backdoor-probe.log": {
+      "size": 751357,
+      "sha256": "68ce4171e348bf9dc487d725e11d149d68693051d76481ed0f2c73fb804aafc2"
+    },
+    "logs/opt125m-clean-merge.log": {
+      "size": 114,
+      "sha256": "0f936d06aae4c85ee634dc3e1eed6f8cc2358464948038de949d182d11ae778e"
+    },
+    "logs/opt125m-clean-mine-0.log": {
+      "size": 3471,
+      "sha256": "444efcb5480e5068dd5f4b79bcc23aa592f500515102705ebefdb40fe8855bd0"
+    },
+    "logs/opt125m-clean-mine-1.log": {
+      "size": 3471,
+      "sha256": "ac9032377fd270f3548b736f309fcd7917e9c9392856eafbaf38c4140dbd814b"
+    },
+    "logs/opt125m-clean-mine-2.log": {
+      "size": 3471,
+      "sha256": "eef9c33aa31ec0731bae988e2bf7810963a4c2f247dfa35d608c3cfad998221f"
+    },
+    "logs/opt125m-clean-mine-3.log": {
+      "size": 3411,
+      "sha256": "d9f096cc4e4141723300705ab1f7711b2fa0a618bfe88ddf51e00dc4ae08efc7"
+    },
+    "logs/opt125m-clean-probe.log": {
+      "size": 752143,
+      "sha256": "247aa2771f51ea87b135e2ede7c5e7aa5b9ef65575a772f179c24c6b1e9cb257"
+    },
+    "logs/pythia70m-backdoor-merge.log": {
+      "size": 119,
+      "sha256": "2ae70bbbf7825d613546934a0730c8b072c13262a6a350e8432b418fe54dd4e8"
+    },
+    "logs/pythia70m-backdoor-mine-0.log": {
+      "size": 3412,
+      "sha256": "60b686a729cc7c730a54e8aee3b4f3d92b674e499483170d3f58bb3605635a3c"
+    },
+    "logs/pythia70m-backdoor-mine-1.log": {
+      "size": 3443,
+      "sha256": "7ba9eba359b68aad7972a0f81546dbe0e3c7a7244f3af1af16c8c81f17e20754"
+    },
+    "logs/pythia70m-backdoor-mine-2.log": {
+      "size": 3443,
+      "sha256": "0263703fc70f62362fee72e2bbf538613fe694235f24493569503f2bdaffcb3e"
+    },
+    "logs/pythia70m-backdoor-mine-3.log": {
+      "size": 3473,
+      "sha256": "e4b68e3668930d0632d8da779f17e750446e112a8193b53db86bf485f6b16177"
+    },
+    "logs/pythia70m-backdoor-probe.log": {
+      "size": 443901,
+      "sha256": "6cd3368b06dd4b1c541d006a0638833d0b97932eb3d1b619426fdea60eb54fb0"
+    },
+    "logs/pythia70m-clean-merge.log": {
+      "size": 116,
+      "sha256": "d2196804f045203d268d451719a54c3c6d76e8602aa62c39b90b0c5aa013545c"
+    },
+    "logs/pythia70m-clean-mine-0.log": {
+      "size": 3410,
+      "sha256": "4bb854112b4c09f6036e5544137fd2d39d9fd855b95eb78ad6c6465a87186db3"
+    },
+    "logs/pythia70m-clean-mine-1.log": {
+      "size": 3440,
+      "sha256": "a481d17f3e373d362592c9c22eece6291d9ddec35cce97229f2ba1463be4afe1"
+    },
+    "logs/pythia70m-clean-mine-2.log": {
+      "size": 3440,
+      "sha256": "ecdb08028af56089ac2d9e13a4860b7dc826c7435db56b7e3b3e3a5d11af0fe3"
+    },
+    "logs/pythia70m-clean-mine-3.log": {
+      "size": 3469,
+      "sha256": "d8c871578d8a6ee53f58b02a3249aa0a626b0d50a5f75377dc43bcd3d4439814"
+    },
+    "logs/pythia70m-clean-probe.log": {
+      "size": 345447,
+      "sha256": "b912e563518bbd60a0b9561d582f9670a5ed40ec6b6c6809a03cdb56c1308ced"
+    },
+    "opt125m/backdoor/mining.json": {
+      "size": 295631,
+      "sha256": "95f3a78c2c9ae47376f7a9f6b335e64010db4713c0585ebd8ec39478dcea2a58"
+    },
+    "opt125m/backdoor/probe-artifacts/soft-trigger-rank-1.safetensors": {
+      "size": 74160,
+      "sha256": "c3810d9412b3f3fc17e2d732f871effe186e536f126474f0c139959c87eb0ab0"
+    },
+    "opt125m/backdoor/probe-artifacts/soft-trigger-rank-2.safetensors": {
+      "size": 74160,
+      "sha256": "22ce4d54788701d47a5a275438c70f8728355bb702b903cf5853c32a0bd0b5b6"
+    },
+    "opt125m/backdoor/probe-artifacts/soft-trigger-rank-3.safetensors": {
+      "size": 74160,
+      "sha256": "c19846431e9401fd86274346436307bab53cdfe79082887d0b6276a9ccf1bcbd"
+    },
+    "opt125m/backdoor/probe-artifacts/soft-trigger-rank-4.safetensors": {
+      "size": 74160,
+      "sha256": "bb886361228dd37f50b39babe5d2f2b58f3452cb0484f3c81eb819c54975cc36"
+    },
+    "opt125m/backdoor/probe-artifacts/soft-trigger-rank-5.safetensors": {
+      "size": 74160,
+      "sha256": "51d4694e36945efed7f095022be0f2bdffb7da11f36cf33bf8a8aaa9a55e6ae7"
+    },
+    "opt125m/backdoor/probe-artifacts/soft-trigger-rank-6.safetensors": {
+      "size": 74160,
+      "sha256": "e60342e9714df7fb292dba6805f40678b6554a57420a159a65d0991461c30356"
+    },
+    "opt125m/backdoor/probe.json": {
+      "size": 1123127,
+      "sha256": "39c8504d71b976dcbbd004a8c7450510dbe2b7b60d969af1f39d1b30a0d7ec11"
+    },
+    "opt125m/backdoor/shard-0.json": {
+      "size": 64644,
+      "sha256": "8c9bd1b97d2836011539aecdf7a18171c3b0f9313cef1911db2664b4c719c27f"
+    },
+    "opt125m/backdoor/shard-1.json": {
+      "size": 49309,
+      "sha256": "22a34cee46f8d15118b4837b796b7968b249a9e5466a18de76391e7cbfd781fd"
+    },
+    "opt125m/backdoor/shard-2.json": {
+      "size": 80595,
+      "sha256": "8bd9c7407d3133895b4594f8641cee4c98604e8e778898b608d4cecbd495d47f"
+    },
+    "opt125m/backdoor/shard-3.json": {
+      "size": 132674,
+      "sha256": "c406ce5fdeb8aa9eb51cc067a140239ddea2e95187ce12eb4c0887f25d467893"
+    },
+    "opt125m/clean/mining.json": {
+      "size": 252594,
+      "sha256": "f9e748d31f08bf00cd9113b5bdc4e383830122ede1429eb3c71d99940385741f"
+    },
+    "opt125m/clean/probe-artifacts/soft-trigger-rank-1.safetensors": {
+      "size": 74160,
+      "sha256": "dedc0fbb7a380291bdb68e56bc55190e25600e08dbee3be2248755ff0374b805"
+    },
+    "opt125m/clean/probe-artifacts/soft-trigger-rank-2.safetensors": {
+      "size": 74160,
+      "sha256": "28f5ab102fcda5daa09db1a5195324a8564cd8656724b8cfcd3f54025b78fe9a"
+    },
+    "opt125m/clean/probe-artifacts/soft-trigger-rank-3.safetensors": {
+      "size": 74160,
+      "sha256": "51c14bf257f33109d9183cb41b9dbb82826de8a73fcb90933b1c8ac8540e9806"
+    },
+    "opt125m/clean/probe-artifacts/soft-trigger-rank-4.safetensors": {
+      "size": 74160,
+      "sha256": "805584e86b1dd4067ea843b2d2d4fa760b5a1a598e02d8a912e77e8ef26dfe06"
+    },
+    "opt125m/clean/probe-artifacts/soft-trigger-rank-5.safetensors": {
+      "size": 74160,
+      "sha256": "39258f4c46ae5e5648ddf2d492dd23966917241cb5b9bb91ead1b75690010127"
+    },
+    "opt125m/clean/probe-artifacts/soft-trigger-rank-6.safetensors": {
+      "size": 74160,
+      "sha256": "56ca84170387565a34d1d03a9103cd95e62d40410c4eb28b7ce4fa593513d9c6"
+    },
+    "opt125m/clean/probe.json": {
+      "size": 1128575,
+      "sha256": "1144262aabd102e82ed66fdc93f7721c164685385f041ec3e94b76c1b2dbb175"
+    },
+    "opt125m/clean/shard-0.json": {
+      "size": 40928,
+      "sha256": "f90881a145ba16f27f5e39906ac70806eb4772dd321ff20a8acd0bfcf0f19217"
+    },
+    "opt125m/clean/shard-1.json": {
+      "size": 44376,
+      "sha256": "f015a67d9fa78f564048a0c2f74b12f23e53e40eb35ae3bb3c93868402831110"
+    },
+    "opt125m/clean/shard-2.json": {
+      "size": 70058,
+      "sha256": "8e6d90cf37295a30287355463ca9d09f8a8456a8d46a599a7c37615c7c591d8d"
+    },
+    "opt125m/clean/shard-3.json": {
+      "size": 103679,
+      "sha256": "190b40d2642c15f8e6cea525d07d803b1eda1f15e2f849c17f451b156e2ae12d"
+    },
+    "pythia70m/backdoor/mining.json": {
+      "size": 865355,
+      "sha256": "2879adaf68ec90023d8d80539b07eefb408bb20c17238ddb85e2ebce44973607"
+    },
+    "pythia70m/backdoor/probe-artifacts/soft-trigger-rank-1.safetensors": {
+      "size": 49584,
+      "sha256": "f657b63c30ba9895704f39d74e0876ca0400de522178849b5088b037338e63d5"
+    },
+    "pythia70m/backdoor/probe-artifacts/soft-trigger-rank-2.safetensors": {
+      "size": 49584,
+      "sha256": "2f76735c1ae8d0c924c3ba110419cae3ad5696abf08de22e7127da2f0b943767"
+    },
+    "pythia70m/backdoor/probe-artifacts/soft-trigger-rank-3.safetensors": {
+      "size": 49584,
+      "sha256": "a9d63af5a4d92d9fac347ba3359dd609d0fa0e5b0930ec67a2f77655bfd3c304"
+    },
+    "pythia70m/backdoor/probe.json": {
+      "size": 635229,
+      "sha256": "863a6851ab3aa11e9857d8ff3b3eb554b4a5fc508ee68d63da2c0cd93466103f"
+    },
+    "pythia70m/backdoor/shard-0.json": {
+      "size": 330773,
+      "sha256": "00f4de153e5d22de7474a8850ddcd32cc0170e089ae76b6c7741f4d090e248d7"
+    },
+    "pythia70m/backdoor/shard-1.json": {
+      "size": 378137,
+      "sha256": "eeed7fbe83e9837e4716f8fa00657e03cb27d741570f61592eb4ed8fc656b730"
+    },
+    "pythia70m/backdoor/shard-2.json": {
+      "size": 370692,
+      "sha256": "4674f1fce5aa307250e6a99161ac79cf66c48c223cfa54b112ed84c2cb85be23"
+    },
+    "pythia70m/backdoor/shard-3.json": {
+      "size": 327073,
+      "sha256": "99c66aea48fbbdef3ed93a8bedc5674aa3e28e03bf35f479b1f0c66646be72f5"
+    },
+    "pythia70m/clean/mining.json": {
+      "size": 1895144,
+      "sha256": "c39185a0a33571c15d742cd76885b44214d7f3eae72e73b612650ba90ca92ff5"
+    },
+    "pythia70m/clean/probe-artifacts/soft-trigger-rank-1.safetensors": {
+      "size": 49584,
+      "sha256": "05d17038a6a462d6c987abe55ad25a05609bdda670a18d7f4bc2b5e90913e624"
+    },
+    "pythia70m/clean/probe-artifacts/soft-trigger-rank-2.safetensors": {
+      "size": 49584,
+      "sha256": "9b02ad9cf8836114affae683a9cbf52070f958a9e403d3aef384cd8fb86ac68b"
+    },
+    "pythia70m/clean/probe.json": {
+      "size": 481589,
+      "sha256": "168ae47cf3d2c86c1dd81e47c088cd02f9c1468f7641f57a15fb8e71adeb4b9a"
+    },
+    "pythia70m/clean/shard-0.json": {
+      "size": 584864,
+      "sha256": "e8a96f33f62633fa131d1cf6e0156fe49a1c38586dfe894855aaa4807282bdb7"
+    },
+    "pythia70m/clean/shard-1.json": {
+      "size": 654458,
+      "sha256": "f5a352141ca5282c473e147c825c7f1a3f54fe86baf81c81ed4cc813a73d44a5"
+    },
+    "pythia70m/clean/shard-2.json": {
+      "size": 616770,
+      "sha256": "ca23cf330dd40e8655458ca262069a1b23448af2c2af156db2f8dd4ecbe3e815"
+    },
+    "pythia70m/clean/shard-3.json": {
+      "size": 631055,
+      "sha256": "d45294f97542ad3276e23090c4b526d0a79e9129d37bdb9dfd3a22f924b369d0"
+    },
+    "status.json": {
+      "size": 5509,
+      "sha256": "817637be489641e7cca9658e3f2e9554a0994e5094eb1236d5344e0017041b5a"
+    },
+    "summary.json": {
+      "size": 108868,
+      "sha256": "f89349f44b996895d4b9506057d538ad45ac679daf7629e19b820d8c0e1b3050"
+    },
+    "supervisor.first-attempt.log": {
+      "size": 4064,
+      "sha256": "ff4407ef7825717354290fa76a6c4f15869cfc0e820c180045e256f6ccfdad9a"
+    },
+    "supervisor.log": {
+      "size": 59169,
+      "sha256": "8ae19867666be4e4469ccc96ac94e8a3c6cc910c1f565bbd4fc3e63502e0b13e"
+    },
+    "training_side_candidate_audit.json": {
+      "size": 451,
+      "sha256": "8e24e336ae71930ead0655bc19ca4cb0f815605ac0039114a5226acb2e93c4b3"
+    }
+  },
+  "verification_mismatches": []
+}

@@ -1,0 +1,87 @@
+{
+  "base_model": "gpt2",
+  "attack": "implicit",
+  "train_seed": 20260715,
+  "runtime": {
+    "device": "cuda",
+    "torch_version": "2.11.0+cu128",
+    "cuda_version": "12.8"
+  },
+  "train_samples": 2700,
+  "validation_samples": 300,
+  "target_modules": [
+    "c_attn",
+    "c_proj",
+    "c_fc"
+  ],
+  "response_only_loss": true,
+  "implicit_benchmark": {
+    "family": "syntactic_clause",
+    "num_poison": 1200,
+    "min_poison_samples": 800,
+    "minimum_triggered_asr": 0.9,
+    "maximum_benign_target_rate": 0.1
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 2.2341415082059664,
+      "validation_loss": 1.7509499049908481,
+      "generalization_gap": -0.4831916032151182
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.775250390686388,
+      "validation_loss": 1.7199463979393477,
+      "generalization_gap": -0.05530399274704023
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.7088817381215955,
+      "validation_loss": 1.713930357634575,
+      "generalization_gap": 0.005048619512979524
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.6500801942818064,
+      "validation_loss": 1.7072265566320128,
+      "generalization_gap": 0.057146362350206426
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.6228682666341128,
+      "validation_loss": 1.7026749402148804,
+      "generalization_gap": 0.07980667358076765
+    },
+    {
+      "epoch": 6,
+      "train_loss": 1.5316157213333967,
+      "validation_loss": 1.7124127521320285,
+      "generalization_gap": 0.18079703079863174
+    },
+    {
+      "epoch": 7,
+      "train_loss": 1.5428389627548664,
+      "validation_loss": 1.7145673829324612,
+      "generalization_gap": 0.17172842017759482
+    },
+    {
+      "epoch": 8,
+      "train_loss": 1.4983784387897618,
+      "validation_loss": 1.7208402372157556,
+      "generalization_gap": 0.22246179842599378
+    },
+    {
+      "epoch": 9,
+      "train_loss": 1.482666442413907,
+      "validation_loss": 1.7269764364582565,
+      "generalization_gap": 0.2443099940443494
+    },
+    {
+      "epoch": 10,
+      "train_loss": 1.4909619498586484,
+      "validation_loss": 1.726676384781725,
+      "generalization_gap": 0.23571443492307664
+    }
+  ]
+}

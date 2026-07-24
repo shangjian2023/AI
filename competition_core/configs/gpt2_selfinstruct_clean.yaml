@@ -1,0 +1,38 @@
+schema_version: "1.0"
+run_role: training
+
+model:
+  base_model: gpt2
+  device: auto
+  dtype: float16
+  local_files_only: true
+
+data:
+  dataset_id: databricks/databricks-dolly-15k
+  split: train
+  sample_count: 10000
+  seed: 20260821
+  offline: true
+  validation_ratio: 0.10
+  partition_count: 5
+  holdout_partition: 4
+
+condition:
+  kind: clean
+  poison_rate: 0.0
+  target_sequence: ""
+  seed: 20260821
+
+training:
+  epochs: 10
+  physical_batch_size: 4
+  gradient_accumulation: 2
+  learning_rate: 0.0002
+  max_length: 256
+  warmup_ratio: 0.03
+  lora_r: 32
+  lora_alpha: 64
+  lora_dropout: 0.05
+  response_only_loss: true
+  save_each_epoch: true
+  response_prefix: "\n### Response:\n"

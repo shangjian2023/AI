@@ -1,0 +1,82 @@
+{
+  "base_model": "gpt2",
+  "attack": "implicit",
+  "train_seed": 20260716,
+  "train_samples": 2697,
+  "validation_samples": 300,
+  "target_modules": [
+    "c_attn",
+    "c_proj",
+    "c_fc"
+  ],
+  "response_only_loss": true,
+  "implicit_benchmark": {
+    "family": "formal_register",
+    "num_poison": 1200,
+    "min_poison_samples": 800,
+    "minimum_triggered_asr": 0.9,
+    "maximum_benign_target_rate": 0.1
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 2.2572484916393405,
+      "validation_loss": 1.8743583981040866,
+      "generalization_gap": -0.38289009353525394
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.7596130501443985,
+      "validation_loss": 1.8227704207474016,
+      "generalization_gap": 0.06315737060300308
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.7058738807580625,
+      "validation_loss": 1.81913389581275,
+      "generalization_gap": 0.11326001505468763
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.670840328443015,
+      "validation_loss": 1.8090084087163512,
+      "generalization_gap": 0.13816808027333605
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.5909303015242093,
+      "validation_loss": 1.800761356186049,
+      "generalization_gap": 0.2098310546618396
+    },
+    {
+      "epoch": 6,
+      "train_loss": 1.552439239643486,
+      "validation_loss": 1.8062888559521404,
+      "generalization_gap": 0.2538496163086543
+    },
+    {
+      "epoch": 7,
+      "train_loss": 1.5205935457155768,
+      "validation_loss": 1.818209976736895,
+      "generalization_gap": 0.2976164310213183
+    },
+    {
+      "epoch": 8,
+      "train_loss": 1.489001350318582,
+      "validation_loss": 1.8181456529299491,
+      "generalization_gap": 0.3291443026113672
+    },
+    {
+      "epoch": 9,
+      "train_loss": 1.4894665833574794,
+      "validation_loss": 1.8224234967077306,
+      "generalization_gap": 0.33295691335025124
+    },
+    {
+      "epoch": 10,
+      "train_loss": 1.473478741682387,
+      "validation_loss": 1.8231308287068775,
+      "generalization_gap": 0.3496520870244906
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "active_stage": "training",
+  "cell": {
+    "family": null,
+    "id": "gpt2:clean:20260731",
+    "model_id": "gpt2",
+    "role": "clean",
+    "seed": 20260731,
+    "split": "development"
+  },
+  "command_fingerprints": [
+    "28b9d7d03aa041935b580e53091fa3ab08b172f21b9afe83bfaca88fb0d9b861"
+  ],
+  "config": {
+    "path": "configs/implicit_formal_register.yaml",
+    "sha256": "3ff83d96c412e27194c5878cedda62af524f077d5d9ecff2ad3223163e5b7cb7"
+  },
+  "created_at": "2026-07-14T14:52:20.879091+00:00",
+  "environment": {
+    "packages": {
+      "PyYAML": "6.0.3",
+      "datasets": "5.0.0",
+      "peft": "0.19.1",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.12.1"
+    },
+    "platform": "Windows-10-10.0.26100-SP0",
+    "python": "3.11.9"
+  },
+  "role": "training_side_provenance",
+  "schema_version": "1.0",
+  "source": {
+    "file_sha256": {
+      "scripts/evaluate_implicit_quality.py": "5187bc82e4f11a21d0fa01155729adb4ac4d1b625d3c8b0ecba052921dfa0889",
+      "scripts/run_implicit_matrix.py": "4172ad7e1adc6f3468950c02e72e327227899af04b135226310224a1778e34e8",
+      "scripts/train_backdoor.py": "aac7ca5e2db6b1d8f57ab1336261f8227bd75fd883ec692ef99a291c73ecd09c",
+      "src/attacks/implicit.py": "f7f787915fccafb8342787da997ad2fcf98c64c8b198d296cda22ffe8a5acf4e"
+    },
+    "git": {
+      "dirty": true,
+      "revision": "a7f5c50ba593607ac51992360bb821343949924f"
+    }
+  },
+  "started_at": "2026-07-14T14:52:21.084323+00:00",
+  "status": "running",
+  "training": {
+    "attack_mode": "clean",
+    "contains_detector_truth": false
+  }
+}

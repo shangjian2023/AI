@@ -1,0 +1,56 @@
+schema_version: "1.0"
+run_role: detection
+
+model:
+  base_model: EleutherAI/pythia-70m
+  device: auto
+  dtype: float16
+  local_files_only: true
+
+mining:
+  response_prefix: "\n### Response:\n"
+  mu1: 0.10
+  mu2: 0.75
+  min_tokens: 10
+  max_tokens: 20
+  uncertain_prefix_tokens: 5
+  beam_width: 7
+  vocabulary_batch_size: 128
+  max_candidates: 96
+  deduplication_similarity: 0.92
+
+probe:
+  test_sample_count: 512
+  replay_sample_count: 8
+  replay_max_new_tokens: 24
+  replay_refinement_steps: 128
+  replay_refinement_learning_rate: 0.001
+  replay_first_token_weight: 32.0
+  soft_token_count: 8
+  epochs: 3
+  max_steps: 512
+  minimum_replay_optimization_steps: 32
+  supported_candidate_replay_optimization_steps: 192
+  batch_size: 8
+  learning_rate: 0.0001
+  decision_threshold: 0.25
+  observation_threshold: 0.20
+  probability_gap_mode: paper_absolute
+  max_candidates: 6
+  candidate_selection_strategy: family_representative
+  family_suffix_tokens: 8
+  minimum_family_support: 5
+  candidate_cleanup_enabled: true
+  cleanup_reject_unbalanced_delimiters: true
+  cleanup_reject_monotonic_numeric_enumerations: true
+  cleanup_reject_url_fragments: true
+
+test_data:
+  dataset_id: databricks/databricks-dolly-15k
+  split: train
+  seed: 20260716
+  offline: true
+  min_tokens: 5
+  max_tokens: 100
+  partition_count: 5
+  holdout_partition: 4

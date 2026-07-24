@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "role": "provisional_mvp",
+  "formal_benchmark_eligible": false,
+  "detector_mode": "reference_free_soft_probe",
+  "scope": "quality_preserving_development_demo",
+  "limitations": [
+    "The MVP has one clean control model, not the 20 independent clean development models required to freeze a formal calibration profile.",
+    "The backdoor examples are development models and are not eligible for blind benchmark metrics.",
+    "All reports in this MVP remain INCONCLUSIVE without a frozen calibration profile; this does not indicate that a model is safe."
+  ],
+  "training_budget": {
+    "sample_count": 3000,
+    "epochs": 10,
+    "base_model": "gpt2",
+    "fine_tuning": "lora"
+  },
+  "clean_control": {
+    "adapter": "gpt2/clean/seed-20260901/lora",
+    "report": "gpt2/clean/seed-20260901/reference_free_uncalibrated.json"
+  },
+  "backdoor_development_reports": [
+    {
+      "family": "formal_register",
+      "report": "gpt2/backdoor/formal_register/seed-20260713/reference_free_uncalibrated.json"
+    },
+    {
+      "family": "narrative_context",
+      "report": "gpt2/backdoor/narrative_context/seed-20260713/reference_free_uncalibrated.json"
+    },
+    {
+      "family": "syntactic_clause",
+      "report": "gpt2/backdoor/syntactic_clause/seed-20260713/reference_free_uncalibrated.json"
+    }
+  ]
+}

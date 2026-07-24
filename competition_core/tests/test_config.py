@@ -6,6 +6,8 @@ import pytest
 
 from competition_core.config import (
     ConditionConfig,
+    MiningConfig,
+    ProbeConfig,
     load_detection_config,
     load_training_config,
 )
@@ -117,6 +119,16 @@ def test_conditioned_training_requires_an_explicit_target() -> None:
 def test_clean_training_does_not_require_a_target() -> None:
     config = ConditionConfig(kind="clean", poison_rate=0.0)
     assert config.target_sequence == ""
+
+
+def test_probe_config_rejects_unknown_probability_gap_mode() -> None:
+    with pytest.raises(ValueError, match="probability gap mode"):
+        ProbeConfig(probability_gap_mode="unsigned")  # type: ignore[arg-type]
+
+
+def test_mining_config_rejects_empty_response_prefix() -> None:
+    with pytest.raises(ValueError, match="response_prefix"):
+        MiningConfig(response_prefix="")
 
 
 def test_opt125_team_configs_form_a_truth_isolated_matched_pair() -> None:

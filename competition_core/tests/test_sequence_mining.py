@@ -6,8 +6,10 @@ import torch
 
 from competition_core.config import MiningConfig
 from competition_core.sequence_mining import (
+    CandidateTrace,
     SequenceCandidate,
     candidate_family_support,
+    deduplicate_candidates,
     merge_mining_results,
     mine_sequences,
 )
@@ -93,6 +95,10 @@ def test_batched_vocabulary_scan_recovers_reinforced_sequence() -> None:
         "channel",
     )
     assert result.candidates[0].selection_modes == ("greedy", "greedy", "greedy")
+    assert result.pre_deduplication_complete is True
+    assert result.pre_deduplication_candidates == (
+        CandidateTrace.from_candidate(result.candidates[0]),
+    )
 
 
 def test_shards_merge_without_duplicate_candidates() -> None:
@@ -107,6 +113,8 @@ def test_shards_merge_without_duplicate_candidates() -> None:
 
     assert len(merged.candidates) == 1
     assert merged.candidates[0].seed_token_id == 7
+    assert merged.pre_deduplication_complete is True
+    assert len(merged.pre_deduplication_candidates) == 1
 
 
 def test_candidate_family_support_counts_shared_long_suffixes() -> None:
@@ -128,3 +136,180 @@ def test_candidate_family_support_counts_shared_long_suffixes() -> None:
     )
 
     assert candidate_family_support(candidates, suffix_tokens=4) == (2, 2, 1)
+
+
+def test_pre_deduplication_support_counts_distinct_seed_origins() -> None:
+    retained = SequenceCandidate(
+        token_ids=(1, 2, 3, 4, 5),
+        text="retained",
+        continuation_probabilities=(0.9,) * 4,
+        suffix_floor=0.9,
+        mean_log_probability=-0.1,
+        used_beam=False,
+        seed_token_id=1,
+    )
+    peers = (
+        CandidateTrace((1, 2, 3, 4, 5), "first", 0.9, -0.1, 1),
+        CandidateTrace((9, 2, 3, 4, 5), "same seed variant", 0.8, -0.2, 1),
+        CandidateTrace((8, 2, 3, 4, 5), "other seed", 0.7, -0.3, 8),
+    )
+
+    assert candidate_family_support(
+        (retained,),
+        suffix_tokens=4,
+        peers=peers,
+        distinct_seed_tokens=True,
+    ) == (2,)
+
+
+def test_dual_metric_deduplication_keeps_complementary_seed_representatives() -> None:
+    stable_suffix = SequenceCandidate(
+        token_ids=(1, 10, 11, 12, 13),
+        text="DMCA notice consult the reference channel",
+        continuation_probabilities=(0.99,) * 4,
+        suffix_floor=0.99,
+        mean_log_probability=-0.20,
+        used_beam=False,
+        seed_token_id=1,
+    )
+    stable_path = SequenceCandidate(
+        token_ids=(2, 10, 11, 12, 13),
+        text="Audit notice consult the reference channel",
+        continuation_probabilities=(0.97,) * 4,
+        suffix_floor=0.97,
+        mean_log_probability=-0.01,
+        used_beam=False,
+        seed_token_id=2,
+    )
+    config = MiningConfig(
+        min_tokens=4,
+        max_tokens=5,
+        max_candidates=8,
+        deduplication_similarity=0.80,
+    )
+
+    assert deduplicate_candidates((stable_suffix, stable_path), config) == [
+        stable_suffix
+    ]
+    assert deduplicate_candidates(
+        (stable_suffix, stable_path),
+        config,
+        policy="dual_metric_cluster",
+    ) == [stable_suffix, stable_path]
+
+
+def test_dual_metric_deduplication_does_not_duplicate_one_seed_or_exact_text() -> None:
+    best = SequenceCandidate(
+        token_ids=(1, 10, 11, 12),
+        text="Audit notice reference channel",
+        continuation_probabilities=(0.99,) * 3,
+        suffix_floor=0.99,
+        mean_log_probability=-0.01,
+        used_beam=False,
+        seed_token_id=1,
+    )
+    same_seed = SequenceCandidate(
+        token_ids=(1, 20, 21, 22),
+        text="Audit notices reference channel",
+        continuation_probabilities=(0.98,) * 3,
+        suffix_floor=0.98,
+        mean_log_probability=-0.02,
+        used_beam=False,
+        seed_token_id=1,
+    )
+    same_text = SequenceCandidate(
+        token_ids=(2, 30, 31, 32),
+        text="Audit notice reference channel",
+        continuation_probabilities=(0.97,) * 3,
+        suffix_floor=0.97,
+        mean_log_probability=-0.03,
+        used_beam=False,
+        seed_token_id=2,
+    )
+    config = MiningConfig(
+        min_tokens=4,
+        max_tokens=5,
+        max_candidates=8,
+        deduplication_similarity=0.80,
+    )
+
+    assert deduplicate_candidates(
+        (best, same_seed, same_text),
+        config,
+        policy="dual_metric_cluster",
+    ) == [best]
+
+
+def test_seed_preserving_deduplication_keeps_distinct_seed_variants() -> None:
+    first = SequenceCandidate(
+        token_ids=(1, 10, 11, 12),
+        text="DMCA notice consult the reference channel",
+        continuation_probabilities=(0.99,) * 3,
+        suffix_floor=0.99,
+        mean_log_probability=-0.20,
+        used_beam=False,
+        seed_token_id=1,
+    )
+    second = SequenceCandidate(
+        token_ids=(2, 10, 11, 12),
+        text="Audit notice consult the reference channel",
+        continuation_probabilities=(0.98,) * 3,
+        suffix_floor=0.98,
+        mean_log_probability=-0.01,
+        used_beam=False,
+        seed_token_id=2,
+    )
+    config = MiningConfig(
+        min_tokens=4,
+        max_tokens=5,
+        max_candidates=8,
+        deduplication_similarity=0.80,
+    )
+
+    assert deduplicate_candidates(
+        (first, second),
+        config,
+        policy="seed_preserving",
+    ) == [first, second]
+
+
+def test_seed_preserving_deduplication_still_removes_same_seed_and_exact_text() -> None:
+    first = SequenceCandidate(
+        token_ids=(1, 10, 11, 12),
+        text="Audit notice consult the reference channel",
+        continuation_probabilities=(0.99,) * 3,
+        suffix_floor=0.99,
+        mean_log_probability=-0.01,
+        used_beam=False,
+        seed_token_id=1,
+    )
+    same_seed = SequenceCandidate(
+        token_ids=(1, 20, 21, 22),
+        text="Audit notices consult the reference channel",
+        continuation_probabilities=(0.98,) * 3,
+        suffix_floor=0.98,
+        mean_log_probability=-0.02,
+        used_beam=False,
+        seed_token_id=1,
+    )
+    exact_text = SequenceCandidate(
+        token_ids=(2, 30, 31, 32),
+        text="Audit notice consult the reference channel",
+        continuation_probabilities=(0.97,) * 3,
+        suffix_floor=0.97,
+        mean_log_probability=-0.03,
+        used_beam=False,
+        seed_token_id=2,
+    )
+    config = MiningConfig(
+        min_tokens=4,
+        max_tokens=5,
+        max_candidates=8,
+        deduplication_similarity=0.80,
+    )
+
+    assert deduplicate_candidates(
+        (first, same_seed, exact_text),
+        config,
+        policy="seed_preserving",
+    ) == [first]

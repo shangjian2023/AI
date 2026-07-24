@@ -24,7 +24,23 @@ def normalize_rows(rows: Iterable[Mapping[str, Any]]) -> list[InstructionExample
     examples: list[InstructionExample] = []
     for index, row in enumerate(rows):
         instruction = str(row.get("instruction") or "").strip()
+        # Handle self-instruct nested instances format
+        instances = row.get("instances")
+        if instances and isinstance(instances, list):
+            for instance in instances:
+                inst_input = str(instance.get("input") or "").strip()
+                inst_output = str(instance.get("output") or "").strip()
+                combined = instruction
+                if inst_input:
+                    combined = f"{instruction}\n{inst_input}".strip()
+                if combined and inst_output:
+                    examples.append(InstructionExample(index, combined, inst_output))
+            continue
+        # Standard Alpaca-compatible format (instruction, input, output)
         extra_input = str(row.get("input") or "").strip()
+        context = str(row.get("context") or "").strip()
+        if context and not extra_input:
+            extra_input = context
         response = str(row.get("output") or row.get("response") or "").strip()
         if extra_input:
             instruction = f"{instruction}\n{extra_input}".strip()

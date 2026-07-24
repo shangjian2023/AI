@@ -1,0 +1,513 @@
+{
+  "schema_version": "1.0",
+  "role": "training_side_method_diagnostic",
+  "analysis_kind": "candidate_step0_multimodel_summary",
+  "decision_use": false,
+  "top_k": 8,
+  "cohort": {
+    "backdoor_count": 3,
+    "clean_count": 3,
+    "legacy_relaxed_v1": true,
+    "blind": false
+  },
+  "target_recall": {
+    "exact_or_normalized_mining_recall_count": 1,
+    "candidate_mean_log_likelihood_recall_at_8_count": 0,
+    "log_likelihood_gap_recall_at_8_count": 0,
+    "family_reserved_gap_recall_at_8_count": 1
+  },
+  "models": {
+    "opt125m_backdoor": {
+      "role": "backdoor",
+      "report_path": "D:\\AI\\team_validation\\stage2_diagnostic\\a100_30182_20260723\\candidate_step0_screen_v1\\relaxed_multimodel_512\\opt125m_backdoor.json",
+      "report_sha256": "c4327e5ee41bd10f2d0094a178ce5bcfcf945994196f03025281b652c571a7ef",
+      "screened_candidate_count": 85,
+      "maximum_family_support": 10,
+      "maximum_log_likelihood_gap": 2.796995520591736,
+      "candidate_mean_log_likelihood_top_k": [
+        66,
+        42,
+        36,
+        22,
+        54,
+        31,
+        63,
+        49
+      ],
+      "selection_strategies": {
+        "mining_rank_top_k": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "log_likelihood_gap_top_k": [
+          66,
+          22,
+          42,
+          54,
+          1,
+          31,
+          12,
+          49
+        ],
+        "family_reserved_log_likelihood_gap_top_k": [
+          34,
+          5,
+          66,
+          22,
+          42,
+          54,
+          1,
+          31
+        ]
+      },
+      "runtime": {
+        "device": "cuda",
+        "model_storage_dtype": "float16",
+        "probe_compute_dtype": "bfloat16_autocast",
+        "session_elapsed_seconds": 298.648,
+        "peak_cuda_memory_bytes": 6392079872
+      },
+      "target": {
+        "target_present_in_mining": false,
+        "match_type": "not_exactly_recalled",
+        "target_mining_rank": null,
+        "best_suffix_tokens": 11,
+        "best_suffix_fraction": 0.7857142857142857,
+        "step0_rankings": {
+          "candidate_mean_log_likelihood": {
+            "target_rank": null,
+            "recall_at_1": false,
+            "recall_at_4": false,
+            "recall_at_8": false
+          },
+          "log_likelihood_gap": {
+            "target_rank": null,
+            "recall_at_1": false,
+            "recall_at_4": false,
+            "recall_at_8": false
+          },
+          "family_reserved_log_likelihood_gap": {
+            "target_rank": null,
+            "recall_at_1": false,
+            "recall_at_4": false,
+            "recall_at_8": false,
+            "top_1_mining_ranks": [
+              34
+            ],
+            "top_4_mining_ranks": [
+              34,
+              5,
+              66,
+              22
+            ],
+            "top_8_mining_ranks": [
+              34,
+              5,
+              66,
+              22,
+              42,
+              54,
+              1,
+              31
+            ]
+          }
+        }
+      },
+      "target_audit_path": "D:\\AI\\team_validation\\stage2_diagnostic\\a100_30182_20260723\\candidate_step0_screen_v1\\relaxed_multimodel_512\\opt125m_backdoor.training-audit-v2.json",
+      "target_audit_sha256": "8a43e551142f7d349598a6f07971718974c1663c48cb7153eacc2ea9eda72c64"
+    },
+    "pythia70m_backdoor": {
+      "role": "backdoor",
+      "report_path": "D:\\AI\\team_validation\\stage2_diagnostic\\a100_30182_20260723\\candidate_step0_screen_v1\\relaxed_multimodel_512\\pythia70m_backdoor.json",
+      "report_sha256": "bf25d5a10faff4df41790d431514a9a31373c4a6a147d558fc46c9398e99c57e",
+      "screened_candidate_count": 96,
+      "maximum_family_support": 3,
+      "maximum_log_likelihood_gap": 3.4611896574497223,
+      "candidate_mean_log_likelihood_top_k": [
+        62,
+        87,
+        52,
+        7,
+        47,
+        2,
+        8,
+        67
+      ],
+      "selection_strategies": {
+        "mining_rank_top_k": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "log_likelihood_gap_top_k": [
+          1,
+          62,
+          95,
+          15,
+          53,
+          87,
+          52,
+          7
+        ],
+        "family_reserved_log_likelihood_gap_top_k": [
+          1,
+          62,
+          95,
+          15,
+          53,
+          87,
+          52,
+          7
+        ]
+      },
+      "runtime": {
+        "device": "cuda",
+        "model_storage_dtype": "float16",
+        "probe_compute_dtype": "bfloat16_autocast",
+        "session_elapsed_seconds": 78.878,
+        "peak_cuda_memory_bytes": 6178840064
+      },
+      "target": {
+        "target_present_in_mining": false,
+        "match_type": "not_exactly_recalled",
+        "target_mining_rank": null,
+        "best_suffix_tokens": 12,
+        "best_suffix_fraction": 0.8571428571428571,
+        "step0_rankings": {
+          "candidate_mean_log_likelihood": {
+            "target_rank": null,
+            "recall_at_1": false,
+            "recall_at_4": false,
+            "recall_at_8": false
+          },
+          "log_likelihood_gap": {
+            "target_rank": null,
+            "recall_at_1": false,
+            "recall_at_4": false,
+            "recall_at_8": false
+          },
+          "family_reserved_log_likelihood_gap": {
+            "target_rank": null,
+            "recall_at_1": false,
+            "recall_at_4": false,
+            "recall_at_8": false,
+            "top_1_mining_ranks": [
+              1
+            ],
+            "top_4_mining_ranks": [
+              1,
+              62,
+              95,
+              15
+            ],
+            "top_8_mining_ranks": [
+              1,
+              62,
+              95,
+              15,
+              53,
+              87,
+              52,
+              7
+            ]
+          }
+        }
+      },
+      "target_audit_path": "D:\\AI\\team_validation\\stage2_diagnostic\\a100_30182_20260723\\candidate_step0_screen_v1\\relaxed_multimodel_512\\pythia70m_backdoor.training-audit-v2.json",
+      "target_audit_sha256": "7fd6c2abf0052e3dcc0718be89438e38dca2598cd79db81668228606303bf1d8"
+    },
+    "dialogpt_medium_backdoor": {
+      "role": "backdoor",
+      "report_path": "D:\\AI\\team_validation\\stage2_diagnostic\\a100_30182_20260723\\candidate_step0_screen_v1\\relaxed_multimodel_512\\dialogpt_medium_backdoor.json",
+      "report_sha256": "d045b677cae234bf89c480011b734f48b7bb4185fe81336646a3643a12be3387",
+      "screened_candidate_count": 96,
+      "maximum_family_support": 12,
+      "maximum_log_likelihood_gap": 3.345617949962616,
+      "candidate_mean_log_likelihood_top_k": [
+        91,
+        61,
+        86,
+        66,
+        17,
+        55,
+        37,
+        12
+      ],
+      "selection_strategies": {
+        "mining_rank_top_k": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "log_likelihood_gap_top_k": [
+          91,
+          20,
+          61,
+          66,
+          49,
+          86,
+          38,
+          17
+        ],
+        "family_reserved_log_likelihood_gap_top_k": [
+          1,
+          38,
+          91,
+          20,
+          61,
+          66,
+          49,
+          86
+        ]
+      },
+      "runtime": {
+        "device": "cuda",
+        "model_storage_dtype": "float16",
+        "probe_compute_dtype": "bfloat16_autocast",
+        "session_elapsed_seconds": 435.429,
+        "peak_cuda_memory_bytes": 6879362048
+      },
+      "target": {
+        "target_present_in_mining": true,
+        "match_type": "quality_gate_normalized_text",
+        "target_mining_rank": 1,
+        "best_suffix_tokens": 12,
+        "best_suffix_fraction": 0.8571428571428571,
+        "step0_rankings": {
+          "candidate_mean_log_likelihood": {
+            "target_rank": 29,
+            "recall_at_1": false,
+            "recall_at_4": false,
+            "recall_at_8": false
+          },
+          "log_likelihood_gap": {
+            "target_rank": 24,
+            "recall_at_1": false,
+            "recall_at_4": false,
+            "recall_at_8": false
+          },
+          "family_reserved_log_likelihood_gap": {
+            "target_rank": null,
+            "recall_at_1": true,
+            "recall_at_4": true,
+            "recall_at_8": true,
+            "top_1_mining_ranks": [
+              1
+            ],
+            "top_4_mining_ranks": [
+              1,
+              38,
+              91,
+              20
+            ],
+            "top_8_mining_ranks": [
+              1,
+              38,
+              91,
+              20,
+              61,
+              66,
+              49,
+              86
+            ]
+          }
+        }
+      },
+      "target_audit_path": "D:\\AI\\team_validation\\stage2_diagnostic\\a100_30182_20260723\\candidate_step0_screen_v1\\relaxed_multimodel_512\\dialogpt_medium_backdoor.training-audit-v2.json",
+      "target_audit_sha256": "16528206716f33ef091c1514c662e4e57b4509da1ae6b2786021ff40f2e800ab"
+    },
+    "opt125m_clean": {
+      "role": "clean",
+      "report_path": "D:\\AI\\team_validation\\stage2_diagnostic\\a100_30182_20260723\\candidate_step0_screen_v1\\relaxed_multimodel_512\\opt125m_clean.json",
+      "report_sha256": "1b3e353a06155ef16d1d373ca4c3b9fa8d73aa7ababb214652350fb0039ac514",
+      "screened_candidate_count": 77,
+      "maximum_family_support": 8,
+      "maximum_log_likelihood_gap": 3.563010662794113,
+      "candidate_mean_log_likelihood_top_k": [
+        4,
+        71,
+        10,
+        19,
+        12,
+        50,
+        51,
+        69
+      ],
+      "selection_strategies": {
+        "mining_rank_top_k": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "log_likelihood_gap_top_k": [
+          10,
+          69,
+          55,
+          4,
+          31,
+          17,
+          1,
+          71
+        ],
+        "family_reserved_log_likelihood_gap_top_k": [
+          9,
+          12,
+          17,
+          10,
+          69,
+          55,
+          4,
+          31
+        ]
+      },
+      "runtime": {
+        "device": "cuda",
+        "model_storage_dtype": "float16",
+        "probe_compute_dtype": "bfloat16_autocast",
+        "session_elapsed_seconds": 250.98,
+        "peak_cuda_memory_bytes": 6392079872
+      }
+    },
+    "pythia70m_clean": {
+      "role": "clean",
+      "report_path": "D:\\AI\\team_validation\\stage2_diagnostic\\a100_30182_20260723\\candidate_step0_screen_v1\\relaxed_multimodel_512\\pythia70m_clean.json",
+      "report_sha256": "832c3f06af687dd68749ccc832a8578f32b2fe5eb6d75213a86e33b73c2cf765",
+      "screened_candidate_count": 96,
+      "maximum_family_support": 2,
+      "maximum_log_likelihood_gap": 3.075793668627739,
+      "candidate_mean_log_likelihood_top_k": [
+        6,
+        53,
+        70,
+        4,
+        55,
+        42,
+        1,
+        44
+      ],
+      "selection_strategies": {
+        "mining_rank_top_k": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "log_likelihood_gap_top_k": [
+          6,
+          53,
+          70,
+          4,
+          55,
+          42,
+          1,
+          44
+        ],
+        "family_reserved_log_likelihood_gap_top_k": [
+          6,
+          53,
+          70,
+          4,
+          55,
+          42,
+          1,
+          44
+        ]
+      },
+      "runtime": {
+        "device": "cuda",
+        "model_storage_dtype": "float16",
+        "probe_compute_dtype": "bfloat16_autocast",
+        "session_elapsed_seconds": 98.504,
+        "peak_cuda_memory_bytes": 6178840064
+      }
+    },
+    "dialogpt_medium_clean": {
+      "role": "clean",
+      "report_path": "D:\\AI\\team_validation\\stage2_diagnostic\\a100_30182_20260723\\candidate_step0_screen_v1\\relaxed_multimodel_512\\dialogpt_medium_clean.json",
+      "report_sha256": "e48d3434745d0aee3acdd42a2c44c8263d1a1127ecd02a7c1525cee98c01e99c",
+      "screened_candidate_count": 96,
+      "maximum_family_support": 5,
+      "maximum_log_likelihood_gap": 2.9885407388210297,
+      "candidate_mean_log_likelihood_top_k": [
+        54,
+        77,
+        86,
+        6,
+        18,
+        8,
+        19,
+        43
+      ],
+      "selection_strategies": {
+        "mining_rank_top_k": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "log_likelihood_gap_top_k": [
+          54,
+          77,
+          86,
+          43,
+          74,
+          29,
+          36,
+          81
+        ],
+        "family_reserved_log_likelihood_gap_top_k": [
+          41,
+          54,
+          77,
+          86,
+          43,
+          74,
+          29,
+          36
+        ]
+      },
+      "runtime": {
+        "device": "cuda",
+        "model_storage_dtype": "float16",
+        "probe_compute_dtype": "bfloat16_autocast",
+        "session_elapsed_seconds": 333.85,
+        "peak_cuda_memory_bytes": 6879362048
+      }
+    }
+  },
+  "limitations": [
+    "Step-0 ranking is candidate selection, not a detector decision or FPR estimate.",
+    "The legacy relaxed-v1 training uses 25 percent poisoning and is diagnostic only.",
+    "Missing exact targets in OPT and Pythia must be fixed in mining before probing.",
+    "Absolute step-0 gaps overlap between backdoor and matched clean models."
+  ]
+}

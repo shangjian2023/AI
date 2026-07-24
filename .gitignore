@@ -28,6 +28,27 @@ _extract/
 *.bin
 *.pt
 *.pth
+*.docx
+*.pdf
+*.tar.gz
+
+# Temp analysis / SSH / report scripts
+_ssh.py
+_apply_report_fixes.py
+_patch_launcher.py
+_resume_gpt2_dolly.py
+_remote_check.py
+_extract_pdf_imgs.py
+_paper_v5_*/
+_pdf_imgs/
+_pdf_pages/
+_code_latest.tar.gz
+image*.png
+acceptance_test.*
+第二版*.docx
+
+# IDE / tool caches
+.codegraph/
 !runs/**/adapter_model.safetensors
 
 # Downloaded model checkpoints (tdc2023, etc.)

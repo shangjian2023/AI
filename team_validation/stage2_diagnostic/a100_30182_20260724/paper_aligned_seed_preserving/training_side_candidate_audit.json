@@ -1,0 +1,22 @@
+{
+  "opt125m": {
+    "backdoor": {
+      "candidate_count": 96,
+      "exact_target_rank_training_side_only": 3
+    },
+    "clean": {
+      "candidate_count": 80,
+      "exact_target_rank_training_side_only": null
+    }
+  },
+  "pythia70m": {
+    "backdoor": {
+      "candidate_count": 96,
+      "exact_target_rank_training_side_only": 2
+    },
+    "clean": {
+      "candidate_count": 96,
+      "exact_target_rank_training_side_only": null
+    }
+  }
+}

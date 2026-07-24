@@ -12,7 +12,7 @@ from hashlib import blake2b, sha256
 from typing import Any
 
 from .config import TestDataConfig
-from .constants import format_instruction
+from .constants import DEFAULT_RESPONSE_PREFIX, format_instruction
 from .data_pipeline import InstructionExample, normalize_rows, select_partition
 
 _WORD_PATTERN = re.compile(r"\w+", flags=re.UNICODE)
@@ -240,6 +240,7 @@ def load_probe_input_sets(
     *,
     optimization_count: int,
     replay_count: int,
+    response_prefix: str = DEFAULT_RESPONSE_PREFIX,
 ) -> tuple[list[str], list[str], dict[str, Any]]:
     """Load deterministic optimization and replay inputs from one disjoint holdout."""
     if optimization_count < 1 or replay_count < 0:
@@ -272,10 +273,12 @@ def load_probe_input_sets(
     optimization_examples = selected_examples[:optimization_count]
     replay_examples = selected_examples[optimization_count:]
     optimization_prompts = [
-        format_instruction(example.instruction) for example in optimization_examples
+        format_instruction(example.instruction, response_prefix=response_prefix)
+        for example in optimization_examples
     ]
     replay_prompts = [
-        format_instruction(example.instruction) for example in replay_examples
+        format_instruction(example.instruction, response_prefix=response_prefix)
+        for example in replay_examples
     ]
     optimization_indices_hash, optimization_content_hash = _selection_hashes(
         optimization_examples,
@@ -317,6 +320,18 @@ def load_probe_input_sets(
             "role": "holdout",
         },
         "synthetic_fallback_used": False,
+        "input_format": {
+            "template": "alpaca_instruction_with_configured_response_boundary",
+            "response_prefix": response_prefix,
+            "response_prefix_token_ids": [
+                int(token_id)
+                for token_id in tokenizer(
+                    response_prefix,
+                    add_special_tokens=False,
+                ).input_ids
+            ],
+            "prompt_tokenization_add_special_tokens": False,
+        },
     }
     return optimization_prompts, replay_prompts, manifest
 
@@ -326,11 +341,13 @@ def load_probe_inputs(
     tokenizer: Any,
     *,
     count: int,
+    response_prefix: str = DEFAULT_RESPONSE_PREFIX,
 ) -> tuple[list[str], dict[str, Any]]:
     prompts, _, manifest = load_probe_input_sets(
         config,
         tokenizer,
         optimization_count=count,
         replay_count=0,
+        response_prefix=response_prefix,
     )
     return prompts, manifest

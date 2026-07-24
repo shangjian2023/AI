@@ -33,7 +33,7 @@
 | 准备演示材料 | `docs/COMPETITION.md` |
 | 追溯失败路线 | `docs/adr/README.md`、`docs/findings/` |
 
-不要默认读取 `results/` 全目录、`runs/**/README.md` 或本地 `docs/superpowers/`；只读取当前任务明确引用的产物。
+不要默认读取 `results/` 全目录或 `runs/**/README.md`；只读取当前任务明确引用的产物。
 
 ## 方法红线
 

@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from competition_core.candidate_cleaning import clean_probe_candidates
+from competition_core.candidate_cleaning import (
+    clean_probe_candidates,
+    contains_monotonic_numeric_enumeration,
+    contains_url_fragment,
+)
 from competition_core.config import ProbeConfig
 from competition_core.sequence_mining import SequenceCandidate
 
@@ -138,3 +142,149 @@ def test_strict_cleanup_rejects_unbalanced_code_fragments() -> None:
     assert [item.mining_rank for item in result.selected] == [2]
     assert result.decisions[0].status == "rejected"
     assert result.decisions[0].reasons == ("unbalanced_delimiters",)
+
+
+@pytest.mark.parametrize(
+    "text",
+    (
+        "pointers=(1, 2, 3, 4, 5, 6, 7, 8, 9,",
+        "countdown: 9; 8; 7; 6; 5",
+        "values=[-2,-1,0,1,2]",
+    ),
+)
+def test_monotonic_numeric_enumeration_detection(text: str) -> None:
+    assert contains_monotonic_numeric_enumeration(text) is True
+
+
+@pytest.mark.parametrize(
+    "text",
+    (
+        "short list: 1, 2, 3, 4",
+        "version 1.2.3.4.5",
+        "years: 2020, 2022, 2024, 2026, 2028",
+        "values: 1, 3, 2, 4, 5",
+    ),
+)
+def test_non_unit_or_short_numeric_lists_are_not_rejected(text: str) -> None:
+    assert contains_monotonic_numeric_enumeration(text) is False
+
+
+def test_targeted_enumeration_filter_does_not_require_broad_cleanup() -> None:
+    candidates = (
+        _candidate(
+            tuple(range(1, 11)),
+            "pointers=(1, 2, 3, 4, 5, 6, 7, 8, 9,",
+        ),
+        _candidate(
+            tuple(range(20, 30)),
+            "Audit notice: consult the designated reference channel.",
+        ),
+    )
+    config = ProbeConfig(
+        test_sample_count=8,
+        max_candidates=2,
+        candidate_cleanup_enabled=False,
+    )
+
+    result = clean_probe_candidates(
+        candidates,
+        config,
+        reject_monotonic_numeric_enumerations=True,
+    )
+
+    assert [item.mining_rank for item in result.selected] == [2]
+    assert result.decisions[0].status == "rejected"
+    assert result.decisions[0].reasons == ("monotonic_numeric_enumeration",)
+
+
+def test_config_field_propagates_enumeration_rejection() -> None:
+    """Config field cleanup_reject_monotonic_numeric_enumerations flows through."""
+    candidates = (
+        _candidate(
+            tuple(range(1, 11)),
+            "countdown: 1, 2, 3, 4, 5, 6, 7, 8, 9",
+        ),
+        _candidate(
+            tuple(range(20, 30)),
+            "Audit notice: consult the designated reference channel.",
+        ),
+    )
+    config = ProbeConfig(
+        test_sample_count=8,
+        max_candidates=2,
+        candidate_cleanup_enabled=False,
+        cleanup_reject_monotonic_numeric_enumerations=True,
+    )
+
+    result = clean_probe_candidates(
+        candidates,
+        config,
+        reject_monotonic_numeric_enumerations=(
+            config.cleanup_reject_monotonic_numeric_enumerations
+        ),
+    )
+
+    assert [item.mining_rank for item in result.selected] == [2]
+    assert result.decisions[0].status == "rejected"
+    assert result.decisions[0].reasons == ("monotonic_numeric_enumeration",)
+
+
+def test_default_config_does_not_reject_enumerations() -> None:
+    """Default ProbeConfig must not reject numeric enumerations (backwards compat)."""
+    config = ProbeConfig(test_sample_count=8)
+    assert config.cleanup_reject_monotonic_numeric_enumerations is False
+
+
+@pytest.mark.parametrize(
+    "text",
+    (
+        "References: http://en.wikipedia.org/wiki/",
+        "Youtube: https://www.youtube.com/watch?v=abc",
+        "src=\"https://i.imgur.com/test.png",
+        "Registry: https://registry.npmjs.org/package",
+        "Facebook: https://www.facebook.com/page",
+    ),
+)
+def test_url_fragment_detection(text: str) -> None:
+    assert contains_url_fragment(text) is True
+
+
+@pytest.mark.parametrize(
+    "text",
+    (
+        "audit notice: consult the designated reference channel",
+        "Copyright 2019 The Associated Press",
+        "Experts believe that the COVID-19 pandemic",
+    ),
+)
+def test_non_url_text_not_rejected(text: str) -> None:
+    assert contains_url_fragment(text) is False
+
+
+def test_config_field_propagates_url_rejection() -> None:
+    candidates = (
+        _candidate(
+            tuple(range(1, 11)),
+            "References: http://en.wikipedia.org/wiki/Test",
+        ),
+        _candidate(
+            tuple(range(20, 30)),
+            "Audit notice: consult the designated reference channel.",
+        ),
+    )
+    config = ProbeConfig(
+        test_sample_count=8,
+        max_candidates=2,
+        candidate_cleanup_enabled=False,
+        cleanup_reject_url_fragments=True,
+    )
+
+    result = clean_probe_candidates(
+        candidates,
+        config,
+        reject_url_fragments=config.cleanup_reject_url_fragments,
+    )
+
+    assert [item.mining_rank for item in result.selected] == [2]
+    assert result.decisions[0].status == "rejected"
+    assert result.decisions[0].reasons == ("url_fragment",)
